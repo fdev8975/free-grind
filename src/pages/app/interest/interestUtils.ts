@@ -19,7 +19,7 @@ export type InterestItem = {
 	isRead?: boolean;
 	onlineUntil?: number | null;
 	rightNow?: string | null;
-	/** Received taps only; null when the tapper hides their distance. */
+	/** Received taps and views (also locked previews); null when hidden. */
 	distanceMeters?: number | null;
 };
 
@@ -84,6 +84,7 @@ function mergeViewItem(
 		isMutual: incoming.isMutual ?? cached.isMutual,
 		onlineUntil: incoming.onlineUntil ?? cached.onlineUntil,
 		rightNow: incoming.rightNow ?? cached.rightNow,
+		distanceMeters: incoming.distanceMeters ?? cached.distanceMeters,
 	};
 }
 
@@ -255,6 +256,7 @@ export function normalizeViews(
 			isFromCache: false,
 			onlineUntil: toNumber(obj.onlineUntil),
 			rightNow: getItemRightNow(obj),
+			distanceMeters: toNumber(obj.distance),
 		};
 	}).filter((it): it is InterestItem => it !== null);
 
@@ -279,6 +281,8 @@ export function normalizeViews(
 			isFromCache: !!recoveredMatch,
 			onlineUntil: recoveredMatch ? recoveredMatch.onlineUntil : toNumber(obj.onlineUntil),
 			rightNow: recoveredMatch ? recoveredMatch.rightNow : getItemRightNow(obj),
+			// Distance is sent for locked previews too.
+			distanceMeters: toNumber(obj.distance),
 		};
 	}).filter((it): it is InterestItem => it !== null);
 

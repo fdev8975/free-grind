@@ -124,7 +124,7 @@ export const InterestRow = memo(function InterestRow({
 							<ClockFilled className="h-3 w-3 shrink-0" />
 							<span className="truncate">{formatTimestamp(item.timestamp, t, now)}</span>
 						</span>
-						{mode === "taps" && item.distanceMeters != null && (
+						{mode !== "sent" && item.distanceMeters != null && (
 							<span className="flex shrink-0 items-center gap-1">
 								<Navigation className="h-3 w-3 fill-current" />
 								<span className="tabular-nums">{formatDistance(item.distanceMeters, t, unitsPreset)}</span>
@@ -184,7 +184,7 @@ const TILE_ICON_SHADOW = "drop-shadow-[0_1px_1.5px_rgba(0,0,0,1)] drop-shadow-[0
 
 /** Grid-style tile for the views tab (and, on desktop, taps/sent), modelled on
  * the browse grid's BrowseCardTile: view count or tap emoji top-left, presence
- * top-right, name and time (plus distance for taps) bottom-left, favorite
+ * top-right, name, time and distance bottom-left, favorite
  * bottom-right. `browseCard` is the profile as last
  * seen in the browse grid (if ever), which is the only source for age and
  * favorite since the views endpoint doesn't carry them. */
@@ -330,7 +330,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 								<p className={cn("flex items-center gap-1 text-[11px] font-semibold text-white/80", displayName && "mt-0.5")}>
 									<ClockFilled className="h-3 w-3 shrink-0" />
 									<span className="truncate">{formatTimestamp(item.timestamp, t, now)}</span>
-									{mode === "taps" && item.distanceMeters != null && (
+									{mode !== "sent" && item.distanceMeters != null && (
 										<span className="ml-1.5 flex shrink-0 items-center gap-1">
 											<Navigation className="h-3 w-3 fill-current" />
 											<span className="tabular-nums">{formatDistance(item.distanceMeters, t, unitsPreset)}</span>
