@@ -2450,6 +2450,7 @@
         "view_count_other": "{{count}} Besuche",
         "viewed": "Angesehen",
         "recovered_tooltip": "Aus lokalem Verlauf wiedererkannt",
+        "recovered_distance_tooltip": "Vermutlich dieses Profil: anhand der Entfernung zugeordnet",
         "onboarding": {
             "title": "Profilbesucher",
             "limitation_title": "Funktionsweise",

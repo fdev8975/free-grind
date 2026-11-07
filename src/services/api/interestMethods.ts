@@ -18,6 +18,20 @@ export function createInterestMethods(fetchRest: RestFetcher, t: (key: string) =
 			return interestViewsResponseSchema.parse(await parseJsonSafe(response));
 		},
 
+		/** Views badge count; `mostRecent` names the latest viewer by real ID,
+		 * also when the views list only returns them as a locked preview. */
+		async getViewsEyeball(): Promise<{ profileId: string; imageHash: string | null; timestamp: number } | null> {
+			const response = await fetchRest("/v6/views/eyeball");
+			await assertSuccess(response, t("api.errors.load_views"));
+			const body = (await parseJsonSafe(response)) as { mostRecent?: Record<string, unknown> | null } | null;
+			const mostRecent = body?.mostRecent;
+			const profileId = mostRecent?.profileId;
+			const timestamp = Number(mostRecent?.timestamp);
+			if ((typeof profileId !== "string" && typeof profileId !== "number") || !Number.isFinite(timestamp)) return null;
+			const hash = mostRecent?.photoHash;
+			return { profileId: String(profileId), imageHash: typeof hash === "string" && hash ? hash : null, timestamp };
+		},
+
 		async getTaps(): Promise<InterestTapsResponse> {
 			const response = await fetchRest("/v2/taps/received");
 			await assertSuccess(response, t("api.errors.load_taps"));

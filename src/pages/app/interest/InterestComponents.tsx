@@ -103,8 +103,8 @@ export const InterestRow = memo(function InterestRow({
 							{displayName}
 						</p>
 						{isRecovered && (
-							<span title={t("interest_page.recovered_tooltip")}>
-								<History className="h-3 w-3 text-[var(--accent)]" />
+							<span title={t(item.recoveredBy === "distance" ? "interest_page.recovered_distance_tooltip" : "interest_page.recovered_tooltip")}>
+								<History className={cn("h-3 w-3", item.recoveredBy === "distance" ? "text-[var(--text-muted)]" : "text-[var(--accent)]")} />
 							</span>
 						)}
 						{item.rightNow === "HOSTING" && (
@@ -353,9 +353,16 @@ export const InterestViewTile = memo(function InterestViewTile({
 											<LockFilled className={cn("h-3.5 w-3.5 text-white", TILE_ICON_SHADOW)} />
 										</div>
 									)}
+									{/* A distance match is only a guess — shown white instead of accent. */}
 									{isRecovered && (
-										<div className="flex h-5 w-5 items-center justify-center" title={t("interest_page.recovered_tooltip")}>
-											<History className={cn("h-3.5 w-3.5 text-[var(--accent)]", TILE_ICON_SHADOW)} strokeWidth={2.5} />
+										<div
+											className="flex h-5 w-5 items-center justify-center"
+											title={t(item.recoveredBy === "distance" ? "interest_page.recovered_distance_tooltip" : "interest_page.recovered_tooltip")}
+										>
+											<History
+												className={cn("h-3.5 w-3.5", item.recoveredBy === "distance" ? "text-white/80" : "text-[var(--accent)]", TILE_ICON_SHADOW)}
+												strokeWidth={2.5}
+											/>
 										</div>
 									)}
 								</div>

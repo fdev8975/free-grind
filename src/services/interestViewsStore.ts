@@ -10,6 +10,7 @@ type StoredInterestView = {
 	/** Optional: rows written before distance was cached lack it. */
 	distanceMeters?: number | null;
 	isFavorite?: boolean | null;
+	recoveredBy?: "hash" | "event" | "distance" | null;
 	updatedAt: number;
 };
 

@@ -14,6 +14,7 @@ import {
 	enrichSentTapsWithProfiles,
 	PREVIEW_ID_PREFIX,
 	type BrowseHashMatch,
+	type DistanceCandidate,
 	type InterestItem,
 } from "../../pages/app/interest/interestUtils";
 import { getAllCachedBrowseCardsByImageHash, getAllCachedBrowseCardsById } from "../../pages/app/gridpage/cache";
@@ -29,11 +30,20 @@ export function useInterestData() {
 		queryKey: ["interest", "list"],
 		queryFn: async () => {
 			// 1. Parallel fetch from API
-			const [tapsResponse, viewsResponse, sentTapsResponse] = await Promise.all([
+			const [tapsResponse, viewsResponse, sentTapsResponse, eyeball] = await Promise.all([
 				api.getTaps(),
 				api.getViews(),
 				api.getSentTaps().catch(() => []),
+				api.getViewsEyeball().catch(() => null),
 			]);
+			// The eyeball names the latest viewer even after the app was closed
+			// (no WS event then) — the main way to unlock photo-less previews.
+			if (eyeball) {
+				await Promise.all([
+					interestIdentityStore.rememberViewEvent(eyeball),
+					interestIdentityStore.rememberHashes([{ hash: eyeball.imageHash, profileId: eyeball.profileId }]),
+				]).catch(() => {});
+			}
 
 			// 2. Load cached views from IndexedDB (persistence)
 			const cachedRows = await interestViewsStore.getAll();
@@ -47,7 +57,7 @@ export function useInterestData() {
 				interestIdentityStore.getViewEvents().catch(() => []),
 			]);
 			const normalizedViews = await enrichSentTapsWithProfiles(
-				normalizeViews(viewsResponse, cachedViews, t, identityByHash, viewEvents),
+				normalizeViews(viewsResponse, cachedViews, t, identityByHash, viewEvents, buildDistanceCandidates()),
 				api.getProfilesByIds,
 				// Only recovered previews: unlocked viewers come with their name
 				// (or genuinely have none), no need to re-ask every load.
@@ -153,4 +163,22 @@ async function buildIdentityIndex(taps: InterestItem[]): Promise<Map<string, Bro
 		});
 	}
 	return index;
+}
+
+/** Photo-less profiles from the live browse grid with a real (not estimated)
+ * distance — candidates for photo-less locked previews. */
+function buildDistanceCandidates(): DistanceCandidate[] {
+	const candidates: DistanceCandidate[] = [];
+	for (const card of getAllCachedBrowseCardsById().values()) {
+		if (card.primaryImageUrl || typeof card.distanceMeters !== "number") continue;
+		candidates.push({
+			profileId: card.profileId,
+			displayName: card.displayName ?? null,
+			onlineUntil: card.onlineUntil ?? null,
+			rightNow: card.rightNow ?? null,
+			distanceMeters: card.distanceMeters,
+			favorite: typeof card.favorite === "boolean" ? card.favorite : null,
+		});
+	}
+	return candidates;
 }

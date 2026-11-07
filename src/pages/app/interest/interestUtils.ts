@@ -23,6 +23,8 @@ export type InterestItem = {
 	distanceMeters?: number | null;
 	/** Views only: the API's own favorite flag (also sent for locked previews). */
 	isFavorite?: boolean | null;
+	/** How a locked preview was matched to a real profile; "distance" is a guess. */
+	recoveredBy?: "hash" | "event" | "distance" | null;
 };
 
 export const PREVIEW_ID_PREFIX = "preview:";
@@ -38,6 +40,7 @@ export function fromStoredView(row: StoredInterestView): InterestItem {
 		canOpenProfile: !row.profileId.startsWith(PREVIEW_ID_PREFIX),
 		distanceMeters: row.distanceMeters ?? null,
 		isFavorite: row.isFavorite ?? null,
+		recoveredBy: row.recoveredBy ?? null,
 		isFromCache: true,
 	};
 }
@@ -51,6 +54,7 @@ export function toStoredView(item: InterestItem): Omit<StoredInterestView, "upda
 		viewCount: item.viewCount,
 		distanceMeters: item.distanceMeters ?? null,
 		isFavorite: item.isFavorite ?? null,
+		recoveredBy: item.recoveredBy ?? null,
 	};
 }
 
@@ -92,6 +96,7 @@ function mergeViewItem(
 		rightNow: incoming.rightNow ?? cached.rightNow,
 		distanceMeters: incoming.distanceMeters ?? cached.distanceMeters,
 		isFavorite: incoming.isFavorite ?? cached.isFavorite,
+		recoveredBy: incoming.recoveredBy ?? cached.recoveredBy,
 	};
 }
 
@@ -236,6 +241,39 @@ function findViewEventMatch(item: InterestItem, viewEvents: ViewEventMatch[]): V
 	);
 }
 
+/** A photo-less profile seen in the browse grid, with its exact distance. */
+export type DistanceCandidate = BrowseHashMatch & {
+	distanceMeters: number;
+	favorite: boolean | null;
+};
+
+// Both distances are measured from our own position, so they only agree while
+// neither side moved much; keep the window tight and demand a single candidate.
+function distanceTolerance(meters: number): number {
+	return Math.max(30, meters * 0.005);
+}
+
+function findDistanceMatch(
+	item: InterestItem,
+	candidates: DistanceCandidate[],
+	takenIds: Set<string>,
+): DistanceCandidate | null {
+	if (item.distanceMeters == null || candidates.length === 0) return null;
+	const distance = item.distanceMeters;
+	const tolerance = distanceTolerance(distance);
+	const matches = candidates.filter((candidate) => {
+		if (takenIds.has(candidate.profileId)) return false;
+		if (Math.abs(candidate.distanceMeters - distance) > tolerance) return false;
+		// Contradicting attributes rule a candidate out.
+		if (item.isFavorite != null && candidate.favorite != null && item.isFavorite !== candidate.favorite) return false;
+		const itemRightNow = item.rightNow === "HOSTING" || item.rightNow === "NOT_HOSTING" ? item.rightNow : null;
+		const candidateRightNow = candidate.rightNow === "HOSTING" || candidate.rightNow === "NOT_HOSTING" ? candidate.rightNow : null;
+		if (item.rightNow != null && candidate.rightNow != null && itemRightNow !== candidateRightNow) return false;
+		return true;
+	});
+	return new Set(matches.map((m) => m.profileId)).size === 1 ? matches[0] : null;
+}
+
 function isHashlessPreview(item: InterestItem): boolean {
 	return item.profileId.startsWith(PREVIEW_ID_PREFIX) && !item.imageHash;
 }
@@ -246,6 +284,7 @@ export function normalizeViews(
 	_t: TFunction,
 	identityByHash?: Map<string, BrowseHashMatch>,
 	viewEvents: ViewEventMatch[] = [],
+	distanceCandidates: DistanceCandidate[] = [],
 ): InterestItem[] {
 	const root = asObject(payload);
 	if (!root) return previouslyCached;
@@ -344,13 +383,22 @@ export function normalizeViews(
 	}
 
 	// 4. Recover still-locked previews — fresh and cached alike — by photo
-	// hash, or else by the WS view event that named the viewer at that time.
+	// hash, else by the view event that named the viewer at that time, else
+	// (photo-less previews only) by a unique photo-less grid profile at the
+	// same distance. A profile appears once in the views list, so IDs already
+	// in it can't be behind another preview.
+	const takenIds = new Set(Array.from(mergedMap.keys()).filter((id) => !id.startsWith(PREVIEW_ID_PREFIX)));
 	for (const [id, item] of Array.from(mergedMap)) {
 		if (!id.startsWith(PREVIEW_ID_PREFIX)) continue;
 		const byHash = item.imageHash ? hashToProfile.get(item.imageHash) : undefined;
-		const profileId = byHash?.profileId ?? findViewEventMatch(item, viewEvents)?.profileId;
+		const byEvent = byHash ? null : findViewEventMatch(item, viewEvents);
+		const byDistance =
+			byHash || byEvent || item.imageHash ? null : findDistanceMatch(item, distanceCandidates, takenIds);
+		const profileId = byHash?.profileId ?? byEvent?.profileId ?? byDistance?.profileId;
 		if (!profileId) continue;
-		const known = byHash ?? idToProfile.get(profileId);
+		const known = byHash ?? byDistance ?? idToProfile.get(profileId);
+		const recoveredBy = byHash ? "hash" : byEvent ? "event" : "distance";
+		takenIds.add(profileId);
 
 		const recovered: InterestItem = {
 			...item,
@@ -358,6 +406,7 @@ export function normalizeViews(
 			displayName: known?.displayName ?? null,
 			canOpenProfile: true,
 			isFromCache: true,
+			recoveredBy,
 			// Fresh presence from the response wins over the (possibly stale) match.
 			onlineUntil: item.onlineUntil ?? known?.onlineUntil ?? null,
 			rightNow: item.rightNow ?? known?.rightNow ?? null,
