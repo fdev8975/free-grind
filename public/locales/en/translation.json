@@ -2460,6 +2460,7 @@
       "button": "Got it"
     },
     "unknown_profile": "Unknown Profile",
+    "locked_profile": "Locked",
     "blocked_profile": "Blocked",
     "unknown_time": "Unknown time",
     "tap_labels": {

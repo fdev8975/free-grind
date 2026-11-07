@@ -57,7 +57,7 @@ export function useInterestData() {
 				interestIdentityStore.getViewEvents().catch(() => []),
 			]);
 			const normalizedViews = await enrichSentTapsWithProfiles(
-				normalizeViews(viewsResponse, cachedViews, t, identityByHash, viewEvents, buildDistanceCandidates()),
+				normalizeViews(viewsResponse, cachedViews, t, identityByHash, viewEvents, buildDistanceCandidates(normalizedTaps)),
 				api.getProfilesByIds,
 				// Only recovered previews: unlocked viewers come with their name
 				// (or genuinely have none), no need to re-ask every load.
@@ -165,12 +165,28 @@ async function buildIdentityIndex(taps: InterestItem[]): Promise<Map<string, Bro
 	return index;
 }
 
-/** Photo-less profiles from the live browse grid with a real (not estimated)
- * distance — candidates for photo-less locked previews. */
-function buildDistanceCandidates(): DistanceCandidate[] {
+/** Photo-less profiles with a known distance — candidates for photo-less
+ * locked previews: received tappers (fetched together with the views, so
+ * their distance is from the same moment) and the live browse grid (real,
+ * not estimated distances). */
+function buildDistanceCandidates(taps: InterestItem[]): DistanceCandidate[] {
 	const candidates: DistanceCandidate[] = [];
+	const seen = new Set<string>();
+	for (const tap of taps) {
+		if (tap.imageHash || typeof tap.distanceMeters !== "number" || seen.has(tap.profileId)) continue;
+		seen.add(tap.profileId);
+		candidates.push({
+			profileId: tap.profileId,
+			displayName: tap.displayName,
+			onlineUntil: tap.onlineUntil ?? null,
+			rightNow: tap.rightNow ?? null,
+			distanceMeters: tap.distanceMeters,
+			favorite: null,
+		});
+	}
 	for (const card of getAllCachedBrowseCardsById().values()) {
-		if (card.primaryImageUrl || typeof card.distanceMeters !== "number") continue;
+		if (card.primaryImageUrl || typeof card.distanceMeters !== "number" || seen.has(card.profileId)) continue;
+		seen.add(card.profileId);
 		candidates.push({
 			profileId: card.profileId,
 			displayName: card.displayName ?? null,

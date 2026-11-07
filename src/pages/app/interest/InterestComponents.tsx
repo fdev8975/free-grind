@@ -224,11 +224,10 @@ export const InterestViewTile = memo(function InterestViewTile({
 	// The API's own flag (also sent for locked previews) beats the browse-grid snapshot.
 	const isFavorite = (item.isFavorite ?? browseCard?.favorite) === true;
 
-	// Private viewers stay nameless — the blurred photo and lock say enough.
 	const displayName = item.displayName
 		? item.displayName
 		: isPrivate
-			? null
+			? t("interest_page.locked_profile")
 			: t("common.unknown_display_name");
 
 	return (
@@ -260,19 +259,17 @@ export const InterestViewTile = memo(function InterestViewTile({
 							privacyScope="grid"
 							placeholder="silhouette"
 							className={cn(
-								// Locked tiles keep their light blur, also while hovered.
-								isLocked
+								// Blocked tiles keep their light blur, also while hovered;
+								// locked previews show their photo as is.
+								isBlocked
 									? (photoPrivacy === "blur" ? "hover:blur-[3px] hover:scale-105 group-hover/reveal:blur-[3px] group-hover/reveal:scale-105" : "blur-[3px] scale-105")
-									: TILE_HOVER_ZOOM_CLASS,
+									: isPrivate ? undefined : TILE_HOVER_ZOOM_CLASS,
 							)}
 						/>
 
-						{/* Locked tiles: lightly blurred and darkened photo. */}
-						{isLocked && (
-							<div
-								className="absolute inset-0 bg-black/30"
-								title={isPrivate ? undefined : t("interest_page.blocked_profile")}
-							/>
+						{/* Blocked tiles: lightly blurred and darkened photo. */}
+						{isBlocked && (
+							<div className="absolute inset-0 bg-black/30" title={t("interest_page.blocked_profile")} />
 						)}
 
 						<div className="pointer-events-none absolute inset-x-0 top-0 h-14 bg-gradient-to-b from-black/70 via-black/25 to-transparent" />
