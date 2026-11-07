@@ -21,6 +21,8 @@ export type InterestItem = {
 	rightNow?: string | null;
 	/** Received taps and views (also locked previews); null when hidden. */
 	distanceMeters?: number | null;
+	/** Views only: the API's own favorite flag (also sent for locked previews). */
+	isFavorite?: boolean | null;
 };
 
 export const PREVIEW_ID_PREFIX = "preview:";
@@ -34,6 +36,8 @@ export function fromStoredView(row: StoredInterestView): InterestItem {
 		tapType: null,
 		viewCount: row.viewCount,
 		canOpenProfile: !row.profileId.startsWith(PREVIEW_ID_PREFIX),
+		distanceMeters: row.distanceMeters ?? null,
+		isFavorite: row.isFavorite ?? null,
 		isFromCache: true,
 	};
 }
@@ -45,6 +49,8 @@ export function toStoredView(item: InterestItem): Omit<StoredInterestView, "upda
 		imageHash: item.imageHash,
 		timestamp: item.timestamp,
 		viewCount: item.viewCount,
+		distanceMeters: item.distanceMeters ?? null,
+		isFavorite: item.isFavorite ?? null,
 	};
 }
 
@@ -85,6 +91,7 @@ function mergeViewItem(
 		onlineUntil: incoming.onlineUntil ?? cached.onlineUntil,
 		rightNow: incoming.rightNow ?? cached.rightNow,
 		distanceMeters: incoming.distanceMeters ?? cached.distanceMeters,
+		isFavorite: incoming.isFavorite ?? cached.isFavorite,
 	};
 }
 
@@ -138,6 +145,10 @@ function getItemImageHash(entry: Record<string, unknown>): string | null {
 
 function getItemRightNow(entry: Record<string, unknown>): string | null {
 	return typeof entry.rightNow === "string" ? entry.rightNow : null;
+}
+
+function getItemFavorite(entry: Record<string, unknown>): boolean | null {
+	return typeof entry.isFavorite === "boolean" ? entry.isFavorite : null;
 }
 
 function getItemTimestamp(entry: Record<string, unknown>): number | null {
@@ -257,6 +268,7 @@ export function normalizeViews(
 			onlineUntil: toNumber(obj.onlineUntil),
 			rightNow: getItemRightNow(obj),
 			distanceMeters: toNumber(obj.distance),
+			isFavorite: getItemFavorite(obj),
 		};
 	}).filter((it): it is InterestItem => it !== null);
 
@@ -279,10 +291,13 @@ export function normalizeViews(
 			viewCount: toNumber(asObject(obj.viewedCount)?.totalCount),
 			canOpenProfile: recoveredMatch ? true : (getViewProfileId(obj) !== null),
 			isFromCache: !!recoveredMatch,
-			onlineUntil: recoveredMatch ? recoveredMatch.onlineUntil : toNumber(obj.onlineUntil),
-			rightNow: recoveredMatch ? recoveredMatch.rightNow : getItemRightNow(obj),
-			// Distance is sent for locked previews too.
+			// Fresh presence from the response wins over the (possibly stale)
+			// browse-grid match.
+			onlineUntil: toNumber(obj.onlineUntil) ?? recoveredMatch?.onlineUntil ?? null,
+			rightNow: getItemRightNow(obj) ?? recoveredMatch?.rightNow ?? null,
+			// Distance and favorite are sent for locked previews too.
 			distanceMeters: toNumber(obj.distance),
+			isFavorite: getItemFavorite(obj),
 		};
 	}).filter((it): it is InterestItem => it !== null);
 

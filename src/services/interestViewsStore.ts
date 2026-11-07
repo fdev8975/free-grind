@@ -6,6 +6,9 @@ type StoredInterestView = {
 	imageHash: string | null;
 	timestamp: number | null;
 	viewCount: number | null;
+	/** Optional: rows written before distance was cached lack it. */
+	distanceMeters?: number | null;
+	isFavorite?: boolean | null;
 	updatedAt: number;
 };
 

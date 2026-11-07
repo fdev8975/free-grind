@@ -221,7 +221,8 @@ export const InterestViewTile = memo(function InterestViewTile({
 	const rightNow = item.rightNow ?? browseCard?.rightNow ?? null;
 	const isRightNow = rightNow === "HOSTING" || rightNow === "NOT_HOSTING";
 	const age = !isPrivate && typeof browseCard?.age === "number" && browseCard.age > 0 ? browseCard.age : null;
-	const isFavorite = !isPrivate && browseCard?.favorite === true;
+	// The API's own flag (also sent for locked previews) beats the browse-grid snapshot.
+	const isFavorite = (item.isFavorite ?? browseCard?.favorite) === true;
 
 	// Private viewers stay nameless — the blurred photo and lock say enough.
 	const displayName = item.displayName
