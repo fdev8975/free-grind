@@ -3,7 +3,19 @@ import { useApiFunctions } from "../useApiFunctions";
 import { useEffect } from "react";
 import { TAP_RECEIVED_EVENT, VIEW_RECEIVED_EVENT } from "../../components/ChatRealtimeBridge";
 import { interestViewsStore } from "../../services/interestViewsStore";
-import { fromStoredView, toStoredView, normalizeViews, normalizeTaps, normalizeSentTaps, enrichSentTapsWithProfiles } from "../../pages/app/interest/interestUtils";
+import { interestIdentityStore } from "../../services/interestIdentityStore";
+import { listConversations, listProfileSnapshotIdentities } from "../../services/chatDb";
+import {
+	fromStoredView,
+	toStoredView,
+	normalizeViews,
+	normalizeTaps,
+	normalizeSentTaps,
+	enrichSentTapsWithProfiles,
+	PREVIEW_ID_PREFIX,
+	type BrowseHashMatch,
+	type InterestItem,
+} from "../../pages/app/interest/interestUtils";
 import { getAllCachedBrowseCardsByImageHash, getAllCachedBrowseCardsById } from "../../pages/app/gridpage/cache";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_STALE_TIME_MS } from "../../config/ui-constants";
@@ -27,22 +39,26 @@ export function useInterestData() {
 			const cachedRows = await interestViewsStore.getAll();
 			const cachedViews = cachedRows.map(fromStoredView);
 
-			// 3. Normalize & Merge (recover locked preview entries by matching their
-			// image hash against profiles already seen in the browse grid)
-			const browseHashIndex = getAllCachedBrowseCardsByImageHash();
-			const browseMatches = new Map(
-				Array.from(browseHashIndex, ([hash, card]) => [
-					hash,
-					{
-						profileId: card.profileId,
-						displayName: card.displayName ?? null,
-						onlineUntil: card.onlineUntil ?? null,
-						rightNow: card.rightNow ?? null,
-					},
-				]),
-			);
-			const normalizedViews = normalizeViews(viewsResponse, cachedViews, t, browseMatches);
+			// 3. Normalize & Merge, recovering locked preview entries via every
+			// known photo → profile pair and the viewers named by WS view events.
 			const normalizedTaps = normalizeTaps(tapsResponse, t);
+			const [identityByHash, viewEvents] = await Promise.all([
+				buildIdentityIndex(normalizedTaps),
+				interestIdentityStore.getViewEvents().catch(() => []),
+			]);
+			const normalizedViews = await enrichSentTapsWithProfiles(
+				normalizeViews(viewsResponse, cachedViews, t, identityByHash, viewEvents),
+				api.getProfilesByIds,
+				// Only recovered previews: unlocked viewers come with their name
+				// (or genuinely have none), no need to re-ask every load.
+				(item) => item.isFromCache === true,
+			);
+			// Learn from this load too: unlocked/recovered viewers and tappers.
+			void interestIdentityStore.rememberHashes(
+				[...normalizedViews, ...normalizedTaps]
+					.filter((item) => !item.profileId.startsWith(PREVIEW_ID_PREFIX))
+					.map((item) => ({ hash: item.imageHash, profileId: item.profileId, displayName: item.displayName })),
+			);
 			const cacheResolvedSentTaps = normalizeSentTaps(sentTapsResponse, getAllCachedBrowseCardsById());
 			// Bulk-resolve anyone the browse-grid cache didn't recognize — the
 			// sent-taps endpoint only returns bare ids, unlike received taps/views.
@@ -91,4 +107,50 @@ export function useInterestData() {
 	}, [queryClient]);
 
 	return query;
+}
+
+const toMatch = (profileId: string, displayName: string | null): BrowseHashMatch => ({
+	profileId,
+	displayName,
+	onlineUntil: null,
+	rightNow: null,
+});
+
+/**
+ * Photo hash → profile index for recovering locked view previews, weakest
+ * source first so stronger ones override on collision: persisted hints,
+ * opened-profile snapshots, chat partners, received taps, the live browse grid.
+ */
+async function buildIdentityIndex(taps: InterestItem[]): Promise<Map<string, BrowseHashMatch>> {
+	const index = new Map<string, BrowseHashMatch>();
+	const add = (hash: string | null | undefined, match: BrowseHashMatch) => {
+		if (hash) index.set(hash, match);
+	};
+
+	const [persisted, snapshots, conversations] = await Promise.all([
+		interestIdentityStore.getHashes().catch(() => []),
+		listProfileSnapshotIdentities().catch(() => []),
+		listConversations({ includeArchived: true }).catch(() => []),
+	]);
+
+	for (const row of persisted) add(row.hash, toMatch(row.profileId, row.displayName));
+	for (const row of snapshots) add(row.imageHash, toMatch(row.profileId, row.displayName));
+	for (const conversation of conversations) {
+		const data = conversation.entry.data;
+		for (const participant of data.participants ?? []) {
+			const profileId = String(participant.profileId);
+			const isOther = conversation.otherProfileId == null || conversation.otherProfileId === profileId;
+			add(participant.primaryMediaHash, toMatch(profileId, isOther ? data.name?.trim() || null : null));
+		}
+	}
+	for (const tap of taps) add(tap.imageHash, toMatch(tap.profileId, tap.displayName));
+	for (const [hash, card] of getAllCachedBrowseCardsByImageHash()) {
+		add(hash, {
+			profileId: card.profileId,
+			displayName: card.displayName ?? null,
+			onlineUntil: card.onlineUntil ?? null,
+			rightNow: card.rightNow ?? null,
+		});
+	}
+	return index;
 }

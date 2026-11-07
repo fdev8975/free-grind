@@ -73,6 +73,7 @@ import { useApiFunctions } from "../hooks/useApiFunctions";
 import { useBlockedProfileIds } from "../hooks/queries/useProfileQueries";
 import { isReadReceiptsHidden } from "../utils/privacy";
 import { classifyProfileAccess } from "../utils/profileAccessStatus";
+import { interestIdentityStore } from "../services/interestIdentityStore";
 import {
 	isChatNotificationsEnabled,
 	isForegroundNotificationsEnabled,
@@ -275,7 +276,7 @@ function parseViewPayload(payload: unknown): ViewReceivedDetail | null {
 	if (!payload || typeof payload !== "object") return null;
 	const r = payload as Record<string, unknown>;
 	const mostRecent = r.mostRecent as Record<string, unknown> | undefined;
-	if (!mostRecent) return null;
+	if (!mostRecent || mostRecent.profileId == null || mostRecent.profileId === "") return null;
 
 	return {
 		profileId: String(mostRecent.profileId),
@@ -747,11 +748,21 @@ export function ChatRealtimeBridge() {
 					const view = parseViewPayload(envelope.payload);
 					if (view) {
 						appLog.debug(`[chat-ws:bridge] Incoming view received. Total views: ${view.viewedCount}`);
-						window.dispatchEvent(
-							new CustomEvent<ViewReceivedDetail>(VIEW_RECEIVED_EVENT, {
-								detail: view,
-							}),
-						);
+						// The event names the real viewer even when the views list only
+						// returns a locked preview — persist it before the refetch the
+						// event triggers, so that refetch can already recover it.
+						void Promise.all([
+							interestIdentityStore.rememberViewEvent(view),
+							interestIdentityStore.rememberHashes([{ hash: view.imageHash, profileId: view.profileId }]),
+						])
+							.catch(() => {})
+							.finally(() => {
+								window.dispatchEvent(
+									new CustomEvent<ViewReceivedDetail>(VIEW_RECEIVED_EVENT, {
+										detail: view,
+									}),
+								);
+							});
 						maybeUnarchiveOnActivity(view.profileId);
 					}
 				}

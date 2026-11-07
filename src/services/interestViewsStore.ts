@@ -1,4 +1,5 @@
 import { appLog } from "../utils/logger";
+import { setActiveIdentityStoreUser } from "./interestIdentityStore";
 
 type StoredInterestView = {
 	profileId: string;
@@ -32,6 +33,7 @@ let activeDbName = LEGACY_DB_NAME;
  */
 export function setActiveInterestStoreUser(profileId: number | string | null): void {
 	activeDbName = profileId != null ? `open-grind-interest-${profileId}` : LEGACY_DB_NAME;
+	setActiveIdentityStoreUser(profileId);
 }
 
 function openDatabase(): Promise<IDBDatabase | null> {

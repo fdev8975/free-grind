@@ -210,11 +210,42 @@ export type BrowseHashMatch = {
 	rightNow: string | null;
 };
 
+/** A `viewed_me` WebSocket event: names the real viewer behind a locked preview. */
+export type ViewEventMatch = {
+	profileId: string;
+	imageHash: string | null;
+	timestamp: number;
+};
+
+// The WS event's timestamp and the preview's lastViewed describe the same view;
+// allow a little skew, but only accept a match that points at one profile.
+const VIEW_EVENT_MATCH_TOLERANCE_MS = 5000;
+
+function findViewEventMatch(item: InterestItem, viewEvents: ViewEventMatch[]): ViewEventMatch | null {
+	if (item.timestamp == null || viewEvents.length === 0) return null;
+	const timestamp = item.timestamp;
+	const candidates = viewEvents.filter(
+		(event) =>
+			Math.abs(event.timestamp - timestamp) <= VIEW_EVENT_MATCH_TOLERANCE_MS &&
+			// A known, different photo rules the event out.
+			(!item.imageHash || !event.imageHash || event.imageHash === item.imageHash),
+	);
+	if (new Set(candidates.map((event) => event.profileId)).size !== 1) return null;
+	return candidates.reduce((best, event) =>
+		Math.abs(event.timestamp - timestamp) < Math.abs(best.timestamp - timestamp) ? event : best,
+	);
+}
+
+function isHashlessPreview(item: InterestItem): boolean {
+	return item.profileId.startsWith(PREVIEW_ID_PREFIX) && !item.imageHash;
+}
+
 export function normalizeViews(
 	payload: unknown,
 	previouslyCached: InterestItem[],
 	_t: TFunction,
-	browseHashIndex?: Map<string, BrowseHashMatch>,
+	identityByHash?: Map<string, BrowseHashMatch>,
+	viewEvents: ViewEventMatch[] = [],
 ): InterestItem[] {
 	const root = asObject(payload);
 	if (!root) return previouslyCached;
@@ -223,34 +254,7 @@ export function normalizeViews(
 	const profilesRaw = Array.isArray(root.profiles) ? root.profiles : Array.isArray(dataRoot?.profiles) ? dataRoot.profiles : [];
 	const previewsRaw = Array.isArray(root.previews) ? root.previews : Array.isArray(dataRoot?.previews) ? dataRoot.previews : [];
 
-	// 1. Helper map for quick access to known profiles (by hash).
-	// Seed from the browse grid first (weaker signal — just an identity guess),
-	// then let previously-resolved interest entries override on hash collision
-	// since those carry richer, interest-specific data.
-	const hashToProfile = new Map<string, InterestItem>();
-	if (browseHashIndex) {
-		for (const [hash, match] of browseHashIndex) {
-			hashToProfile.set(hash, {
-				profileId: match.profileId,
-				displayName: match.displayName,
-				imageHash: hash,
-				timestamp: null,
-				tapType: null,
-				viewCount: null,
-				canOpenProfile: true,
-				isFromCache: true,
-				onlineUntil: match.onlineUntil,
-				rightNow: match.rightNow,
-			});
-		}
-	}
-	for (const item of previouslyCached) {
-		if (item.imageHash && !item.profileId.startsWith(PREVIEW_ID_PREFIX)) {
-			hashToProfile.set(item.imageHash, item);
-		}
-	}
-
-	// 2. Normalize raw data from server
+	// 1. Normalize raw data from server
 	const incomingProfiles = profilesRaw.map((entry): InterestItem | null => {
 		const obj = getViewEntryRecord(entry);
 		if (!obj) return null;
@@ -275,50 +279,106 @@ export function normalizeViews(
 	const incomingPreviews = previewsRaw.map((entry, index): InterestItem | null => {
 		const obj = getViewEntryRecord(entry);
 		if (!obj) return null;
-		const imageHash = getItemImageHash(obj);
-
-		// CHECK: Have we seen this hash before?
-		const recoveredMatch = imageHash ? hashToProfile.get(imageHash) : null;
-
-		const profileId = recoveredMatch ? recoveredMatch.profileId : (getViewProfileId(obj) ?? getPreviewSyntheticId(obj, index));
-
+		const realId = getViewProfileId(obj);
 		return {
-			profileId,
-			displayName: recoveredMatch ? recoveredMatch.displayName : null,
-			imageHash,
+			profileId: realId ?? getPreviewSyntheticId(obj, index),
+			displayName: null,
+			imageHash: getItemImageHash(obj),
 			timestamp: getItemTimestamp(obj),
 			tapType: null,
 			viewCount: toNumber(asObject(obj.viewedCount)?.totalCount),
-			canOpenProfile: recoveredMatch ? true : (getViewProfileId(obj) !== null),
-			isFromCache: !!recoveredMatch,
-			// Fresh presence from the response wins over the (possibly stale)
-			// browse-grid match.
-			onlineUntil: toNumber(obj.onlineUntil) ?? recoveredMatch?.onlineUntil ?? null,
-			rightNow: getItemRightNow(obj) ?? recoveredMatch?.rightNow ?? null,
+			canOpenProfile: realId !== null,
+			isFromCache: false,
+			onlineUntil: toNumber(obj.onlineUntil),
+			rightNow: getItemRightNow(obj),
 			// Distance and favorite are sent for locked previews too.
 			distanceMeters: toNumber(obj.distance),
 			isFavorite: getItemFavorite(obj),
 		};
 	}).filter((it): it is InterestItem => it !== null);
 
-	// 3. Merging
+	// 2. Merging: cache (history) first, then fresh server entries on top.
 	const mergedMap = new Map<string, InterestItem>();
-
-	// First, all items from cache (history)
 	for (const item of previouslyCached) {
 		mergedMap.set(item.profileId, item);
 	}
-
-	// Then fresh profiles/previews from server (overwrite old items with new timestamps)
 	for (const incoming of [...incomingProfiles, ...incomingPreviews]) {
 		const existing = mergedMap.get(incoming.profileId);
 		mergedMap.set(incoming.profileId, mergeViewItem(existing ?? null, incoming));
 	}
 
-	// Drop locked synthetic previews whose hash now belongs to a real profile.
-	// Checked against the whole merged set, not just this response: the cached
-	// locked twin otherwise survives (and reappears next to the unlocked entry)
-	// once the real profile is only in the cache and no longer in the response.
+	// Hashless previews get a position-based synthetic ID, so the same view
+	// could pile up under several IDs across refreshes — keep one per timestamp.
+	const hashlessByTimestamp = new Map<number, string>();
+	for (const [id, item] of mergedMap) {
+		if (!isHashlessPreview(item) || item.timestamp == null) continue;
+		const keptId = hashlessByTimestamp.get(item.timestamp);
+		if (keptId) {
+			mergedMap.set(keptId, { ...mergeViewItem(mergedMap.get(keptId) ?? null, item), profileId: keptId });
+			mergedMap.delete(id);
+		} else {
+			hashlessByTimestamp.set(item.timestamp, id);
+		}
+	}
+
+	// 3. Identity index (photo hash → profile). Weakest first: persisted/browse
+	// hints from the caller, then known interest entries, then this response.
+	const hashToProfile = new Map<string, BrowseHashMatch>();
+	if (identityByHash) {
+		for (const [hash, match] of identityByHash) hashToProfile.set(hash, match);
+	}
+	for (const item of [...previouslyCached, ...incomingProfiles]) {
+		if (item.imageHash && !item.profileId.startsWith(PREVIEW_ID_PREFIX)) {
+			hashToProfile.set(item.imageHash, {
+				profileId: item.profileId,
+				displayName: item.displayName,
+				onlineUntil: item.onlineUntil ?? null,
+				rightNow: item.rightNow ?? null,
+			});
+		}
+	}
+	const idToProfile = new Map<string, BrowseHashMatch>();
+	for (const match of hashToProfile.values()) {
+		const known = idToProfile.get(match.profileId);
+		if (!known || (!known.displayName && match.displayName)) idToProfile.set(match.profileId, match);
+	}
+
+	// 4. Recover still-locked previews — fresh and cached alike — by photo
+	// hash, or else by the WS view event that named the viewer at that time.
+	for (const [id, item] of Array.from(mergedMap)) {
+		if (!id.startsWith(PREVIEW_ID_PREFIX)) continue;
+		const byHash = item.imageHash ? hashToProfile.get(item.imageHash) : undefined;
+		const profileId = byHash?.profileId ?? findViewEventMatch(item, viewEvents)?.profileId;
+		if (!profileId) continue;
+		const known = byHash ?? idToProfile.get(profileId);
+
+		const recovered: InterestItem = {
+			...item,
+			profileId,
+			displayName: known?.displayName ?? null,
+			canOpenProfile: true,
+			isFromCache: true,
+			// Fresh presence from the response wins over the (possibly stale) match.
+			onlineUntil: item.onlineUntil ?? known?.onlineUntil ?? null,
+			rightNow: item.rightNow ?? known?.rightNow ?? null,
+		};
+		mergedMap.delete(id);
+
+		const existing = mergedMap.get(profileId);
+		if (!existing) {
+			mergedMap.set(profileId, recovered);
+			continue;
+		}
+		// An entry for that profile already exists: it wins, the recovered
+		// preview only fills gaps and can carry a newer view time.
+		const merged = mergeViewItem(recovered, existing);
+		merged.displayName = existing.displayName ?? recovered.displayName;
+		merged.timestamp = Math.max(existing.timestamp ?? 0, recovered.timestamp ?? 0) || null;
+		mergedMap.set(profileId, merged);
+	}
+
+	// Drop locked previews whose hash now belongs to a real profile (e.g. a
+	// cached twin of a profile that's unlocked now).
 	const realHashes = new Set<string>();
 	for (const item of mergedMap.values()) {
 		if (item.imageHash && !item.profileId.startsWith(PREVIEW_ID_PREFIX)) {
@@ -433,8 +493,12 @@ const PROFILE_LOOKUP_CHUNK_SIZE = 50;
 export async function enrichSentTapsWithProfiles(
 	items: InterestItem[],
 	getProfilesByIds: (profileIds: (string | number)[]) => Promise<unknown>,
+	shouldResolve: (item: InterestItem) => boolean = () => true,
 ): Promise<InterestItem[]> {
-	const unresolvedIds = items.filter((item) => !item.displayName).map((item) => item.profileId);
+	// Locked previews have no real ID to look up.
+	const unresolvedIds = items
+		.filter((item) => !item.displayName && !item.profileId.startsWith(PREVIEW_ID_PREFIX) && shouldResolve(item))
+		.map((item) => item.profileId);
 	if (unresolvedIds.length === 0) return items;
 
 	const chunks: string[][] = [];

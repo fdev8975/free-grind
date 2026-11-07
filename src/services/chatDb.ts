@@ -1421,6 +1421,25 @@ export async function saveProfileSnapshot(profileId: string, json: string): Prom
 	});
 }
 
+/**
+ * Photo hash + name of every profile snapshot, extracted in SQL so the full
+ * profile JSON isn't loaded — an identity source for recovering locked view
+ * previews (see interestIdentityStore).
+ */
+export async function listProfileSnapshotIdentities(): Promise<
+	{ profileId: string; imageHash: string | null; displayName: string | null }[]
+> {
+	const db = await getDb();
+	const rows = await db.select<{ profile_id: string; hash: string | null; name: string | null }[]>(
+		"SELECT profile_id, json_extract(data, '$.profileImageMediaHash') AS hash, json_extract(data, '$.displayName') AS name FROM profile_snapshots",
+	);
+	return rows.map((row) => ({
+		profileId: row.profile_id,
+		imageHash: typeof row.hash === "string" ? row.hash : null,
+		displayName: typeof row.name === "string" ? row.name : null,
+	}));
+}
+
 export type StoredProfileSnapshot = {
 	profileId: string;
 	data: string;
