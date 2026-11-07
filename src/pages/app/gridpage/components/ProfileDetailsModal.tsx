@@ -1,4 +1,4 @@
-import { TapFlyBurst, TAP_FLY_BURST_MS, createTapFlyBurst, tapEmoji, tapGlow, type TapFlyBurstState } from "../../../../components/TapFlyBurst";
+import { TapFlyBurst, tapFlyBurstDuration, createTapFlyBurst, mutualTapIdFor, tapEmoji, tapGlow, type TapFlyBurstState } from "../../../../components/TapFlyBurst";
 import { Album, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, EllipsisVertical, Flag, Flame, Images, Loader2, LockKeyhole, MessageCircle, Pencil, Phone, ShieldCheck, Star, Trash2, X } from "lucide-react";
 import { BananaFilled, EyeFilled, HomeFilled, MapPinFilled, StickyNoteFilled, EyeOffFilled, LocateFixedFilled, PencilLineFilled, SendHorizontalFilled } from "../../../../components/icons/FilledIcons";
 import { RightNowIcon } from "../../../../components/icons/RightNowIcon";
@@ -659,6 +659,7 @@ export function ProfileDetailsModal({
 	const visualStateValue = typeof tapVisualState === "string" ? tapVisualState : tapVisualState.state;
 	const effectiveTapVisualState = isTappingProfile ? "single" : visualStateValue;
 	const isTapActive = effectiveTapVisualState !== "none";
+	const isBarTapMutual = effectiveTapVisualState === "mutual";
 	const isProfileUnavailable = isBlocked || isSnapshotProfile;
 	const isTapDisabled = isOwnProfile || !onTapProfile || isTappingProfile || isTapBlocked || isProfileUnavailable;
 	const isTriangleDisabled =
@@ -1024,7 +1025,9 @@ export function ProfileDetailsModal({
 		if (!onTapProfile || !messageProfileId || isTapBlocked) return;
 		haptic(30, [15, 10, 25]);
 		onTapProfile(String(messageProfileId), tapId);
-		setBarTapFlyEmoji(createTapFlyBurst(tapId, barTapButtonRef.current));
+		setBarTapFlyEmoji(
+			createTapFlyBurst(tapId, barTapButtonRef.current, mutualTapIdFor(activeProfile?.lastReceivedTapTimestamp, receivedTapType)),
+		);
 		setBarTapPickerOpen(false);
 		setBarTapHoverId(null);
 		barTapStickyRef.current = false;
@@ -1056,7 +1059,7 @@ export function ProfileDetailsModal({
 
 	useEffect(() => {
 		if (!barTapFlyEmoji) return;
-		const timer = setTimeout(() => setBarTapFlyEmoji(null), TAP_FLY_BURST_MS);
+		const timer = setTimeout(() => setBarTapFlyEmoji(null), tapFlyBurstDuration(barTapFlyEmoji));
 		return () => clearTimeout(timer);
 	}, [barTapFlyEmoji]);
 
@@ -2247,6 +2250,7 @@ export function ProfileDetailsModal({
 							onPointerCancel={() => { setBarTapPickerOpen(false); setBarTapHoverId(null); barTapStickyRef.current = false; if (barTapLongPressRef.current) clearTimeout(barTapLongPressRef.current); barInputTimerRef.current = setTimeout(() => setBarInputVisible(true), 210); }}
 							disabled={isTapDisabled}
 							aria-label={t("profile_details.tap", { defaultValue: "Tap" })}
+							title={isBarTapMutual ? t("browse_page.tile_tap.mutual", { defaultValue: "You tapped each other" }) : undefined}
 							className={`tap-btn-base bar-icon-btn relative inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-none bg-transparent text-2xl leading-none transition-all active:scale-90 touch-none select-none ${isTappingProfile ? "opacity-40" : ""} ${barTapPickerOpen ? "text-white/70" : isTapActive || barTapHoverId !== null ? "text-white" : "text-white/70"}`}
 							style={isTapBlocked ? { filter: barTapGlow(tapVisualState.tapId) } : !barTapPickerOpen && barTapHoverId !== null ? { filter: barTapGlow(barTapHoverId) } : undefined}
 						>
@@ -2254,9 +2258,17 @@ export function ProfileDetailsModal({
 								? <X className="h-5 w-5" strokeWidth={2} />
 								: barTapHoverId !== null
 									? barTapEmoji(barTapHoverId)
-									: isTapActive
-										? barTapEmoji(tapVisualState.tapId)
-										: <Flame className="h-5 w-5" strokeWidth={1.8} />
+									: isBarTapMutual
+										? (
+											// Mutual: ours in front, theirs tucked behind it, as a pair.
+											<span className="inline-flex items-center text-[19px] leading-none">
+												<span className="relative z-10 translate-y-1 drop-shadow-[2px_0_2px_rgba(0,0,0,0.65)]">{barTapEmoji(tapVisualState.tapId)}</span>
+												<span className="-ml-2 -translate-y-1">{barTapEmoji(receivedTapType ?? 1)}</span>
+											</span>
+										)
+										: isTapActive
+											? barTapEmoji(tapVisualState.tapId)
+											: <Flame className="h-5 w-5" strokeWidth={1.8} />
 							}
 						</button>
 						{(onMessageProfile || onSendQuickMessage) && (

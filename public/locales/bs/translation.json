@@ -586,8 +586,6 @@
             "distance_info": "Lokacija pregledanja {{lat}}, {{lon}}. {{id}} je udaljen oko {{distance}} m.",
             "distance_unavailable": "Lokacija pregledanja {{lat}}, {{lon}}. Udaljenost nije dostupna za {{id}}.",
             "tap_limit": "Već si tapnuo ovaj profil u posljednjih 24 sata",
-            "tap_mutual": "Tap poslan. Uzajamno je.",
-            "tap_sent": "Tap poslan",
             "tap_failed": "Slanje tapa nije uspjelo",
             "tag_filter_applied": "Filtrirano po oznaci \"{{tag}}\""
         },

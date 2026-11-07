@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { HomeFilled, MapPinFilled } from "../../../../components/icons/FilledIcons";
 import { FacebookIcon, InstagramIcon, XIcon } from "../../../../components/icons/BrandIcons";
-import { type ReactNode, type RefObject, useEffect, useMemo, useState } from "react";
+import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-hot-toast";
 import type { ProfileDetail } from "../../GridPage.types";
@@ -44,6 +44,8 @@ import { ProfileImage } from "../../../../components/ui/profile-image";
 import { Chip } from "../../../../components/ui/chip";
 import { RightNowIcon } from "../../../../components/icons/RightNowIcon";
 import { TapSelector } from "./TapSelector";
+import { TapFlyBurst, createTapFlyBurst, mutualTapIdFor, tapFlyBurstDuration, type TapFlyBurstState } from "../../../../components/TapFlyBurst";
+import { useInterestData } from "../../../../hooks/queries/useInterestQueries";
 import { setCarouselDrag, useCarouselSwipe } from "./useCarouselSwipe";
 import type { ChatContactIndexRecord } from "../../../../types/chat-contact-index";
 import { formatRelativeTime } from "../../../../utils/relativeTime";
@@ -288,14 +290,27 @@ export function ProfileDetailsContent({
 
 	const renderPhotoCreatedBadge = (_hash: string) => null;
 
-	const [tapBurst, setTapBurst] = useState<{ key: number; emoji: string } | null>(null);
+	// Same fly-to-center burst as the profile's bottom bar tap button,
+	// including its mutual variant when they already tapped us.
+	const [tapBurst, setTapBurst] = useState<TapFlyBurstState | null>(null);
+	const tapSelectorWrapRef = useRef<HTMLDivElement | null>(null);
+	const { data: interestData } = useInterestData();
 
 	const handleTapWithBurst = (profileId: string, tapIdArg?: number) => {
 		const id = tapIdArg ?? 1;
-		const emojis: Record<number, string> = { 0: "👋", 1: "🔥", 2: "😈" };
-		setTapBurst({ key: Date.now(), emoji: emojis[id] ?? "🔥" });
+		const receivedTapType =
+			interestData?.taps?.find((item) => item.profileId === String(profileId))?.tapType ?? null;
+		setTapBurst(
+			createTapFlyBurst(id, tapSelectorWrapRef.current, mutualTapIdFor(activeProfile?.lastReceivedTapTimestamp, receivedTapType)),
+		);
 		onTapProfile?.(profileId, id);
 	};
+
+	useEffect(() => {
+		if (!tapBurst) return;
+		const timer = setTimeout(() => setTapBurst(null), tapFlyBurstDuration(tapBurst));
+		return () => clearTimeout(timer);
+	}, [tapBurst]);
 	useEffect(() => {
 		const el = mobileCarouselRef.current;
 		if (el) setCarouselDrag(el, null);
@@ -315,13 +330,7 @@ export function ProfileDetailsContent({
 
 	return (
 		<div className="grid gap-8 @container">
-			{tapBurst && (
-				<div key={tapBurst.key} className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden>
-					<span className="absolute left-1/2 top-1/2 text-7xl animate-tap-burst">
-						{tapBurst.emoji}
-					</span>
-				</div>
-			)}
+			{tapBurst && <TapFlyBurst burst={tapBurst} />}
 			{!hidePicturesSection && (visiblePhotoHashes.length > 0 || !isDesktopLike) && (
 			<div>
 				{visiblePhotoHashes.length > 0 ? (
@@ -554,15 +563,17 @@ export function ProfileDetailsContent({
 						>
 							<MessageCircle className="h-5 w-5" />
 						</button>
-						<TapSelector
-							profileId={messageProfileId}
-							onTapProfile={handleTapWithBurst}
-							isTapDisabled={isTapDisabled}
-							isTapBlocked={isTapBlocked}
-							isTapActive={isTapActive}
-							tapId={tapId}
-							tapButtonClassName={tapButtonClassName}
-						/>
+						<div ref={tapSelectorWrapRef}>
+							<TapSelector
+								profileId={messageProfileId}
+								onTapProfile={handleTapWithBurst}
+								isTapDisabled={isTapDisabled}
+								isTapBlocked={isTapBlocked}
+								isTapActive={isTapActive}
+								tapId={tapId}
+								tapButtonClassName={tapButtonClassName}
+							/>
+						</div>
 					</div>
 				) : null}
 			</div>

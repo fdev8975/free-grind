@@ -586,8 +586,6 @@
             "distance_info": "Navegue pela localização {{lat}}, {{lon}}. {{id}} está a cerca de {{distance}}m de distância.",
             "distance_unavailable": "Navegue até a localização {{lat}}, {{lon}}. A distância não está disponível para {{id}}.",
             "tap_limit": "Você já interagiu com este perfil nas últimas 24 horas",
-            "tap_mutual": "Toque enviado. É recíproco.",
-            "tap_sent": "Toque enviado",
             "tap_failed": "Falha ao enviar toque",
             "tag_filter_applied": "Filtrado pela tag \"{{tag}}\""
         },

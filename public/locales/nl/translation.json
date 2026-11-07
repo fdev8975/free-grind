@@ -580,8 +580,6 @@
             "distance_info": "Bladerlocatie {{lat}}, {{lon}}. {{id}} is ongeveer {{distance}} m verwijderd.",
             "distance_unavailable": "Bladerlocatie {{lat}}, {{lon}}. Afstand is niet beschikbaar voor {{id}}.",
             "tap_limit": "Je hebt dit profiel in de afgelopen 24 uur al getapt",
-            "tap_mutual": "Tap verstuurd. Het is wederzijds.",
-            "tap_sent": "Tap verstuurd",
             "tap_failed": "Tap versturen mislukt",
             "tag_filter_applied": "Gefilterd op tag \"{{tag}}\""
         },

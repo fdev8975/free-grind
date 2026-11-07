@@ -586,8 +586,6 @@
             "distance_info": "Lieu de recherche {{lat}}, {{lon}}. {{id}} est à {{distance}}m.",
             "distance_unavailable": "Lieu de recherche {{lat}}, {{lon}}. Distance indisponible pour {{id}}.",
             "tap_limit": "Vous avez déjà envoyé un Tap à ce profil au cours des dernières 24h",
-            "tap_mutual": "Tap envoyé. C'est mutuel.",
-            "tap_sent": "Tap envoyé",
             "tap_failed": "Erreur lors de l'envoi du Tap",
             "tag_filter_applied": "Filtré par tag « {{tag}} »"
         },

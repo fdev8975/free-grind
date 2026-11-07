@@ -705,8 +705,6 @@
             "distance_info": "Suchstandort {{lat}}, {{lon}}. {{id}} ist etwa {{distance}}m entfernt.",
             "distance_unavailable": "Suchstandort {{lat}}, {{lon}}. Entfernung für {{id}} ist nicht verfügbar.",
             "tap_limit": "Du hast dieses Profil in den letzten 24 Stunden bereits angetippt",
-            "tap_mutual": "Tap gesendet. Es beruht auf Gegenseitigkeit.",
-            "tap_sent": "Tap gesendet",
             "tap_failed": "Fehler beim Senden des Taps",
             "tag_filter_applied": "Nach Tag „{{tag}}“ gefiltert"
         },

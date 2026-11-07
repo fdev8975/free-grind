@@ -586,8 +586,6 @@
             "distance_info": "Ubicación de navegar {{lat}}, {{lon}}. {{id}} está a {{distance}}m.",
             "distance_unavailable": "Ubicación de navegar {{lat}},{{lon}}. La distancia no está disponible para {{id}}.",
             "tap_limit": "Ya has enviado un tap a este perfil en las últimas 24 horas",
-            "tap_mutual": "Tap enviado. Es mutuo.",
-            "tap_sent": "Tap enviado",
             "tap_failed": "Error al enviar tap",
             "tag_filter_applied": "Filtrado por etiqueta \"{{tag}}\""
         },

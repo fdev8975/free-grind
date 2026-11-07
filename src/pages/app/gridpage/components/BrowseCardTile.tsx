@@ -136,7 +136,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 	};
 
 	const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const [flameBurst, setFlameBurst] = useState<{ key: number; tapId: number } | null>(null);
+	const [flameBurst, setFlameBurst] = useState<{ key: number; tapId: number; theirTapId: number | null } | null>(null);
 
 	useEffect(() => {
 		if (flameBurst === null) return;
@@ -170,7 +170,8 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 			}
 			if (onDoubleTapProfile(card.profileId, doubleTapTapType)) {
 				haptic(30, [15, 10, 25]);
-				setFlameBurst({ key: Date.now(), tapId: doubleTapTapType });
+				// They already tapped us: this tap makes it mutual.
+				setFlameBurst({ key: Date.now(), tapId: doubleTapTapType, theirTapId: tapStatus?.received ?? null });
 			}
 			return;
 		}
@@ -388,7 +389,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 						)}
 					</div>
 
-					{flameBurst !== null && <TileFlameBurst key={flameBurst.key} tapId={flameBurst.tapId} />}
+					{flameBurst !== null && <TileFlameBurst key={flameBurst.key} tapId={flameBurst.tapId} theirTapId={flameBurst.theirTapId} />}
 					</div>
 				</div>
 			</button>

@@ -10,8 +10,8 @@ const BURST_THEMES: Record<number, { embers: string[]; glow: string }> = {
 	2: { embers: ["#f5e1ff", "#e0a8ff", "#c06bff", "#a855f7", "#7c3aed"], glow: "168, 85, 247" }, // 😈
 };
 
-function createEmbers(colors: string[]): CSSProperties[] {
-	return Array.from({ length: EMBER_COUNT }, () => {
+function createEmbers(colors: string[], count = EMBER_COUNT): CSSProperties[] {
+	return Array.from({ length: count }, () => {
 		// Fan out mostly upwards (-170°..-10°) with an extra upward drift, so
 		// the sparks read as rising from the flame rather than exploding.
 		const angle = (-170 + Math.random() * 160) * (Math.PI / 180);
@@ -33,10 +33,17 @@ function createEmbers(colors: string[]): CSSProperties[] {
 	});
 }
 
-// Short-lived tap burst overlay for a grid tile. Remount it (via `key`) to replay.
-export function TileFlameBurst({ tapId }: { tapId: number }) {
+// Short-lived tap burst overlay for a grid tile. Remount it (via `key`) to
+// replay. With `theirTapId` (they already tapped us, so this tap is mutual)
+// both emojis slide in from the sides and bump together, and the sparks mix
+// both tap types' colors.
+export function TileFlameBurst({ tapId, theirTapId = null }: { tapId: number; theirTapId?: number | null }) {
 	const theme = BURST_THEMES[tapId] ?? BURST_THEMES[1];
-	const embers = useMemo(() => createEmbers(theme.embers), [theme]);
+	const theirTheme = theirTapId == null ? null : (BURST_THEMES[theirTapId] ?? BURST_THEMES[1]);
+	const embers = useMemo(
+		() => (theirTheme ? createEmbers([...theme.embers, ...theirTheme.embers], EMBER_COUNT * 2) : createEmbers(theme.embers)),
+		[theme, theirTheme],
+	);
 
 	return (
 		<div
@@ -50,7 +57,24 @@ export function TileFlameBurst({ tapId }: { tapId: number }) {
 					<span key={i} className="tile-flame-ember absolute rounded-full" style={style} />
 				))}
 			</div>
-			<span className="tile-flame-emoji absolute left-1/2 top-1/2 text-5xl leading-none">{getTapEmoji(tapId)}</span>
+			{theirTapId == null ? (
+				<span className="tile-flame-emoji absolute left-1/2 top-1/2 text-5xl leading-none">{getTapEmoji(tapId)}</span>
+			) : (
+				<>
+					<span
+						className="tile-flame-meet absolute left-1/2 top-1/2 text-4xl leading-none"
+						style={{ "--meet-side": "-1" } as CSSProperties}
+					>
+						{getTapEmoji(theirTapId)}
+					</span>
+					<span
+						className="tile-flame-meet absolute left-1/2 top-1/2 text-4xl leading-none"
+						style={{ "--meet-side": "1" } as CSSProperties}
+					>
+						{getTapEmoji(tapId)}
+					</span>
+				</>
+			)}
 		</div>
 	);
 }

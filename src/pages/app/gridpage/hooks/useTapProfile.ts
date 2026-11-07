@@ -137,11 +137,8 @@ export function useTapProfile({
 				}));
 				// Sent-taps list backs the Interest "sent" tab and the grid tile badges.
 				void queryClient.invalidateQueries({ queryKey: ["interest", "list"] });
-				toast.success(
-					result.isMutual
-						? t("browse_page.toasts.tap_mutual")
-						: t("browse_page.toasts.tap_sent"),
-				);
+				// No success toast: the tap animation (fly burst / tile burst,
+				// with its mutual variant) is the confirmation.
 
 				if (await registerTapForSinMode(tapId, profileId)) {
 					void setPreferences({ developerMode: true });
