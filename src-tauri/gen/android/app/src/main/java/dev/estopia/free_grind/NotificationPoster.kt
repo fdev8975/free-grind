@@ -297,6 +297,7 @@ object NotificationPoster {
 
         val builder = NotificationCompat.Builder(context, AppDisguise.ACTIVITY_CHANNEL_ID)
             .setSmallIcon(AppDisguise.currentDisguise(context).notificationIconRes)
+            .addExtras(AppDisguise.notificationExtras(context))
             .setColor(Color.TRANSPARENT)
             .setColorized(false)
             .setContentTitle(title)
@@ -312,7 +313,7 @@ object NotificationPoster {
             })
         // Profile-targeted types (favorite/tap/pic recipient online) get the
         // profile's picture; the rest stay icon-only.
-        loadSenderAvatarBitmap(rawData)?.let { builder.setLargeIcon(scaleBitmapIfNeeded(it, 128)) }
+        loadSenderAvatarBitmap(rawData)?.let { builder.setLargeIcon(circleCrop(scaleBitmapIfNeeded(it, 128))) }
 
         notificationManager.notify(key, NOTIFICATION_INSTANCE_ID, builder.build())
         Log.d("FCM", "System notification posted key=$key type=${payload.optString("growthType")}")
@@ -446,6 +447,7 @@ object NotificationPoster {
         val builder = NotificationCompat.Builder(context, channelId)
             // Status-bar icon: monochrome stencil with transparent background only.
             .setSmallIcon(AppDisguise.currentDisguise(context).notificationIconRes)
+            .addExtras(AppDisguise.notificationExtras(context))
             .addPerson(sender)
             // Keep the badge overlay neutral and avoid OEM color plates.
             .setColor(Color.TRANSPARENT)
@@ -547,12 +549,31 @@ object NotificationPoster {
     private fun getNotificationAvatarBitmap(context: Context, rawData: JSONObject?): Bitmap {
         val senderBitmap = loadSenderAvatarBitmap(rawData)
         if (senderBitmap != null) {
-            return scaleBitmapIfNeeded(senderBitmap, 128)
+            return circleCrop(scaleBitmapIfNeeded(senderBitmap, 128))
         }
 
         val fallback = BitmapFactory.decodeResource(context.resources, R.drawable.blank_profile)
             ?: Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888)
-        return scaleBitmapIfNeeded(makeBlackPixelsTransparent(fallback), 128)
+        return circleCrop(scaleBitmapIfNeeded(makeBlackPixelsTransparent(fallback), 128))
+    }
+
+    /**
+     * Center-crops [source] to a square and masks it to a circle. Profile
+     * pictures are round everywhere in the app; System UI only rounds them
+     * itself on some surfaces (conversation icons on stock Android), so the
+     * large icon and OEM skins would otherwise show a square.
+     */
+    private fun circleCrop(source: Bitmap): Bitmap {
+        val size = minOf(source.width, source.height)
+        val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(output)
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG or android.graphics.Paint.FILTER_BITMAP_FLAG)
+        canvas.drawCircle(size / 2f, size / 2f, size / 2f, paint)
+        paint.xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.SRC_IN)
+        val left = (source.width - size) / 2f
+        val top = (source.height - size) / 2f
+        canvas.drawBitmap(source, -left, -top, paint)
+        return output
     }
 
     private fun scaleBitmapIfNeeded(source: Bitmap, maxPx: Int): Bitmap {

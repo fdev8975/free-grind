@@ -18,6 +18,12 @@ import { platform } from "@tauri-apps/plugin-os";
 // so — unlike Android — the choice is mirrored into localStorage as the
 // source of truth for the synchronous initial-state read the settings UI
 // needs; the native call is fired (not awaited) to apply it.
+//
+// Windows: window title/icon, Start menu/desktop shortcuts, taskbar pins,
+// the toast header and the "Installed apps" entry (src-tauri/src/app_disguise.rs).
+// The native state file is the source of truth; it's mirrored into the same
+// localStorage key for the synchronous read, and syncAppDisguiseFromNative
+// corrects the mirror (e.g. after another instance switched it).
 
 export type AppDisguiseId = "default" | "calculator" | "notes" | "weather";
 
@@ -30,7 +36,7 @@ const IOS_ALTERNATE_ICON_NAME: Record<AppDisguiseId, string | null> = {
 	weather: "Weather",
 };
 
-const IOS_DISGUISE_STORAGE_KEY = "fg-app-disguise";
+const DISGUISE_STORAGE_KEY = "fg-app-disguise";
 
 type DisguiseBridge = {
 	setAppDisguise?: (id: string) => boolean;
@@ -49,8 +55,43 @@ function isIosSupported(): boolean {
 	return platform() === "ios";
 }
 
+function isWindowsSupported(): boolean {
+	return platform() === "windows";
+}
+
 export function isAppDisguiseSupported(): boolean {
-	return isAndroidSupported() || isIosSupported();
+	return isAndroidSupported() || isIosSupported() || isWindowsSupported();
+}
+
+function readMirroredDisguise(): AppDisguiseId {
+	try {
+		const raw = window.localStorage.getItem(DISGUISE_STORAGE_KEY);
+		return APP_DISGUISE_IDS.includes(raw as AppDisguiseId) ? (raw as AppDisguiseId) : "default";
+	} catch {
+		return "default";
+	}
+}
+
+function writeMirroredDisguise(id: AppDisguiseId) {
+	try {
+		window.localStorage.setItem(DISGUISE_STORAGE_KEY, id);
+	} catch {
+		// Ignore storage write failures — the native call still applies it.
+	}
+}
+
+/** Windows only: reads the native state and refreshes the localStorage mirror. */
+export async function syncAppDisguiseFromNative(): Promise<AppDisguiseId | null> {
+	if (!isWindowsSupported()) return null;
+	try {
+		const raw = await invoke<string>("app_disguise_get");
+		const id = APP_DISGUISE_IDS.includes(raw as AppDisguiseId) ? (raw as AppDisguiseId) : "default";
+		writeMirroredDisguise(id);
+		return id;
+	} catch (error) {
+		console.error("[appDisguise] failed to read the Windows disguise", error);
+		return null;
+	}
 }
 
 export function getCurrentAppDisguise(): AppDisguiseId {
@@ -59,13 +100,8 @@ export function getCurrentAppDisguise(): AppDisguiseId {
 		return APP_DISGUISE_IDS.includes(raw as AppDisguiseId) ? (raw as AppDisguiseId) : "default";
 	}
 
-	if (isIosSupported()) {
-		try {
-			const raw = window.localStorage.getItem(IOS_DISGUISE_STORAGE_KEY);
-			return APP_DISGUISE_IDS.includes(raw as AppDisguiseId) ? (raw as AppDisguiseId) : "default";
-		} catch {
-			return "default";
-		}
+	if (isIosSupported() || isWindowsSupported()) {
+		return readMirroredDisguise();
 	}
 
 	return "default";
@@ -87,12 +123,16 @@ export function setAppDisguise(id: AppDisguiseId): boolean {
 		return getBridge()?.setAppDisguise?.(id) ?? false;
 	}
 
+	if (isWindowsSupported()) {
+		writeMirroredDisguise(id);
+		void invoke("app_disguise_set", { id }).catch((error) => {
+			console.error("[appDisguise] failed to apply the Windows disguise", error);
+		});
+		return true;
+	}
+
 	if (isIosSupported()) {
-		try {
-			window.localStorage.setItem(IOS_DISGUISE_STORAGE_KEY, id);
-		} catch {
-			// Ignore storage write failures — the invoke call below still fires.
-		}
+		writeMirroredDisguise(id);
 		void invoke("plugin:ios-app-disguise|set_alternate_icon", { name: IOS_ALTERNATE_ICON_NAME[id] }).catch(
 			(error) => {
 				console.error("[appDisguise] failed to set iOS alternate icon", error);

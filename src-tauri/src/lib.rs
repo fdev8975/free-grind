@@ -1,4 +1,6 @@
 mod api;
+#[cfg(desktop)]
+mod app_disguise;
 mod commands;
 mod error;
 mod instance_lock;
@@ -164,6 +166,8 @@ pub fn run() {
                 #[cfg(target_os = "linux")]
                 create_linux_main_window(app)?;
 
+                app_disguise::restore(&app_handle);
+
                 #[cfg(target_os = "linux")]
                 {
                     use tauri::Manager;
@@ -238,6 +242,8 @@ pub fn run() {
             })
             .invoke_handler(tauri::generate_handler![
                 api::runtime::runtime_context,
+                app_disguise::app_disguise_get,
+                app_disguise::app_disguise_set,
                 api::runtime::webview_version,
                 api::runtime::app_commit_hash,
                 api::runtime::create_child_instance,

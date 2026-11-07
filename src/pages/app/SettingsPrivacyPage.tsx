@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
 	CheckCheck,
@@ -18,6 +18,7 @@ import {
 	getCurrentAppDisguise,
 	isAppDisguiseSupported,
 	setAppDisguise,
+	syncAppDisguiseFromNative,
 } from "../../utils/appDisguise";
 import {
 	getHideReadReceiptsGlobal,
@@ -63,6 +64,16 @@ export function SettingsPrivacyPage() {
 	const [incognitoMode, setIncognitoModeState] = useState(() => getIncognitoMode());
 	const [disguiseSupported] = useState(() => isAppDisguiseSupported());
 	const [disguise, setDisguiseState] = useState<AppDisguiseId>(() => getCurrentAppDisguise());
+
+	useEffect(() => {
+		let cancelled = false;
+		void syncAppDisguiseFromNative().then((id) => {
+			if (!cancelled && id) setDisguiseState(id);
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
 	function handleSelectDisguise(id: AppDisguiseId) {
 		const previous = disguise;
@@ -248,7 +259,7 @@ export function SettingsPrivacyPage() {
 					</div>
 				</div>
 
-				{/* App Disguise (Android only) */}
+				{/* App Disguise (Android, iOS, Windows) */}
 				{disguiseSupported && (
 					<div>
 						<p className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">{t("privacy.app_disguise")}</p>

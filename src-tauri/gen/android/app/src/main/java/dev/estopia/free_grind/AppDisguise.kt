@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.media.AudioAttributes
 import android.net.Uri
+import android.os.Bundle
 import android.util.Log
 
 /**
@@ -105,6 +106,9 @@ object AppDisguise {
         pm.setComponentEnabledSetting(aliasComponent(context, candidate), state, PackageManager.DONT_KILL_APP)
       }
       refreshChannelNames(context, identity)
+      // Posted notifications keep the old identity's small icon (and, on
+      // Android 17+, its launcher icon) until dismissed.
+      (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancelAll()
       Log.d("AppDisguise", "Applied disguise: ${identity.id}")
       true
     } catch (t: Throwable) {
@@ -169,6 +173,18 @@ object AppDisguise {
           .build(),
       )
     }
+
+  // Notification.EXTRA_PREFER_SMALL_ICON. From Android 17 System UI shows the
+  // app's launcher icon on the card instead of the small icon — and that is
+  // the real <application> icon, not the enabled alias's. Asking for the
+  // small icon keeps the decoy stencil there. Hidden before API 37, so the
+  // raw key; older versions and builds that strip it just ignore it.
+  private const val EXTRA_PREFER_SMALL_ICON = "android.app.preferSmallIcon"
+
+  /** Extras every notification we post carries, see [EXTRA_PREFER_SMALL_ICON]. */
+  fun notificationExtras(context: Context): Bundle = Bundle().apply {
+    if (currentDisguise(context) != Identity.DEFAULT) putBoolean(EXTRA_PREFER_SMALL_ICON, true)
+  }
 
   fun messageSoundUri(context: Context): Uri =
     Uri.parse("${ContentResolver.SCHEME_ANDROID_RESOURCE}://${context.packageName}/${R.raw.free_grind_message}")
