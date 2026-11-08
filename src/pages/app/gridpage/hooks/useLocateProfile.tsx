@@ -26,7 +26,56 @@ type LocateState = {
 	isSheetOpen: boolean;
 };
 
-let locateState: LocateState = { runningProfileId: null, pendingProfileId: null, progress: null, isSheetOpen: false };
+// --- Spherical helpers ------------------------------------------------------
+// Probe offsets and trilateration span up to thousands of kilometres for far
+// away profiles, where flat lat/lon maths walks past the poles. Everything
+// below works on a sphere and always returns valid coordinates.
+
+const EARTH_RADIUS_M = 6371008.8;
+const DEG = Math.PI / 180;
+/** Probe offsets beyond this distort the local projection too much. */
+const MAX_PROBE_OFFSET_M = 1_000_000;
+
+const normalizeLon = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180;
+
+/** Point `meters` away from (lat, lon) in direction `bearingRad` (0 = north). */
+function destinationPoint(lat: number, lon: number, meters: number, bearingRad: number) {
+	const angular = meters / EARTH_RADIUS_M;
+	const lat1 = lat * DEG;
+	const lon1 = lon * DEG;
+	const lat2 = Math.asin(
+		Math.sin(lat1) * Math.cos(angular) + Math.cos(lat1) * Math.sin(angular) * Math.cos(bearingRad),
+	);
+	const lon2 =
+		lon1 +
+		Math.atan2(
+			Math.sin(bearingRad) * Math.sin(angular) * Math.cos(lat1),
+			Math.cos(angular) - Math.sin(lat1) * Math.sin(lat2),
+		);
+	return { lat: lat2 / DEG, lon: normalizeLon(lon2 / DEG) };
+}
+
+/** Azimuthal equidistant projection around `center`, in metres (x = east, y = north). */
+function projectFrom(center: { lat: number; lon: number }, p: { lat: number; lon: number }) {
+	const lat1 = center.lat * DEG;
+	const lat2 = p.lat * DEG;
+	const dLon = (p.lon - center.lon) * DEG;
+	const a =
+		Math.sin((lat2 - lat1) / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+	const angular = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+	const bearing = Math.atan2(
+		Math.sin(dLon) * Math.cos(lat2),
+		Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon),
+	);
+	const dist = angular * EARTH_RADIUS_M;
+	return { x: dist * Math.sin(bearing), y: dist * Math.cos(bearing) };
+}
+
+function unprojectFrom(center: { lat: number; lon: number }, x: number, y: number) {
+	return destinationPoint(center.lat, center.lon, Math.hypot(x, y), Math.atan2(x, y));
+}
+
+let locateState: LocateState ={ runningProfileId: null, pendingProfileId: null, progress: null, isSheetOpen: false };
 let locateCancelled = false;
 const listeners = new Set<() => void>();
 
@@ -85,20 +134,14 @@ export function LocateProfileHost() {
 	const { pendingProfileId, progress, isSheetOpen } = useSyncExternalStore(subscribeLocate, getLocateState);
 
     const solveTrilateration = (points: { lat: number, lon: number, dist: number }[]) => {
-        // 1. Convert Lat/Lon to a simple XY grid (meters) relative to the first point
-        // This avoids floating point errors with large coordinate numbers
+        // 1. Project onto a metre grid centred on the first point (azimuthal
+        // equidistant, so distances from p1 stay exact even over long ranges)
         const p1 = points[0];
         const p2 = points[1];
         const p3 = points[2];
 
-        // Rough conversion: 1 degree lat = 111320m
-        const latToM = 111320;
-        const lonToM = 111320 * Math.cos(p1.lat * (Math.PI / 180));
-
-        const x2 = (p2.lon - p1.lon) * lonToM;
-        const y2 = (p2.lat - p1.lat) * latToM;
-        const x3 = (p3.lon - p1.lon) * lonToM;
-        const y3 = (p3.lat - p1.lat) * latToM;
+        const { x: x2, y: y2 } = projectFrom(p1, p2);
+        const { x: x3, y: y3 } = projectFrom(p1, p3);
 
         const r1 = p1.dist;
         const r2 = p2.dist;
@@ -120,11 +163,12 @@ export function LocateProfileHost() {
         const x = (C * E - F * B) / denom;
         const y = (A * F - D * C) / denom;
 
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            throw new Error("Trilateration failed: measurements are inconsistent.");
+        }
+
         // 3. Convert XY back to Lat/Lon
-        return {
-            lat: p1.lat + (y / latToM),
-            lon: p1.lon + (x / lonToM)
-        };
+        return unprojectFrom(p1, x, y);
     };
 
     const runLocate = async (targetProfileId: string) => {
@@ -233,13 +277,8 @@ export function LocateProfileHost() {
         };
 
         // Point `meters` away from (lat, lon) in direction `bearingDeg` (0 = north)
-        const offsetPoint = (lat: number, lon: number, meters: number, bearingDeg: number) => {
-            const rad = bearingDeg * (Math.PI / 180);
-            return {
-                lat: lat + (meters * Math.cos(rad)) / 111320,
-                lon: lon + (meters * Math.sin(rad)) / (111320 * Math.cos(lat * (Math.PI / 180))),
-            };
-        };
+        const offsetPoint = (lat: number, lon: number, meters: number, bearingDeg: number) =>
+            destinationPoint(lat, lon, meters, bearingDeg * DEG);
 
         try {
             const initialDist = await getDistanceFromProfile();
@@ -291,7 +330,10 @@ export function LocateProfileHost() {
                     updateProgress({ step: 1 });
                 }
 
-                const offsetMeters = Math.max(anchor.dist * 1.5, targetPrecision * 2);
+                const offsetMeters = Math.min(
+                    Math.max(anchor.dist * 1.5, targetPrecision * 2),
+                    MAX_PROBE_OFFSET_M,
+                );
                 const points = [
                     offsetPoint(anchor.lat, anchor.lon, offsetMeters, 0),
                     offsetPoint(anchor.lat, anchor.lon, offsetMeters, 120),

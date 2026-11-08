@@ -114,14 +114,18 @@ function focusPosition(map: any, lat: number, lon: number, radiusMeters: number 
 }
 
 export function MapLocationPreview({
-	lat,
-	lon,
+	lat: rawLat,
+	lon: rawLon,
 	className = "h-32 w-full",
 	interactive = false,
 	zoom = 15,
 	radiusMeters,
 	marker = true,
 }: Props) {
+	// MapLibre throws on out-of-range coordinates, which would take down the
+	// whole React tree — clamp/wrap anything a caller gets wrong.
+	const lat = Number.isFinite(rawLat) ? Math.max(-90, Math.min(90, rawLat)) : 0;
+	const lon = Number.isFinite(rawLon) ? ((((rawLon + 180) % 360) + 360) % 360) - 180 : 0;
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const mapRef = useRef<any>(null);
 	const markerRef = useRef<any>(null);
