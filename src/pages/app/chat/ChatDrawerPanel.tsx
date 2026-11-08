@@ -809,7 +809,7 @@ export function ChatDrawerPanel({
 						{/* The slide-in gate is only for rendering many tiles: an empty
 						    drawer goes straight to its (cheap) empty state, without a
 						    tall skeleton shrinking down to it. */}
-						<DrawerBody isLoading={(isLoading && !upload.isUploading) || (!hasSlidIn && media.length > 0)} isDesktop={isDesktop} error={error} onRetry={onLoadMedia} gestureProps={tabSwipe}>
+						<DrawerBody skeletonKey={`chat-drawer:${combined ? "combined" : activeTab}`} isLoading={(isLoading && !upload.isUploading) || (!hasSlidIn && media.length > 0)} isDesktop={isDesktop} error={error} onRetry={onLoadMedia} gestureProps={tabSwipe}>
 								{/* sheet-fill: a tab's loading skeleton fills the expanded sheet,
 								    without a short tab scrolling by the sheet's bottom spacer. */}
 								<div className="sheet-fill flex flex-1 flex-col gap-3">
@@ -842,7 +842,7 @@ export function ChatDrawerPanel({
 									)
 								)}
 								{!combined && ((activeTab === "albums" && albums.length > 0) || (activeTab === "collections" && collections.length > 0)) && (
-									<div className={drawerGridClass(isDesktop)}>
+									<div data-drawer-grid className={drawerGridClass(isDesktop)}>
 										{/* Like the media tab's add tile: a create tile first among the albums. */}
 										{activeTab === "albums" ? (
 											<DrawerAddTile

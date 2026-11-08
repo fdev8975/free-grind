@@ -16,6 +16,7 @@ import {
 	Hand,
 	Hash,
 	Heart,
+	Images,
 	MapPin,
 	MessageSquare,
 	Move,
@@ -341,18 +342,19 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 		monthsSinceLastTested != null && monthsSinceLastTested >= TEST_REMINDER_THRESHOLD_MONTHS;
 
 	const openPhotoDrawer = () => photos.setIsDrawerOpen(true);
-	const isPhotoAddDisabled = photos.isUploading || photos.isSaving || photos.hashes.length >= MAX_PROFILE_PHOTOS;
 	const PositionIcon = (draft.sexualPosition ? SEXUAL_POSITION_ICONS[Number(draft.sexualPosition)] : undefined) ?? Compass;
 
 	const picturesSection = (
 		<FieldSection
 			title={t("profile_editor.sections.pictures.title")}
 			action={
-				<FieldSectionAction onClick={openPhotoDrawer} disabled={isPhotoAddDisabled}>
-					<Plus className="h-3.5 w-3.5" />
+				// Always open: the drawer manages the whole pool (upload, delete,
+				// pick), and it limits picking to the free slots itself.
+				<FieldSectionAction onClick={openPhotoDrawer}>
+					<Images className="h-3.5 w-3.5" />
 					{photos.isUploading
 						? t("profile_editor.sections.pictures.uploading")
-						: t("profile_editor.sections.pictures.add")}
+						: t("profile_editor.sections.pictures.manage", { defaultValue: "Manage" })}
 					<span className="tabular-nums text-[var(--text-muted)]">
 						{photos.hashes.length}/{MAX_PROFILE_PHOTOS}
 					</span>

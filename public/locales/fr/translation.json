@@ -792,6 +792,7 @@
                 "description": "Importez et arrangez vos photos",
                 "usage": "{{count}}/{{total}} photos ajoutées",
                 "add": "Ajouter",
+                "manage": "Gérer",
                 "uploading": "Importation en cours…",
                 "saving": "Enregistrement des modifications…",
                 "primary": "Principale",

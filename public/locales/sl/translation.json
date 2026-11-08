@@ -800,6 +800,7 @@
                 "description": "Naloži in uredi svoje fotografije",
                 "usage": "Uporabljenih {{count}}/{{total}} fotografij",
                 "add": "Dodaj",
+                "manage": "Upravljaj",
                 "uploading": "Nalaganje…",
                 "saving": "Shranjevanje sprememb fotografij…",
                 "primary": "Glavna",

@@ -2168,6 +2168,7 @@ export function ProfileDetailsModal({
 	// Floating bar to message or tap the profile: one frosted pill hovering
 	// over the content, like the location sheet's search (MapSheetSearch).
 	// Message turns into a filled send button once there's text.
+	const hasQuickMessageBar = Boolean(messageProfileId) && !isOwnProfile;
 	const renderQuickMessageBar = (paddingBottom: string) => {
 		const sendDraft = () => {
 			// Without a handler there's nowhere to send it, so keep the draft.
@@ -2179,7 +2180,7 @@ export function ProfileDetailsModal({
 		return (
 			// The dark fade stays from before; only the pill takes touches.
 			<div
-				className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-3"
+				className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-4"
 				style={{
 					paddingTop: "5rem",
 					paddingBottom,
@@ -2592,7 +2593,7 @@ export function ProfileDetailsModal({
 						)}
 					</div>
 				)}
-				<div className={`p-4 sm:p-5 ${isEditingOwnProfile ? "pb-0 sm:pb-0" : variant === "page" ? "pb-[calc(var(--safe-area-bottom)+6rem)] sm:pb-[calc(var(--safe-area-bottom)+6rem)]" : "pb-28"}`}>
+				<div className={`p-4 sm:p-5 ${isEditingOwnProfile ? "pb-0 sm:pb-0" : !hasQuickMessageBar ? (variant === "page" ? "pb-[calc(var(--safe-area-bottom)+1rem)] sm:pb-[calc(var(--safe-area-bottom)+1.25rem)]" : "") : variant === "page" ? "pb-[calc(var(--safe-area-bottom)+6rem)] sm:pb-[calc(var(--safe-area-bottom)+6rem)]" : "pb-28"}`}>
 					{isLoadingActiveProfile ? (
 						<ProfileDetailsSkeleton />
 					) : activeProfileError ? (
@@ -2656,8 +2657,8 @@ export function ProfileDetailsModal({
 			</div>
 
 			{/* Floating message bar, like the chat's composer */}
-			{messageProfileId && !isOwnProfile &&
-				renderQuickMessageBar(variant === "page" ? "calc(var(--safe-area-bottom) + 0.75rem)" : "0.75rem")}
+			{hasQuickMessageBar &&
+				renderQuickMessageBar(variant === "page" ? "max(1rem, var(--safe-area-bottom))" : "1rem")}
 		</>
 	);
 
@@ -2964,7 +2965,7 @@ export function ProfileDetailsModal({
 							</div>
 							{/* Split-mode content */}
 							<div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-lenis-prevent>
-								<div className={`p-4 sm:p-5 ${isEditingOwnProfile ? "pb-0 sm:pb-0" : "pb-28 sm:pb-28"}`}>
+								<div className={`p-4 sm:p-5 ${isEditingOwnProfile ? "pb-0 sm:pb-0" : hasQuickMessageBar ? "pb-28 sm:pb-28" : ""}`}>
 									{isLoadingActiveProfile ? (
 										<ProfileDetailsSkeleton />
 									) : activeProfileError ? (
@@ -3026,7 +3027,7 @@ export function ProfileDetailsModal({
 								</div>
 							</div>
 							{/* Split-mode footer */}
-							{messageProfileId && !isOwnProfile && renderQuickMessageBar("0.75rem")}
+							{hasQuickMessageBar && renderQuickMessageBar("1rem")}
 						</Fragment>
 					)}
 				</div>

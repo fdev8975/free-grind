@@ -792,6 +792,7 @@
                 "description": "Sube y organiza tus fotos",
                 "usage": "{{count}}/{{total}} fotos puestas",
                 "add": "Añadir",
+                "manage": "Administrar",
                 "uploading": "Subiendo…",
                 "saving": "Guardando cambios de foto…",
                 "primary": "Principal",

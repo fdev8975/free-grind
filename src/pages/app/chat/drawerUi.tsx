@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type CSSProperties, type HTMLAttributes, type MouseEvent, type PointerEvent, type ReactElement, type ReactNode } from "react";
+import { createContext, Fragment, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type CSSProperties, type HTMLAttributes, type MouseEvent, type PointerEvent, type ReactElement, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Check, ChevronDown, Eye, Film, Folder, Hourglass, Image as ImageIcon, Images, Infinity as InfinityIcon, Loader2, Play, Plus, RefreshCw, Repeat, Video, X } from "lucide-react";
@@ -452,14 +452,68 @@ export function DrawerHeader({
 	);
 }
 
+// How many tiles a drawer showed the last time it finished loading, per
+// `skeletonKey` — kept in memory and, as a per-device convenience, in
+// localStorage, so the next loading skeleton matches it.
+const TILE_COUNT_STORAGE_KEY = "drawer-skeleton-tile-counts";
+const MAX_REMEMBERED_TILE_COUNTS = 100;
+const tileCounts = new Map<string, number>();
+let tileCountsLoaded = false;
+
+function loadTileCounts() {
+	if (tileCountsLoaded) return;
+	tileCountsLoaded = true;
+	try {
+		const raw = localStorage.getItem(TILE_COUNT_STORAGE_KEY);
+		const parsed: unknown = raw ? JSON.parse(raw) : null;
+		if (parsed && typeof parsed === "object") {
+			for (const [key, value] of Object.entries(parsed)) {
+				if (typeof value === "number" && Number.isFinite(value) && value >= 0) tileCounts.set(key, value);
+			}
+		}
+	} catch {
+		// Storage unavailable: memory only.
+	}
+}
+
+function rememberTileCount(key: string, count: number) {
+	loadTileCounts();
+	if (tileCounts.get(key) === count) return;
+	// Re-inserted, so the oldest keys (e.g. per-conversation ones) drop first.
+	tileCounts.delete(key);
+	tileCounts.set(key, count);
+	while (tileCounts.size > MAX_REMEMBERED_TILE_COUNTS) {
+		tileCounts.delete(tileCounts.keys().next().value as string);
+	}
+	try {
+		localStorage.setItem(TILE_COUNT_STORAGE_KEY, JSON.stringify(Object.fromEntries(tileCounts)));
+	} catch {
+		// Storage unavailable: memory only.
+	}
+}
+
+function useRememberedTileCount(key: string | null): number | null {
+	if (!key) return null;
+	loadTileCounts();
+	return tileCounts.get(key) ?? null;
+}
+
+const DrawerSkeletonKeyContext = createContext<string | null>(null);
+
 /** Placeholder tiles in the drawer grid's layout, shown while it loads.
  * In an expanded sheet (or with `fill`) it fills the height it's given —
  * enough tiles, clipped — instead of a few rows over empty space. Placed
  * absolutely, so the tiles never make the scroll area scrollable. */
 export function DrawerGridSkeleton({ isDesktop = false, count, fill }: { isDesktop?: boolean; count?: number; fill?: boolean }) {
 	const isDetented = useIsBottomSheetDetented();
-	const fills = fill ?? isDetented;
-	const tiles = count ?? (fills ? 60 : isDesktop ? 12 : 9);
+	// The enclosing DrawerBody's tile count from the last load, so the
+	// skeleton is as big as what's about to show instead of shrinking to it.
+	const rememberedCount = useRememberedTileCount(useContext(DrawerSkeletonKeyContext));
+	const fills = count == null && rememberedCount == null ? (fill ?? isDetented) : false;
+	const columns = isDesktop ? 4 : 3;
+	const tiles = count ?? (rememberedCount != null
+		? Math.min(Math.max(rememberedCount, 1), 60)
+		: fills ? 60 : columns * 3);
 	const grid = (
 		<div
 			className={`${drawerGridClass(isDesktop)} ${fills ? "absolute inset-0 content-start overflow-hidden" : ""}`}
@@ -485,8 +539,13 @@ export function DrawerBody({
 	empty,
 	className = "max-h-[60vh]",
 	gestureProps,
+	skeletonKey,
 	children,
 }: {
+	/** Names this drawer's content (e.g. per tab): its tile count is
+	 * remembered once loaded, and the next loading skeleton — this body's or
+	 * a DrawerGridSkeleton inside it — shows that many tiles. */
+	skeletonKey?: string;
 	isLoading?: boolean;
 	/** Column count of the loading skeleton, matching the DrawerGrid. */
 	isDesktop?: boolean;
@@ -527,12 +586,28 @@ export function DrawerBody({
 	} else {
 		content = empty ?? children;
 	}
+
+	// Once loaded (no skeleton anywhere inside), count the grid tiles shown.
+	const bodyRef = useRef<HTMLDivElement>(null);
+	useLayoutEffect(() => {
+		const body = bodyRef.current;
+		if (!skeletonKey || !body || isLoading || error) return;
+		if (body.querySelector("[aria-busy='true']")) return;
+		let count = 0;
+		body.querySelectorAll<HTMLElement>("[data-drawer-grid]").forEach((grid) => {
+			count += grid.childElementCount;
+		});
+		rememberTileCount(skeletonKey, count);
+	});
+
 	// min-h-0 + data-lenis-prevent: both are needed for the inner scroll to work in a sheet.
 	// A flex column, so content can fill the body (flex-1) and an empty state centre in it (my-auto).
 	return (
-		<div data-lenis-prevent {...gestureProps} className={`flex min-h-0 flex-1 flex-col overflow-y-auto ${isDetented ? "" : className}`}>
-			{content}
-		</div>
+		<DrawerSkeletonKeyContext.Provider value={skeletonKey ?? null}>
+			<div ref={bodyRef} data-lenis-prevent {...gestureProps} className={`flex min-h-0 flex-1 flex-col overflow-y-auto ${isDetented ? "" : className}`}>
+				{content}
+			</div>
+		</DrawerSkeletonKeyContext.Provider>
 	);
 }
 
@@ -568,7 +643,7 @@ export function GroupTileOverlay({ icon, name, counts, badge }: { icon: ReactNod
 }
 
 export function DrawerGrid({ isDesktop, children }: { isDesktop: boolean; children: ReactNode }) {
-	return <div className={drawerGridClass(isDesktop)}>{children}</div>;
+	return <div data-drawer-grid className={drawerGridClass(isDesktop)}>{children}</div>;
 }
 
 /**

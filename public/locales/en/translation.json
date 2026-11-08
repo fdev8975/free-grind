@@ -973,6 +973,7 @@
         "description": "Upload and arrange your photos",
         "usage": "{{count}}/{{total}} photos used",
         "add": "Add",
+        "manage": "Manage",
         "uploading": "Uploading…",
         "saving": "Saving photo changes…",
         "primary": "Primary",

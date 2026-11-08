@@ -188,6 +188,7 @@ export function DrawerCollectionEditorSheet({
 			</SheetSection>
 
 			<DrawerBody
+				skeletonKey="collection-editor"
 				isDesktop={isDesktop}
 				className="max-h-[50vh]"
 				isLoading={isLoading && media.length === 0 && !upload.isUploading}

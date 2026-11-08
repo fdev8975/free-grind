@@ -143,6 +143,7 @@ export function AlbumDrawerPickerSheet({
 			{upload.step ?? (
 			<>
 			<DrawerBody
+				skeletonKey="album-drawer-picker"
 				isDesktop={isDesktop}
 				isLoading={isLoading && media.length === 0 && !upload.isUploading}
 				error={media.length === 0 ? error : null}

@@ -170,6 +170,7 @@ export function ProfilePictureDrawer({
 				</p>
 
 				<DrawerBody
+					skeletonKey="profile-photo-pool"
 					isDesktop={isDesktop}
 					isLoading={isLoading}
 					error={error}

@@ -792,6 +792,7 @@
                 "description": "Dodaj i rasporedi svoje fotografije",
                 "usage": "Iskorišteno {{count}}/{{total}} fotografija",
                 "add": "Dodaj",
+                "manage": "Upravljaj",
                 "uploading": "Otpremanje…",
                 "saving": "Čuvanje promjena fotografija…",
                 "primary": "Glavna",

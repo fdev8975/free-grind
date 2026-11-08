@@ -812,6 +812,7 @@
                 "description": "بتحميل صورك وترتيبها",
                 "usage": "{{count}}/{{total}} صور مستخدمة",
                 "add": "اضافة",
+                "manage": "Beheren",
                 "uploading": "تحميل.…",
                 "saving": "اختيار وحفظ الصور",
                 "primary": "أساسي",

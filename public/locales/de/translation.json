@@ -973,6 +973,7 @@
                 "description": "Lade Fotos hoch und sortiere sie",
                 "usage": "{{count}}/{{total}} Fotos verwendet",
                 "add": "Hinzufügen",
+                "manage": "Verwalten",
                 "uploading": "Hochladen…",
                 "saving": "Fotoänderungen werden gespeichert…",
                 "primary": "Primär",

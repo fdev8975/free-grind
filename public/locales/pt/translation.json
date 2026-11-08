@@ -792,6 +792,7 @@
                 "description": "Adicione e organize suas fotos",
                 "usage": "{{count}}/{{total}} fotos usadas",
                 "add": "Adicionar",
+                "manage": "Gerir",
                 "uploading": "A carregar…",
                 "saving": "A guardar alterações de fotos…",
                 "primary": "Primário",

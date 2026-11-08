@@ -784,6 +784,7 @@
                 "description": "Voeg foto's toe en orden ze",
                 "usage": "{{count}}/{{total}} foto's gebruikt",
                 "add": "Toevoegen",
+                "manage": "Beheren",
                 "uploading": "Uploaden…",
                 "saving": "Fotowijzigingen opslaan…",
                 "primary": "Hoofdfoto",
