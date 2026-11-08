@@ -264,6 +264,16 @@ export function ChatInboxHeader({
 									onChange={(e) => onSetSearchQuery(e.target.value)}
 									placeholder={t("chat_search.placeholder")}
 									className="h-full w-full bg-transparent pl-9 pr-8 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+									onKeyDown={(e) => {
+										// Escape cancels the search, like the header's search toggle;
+										// kept from reaching window-level Escape handlers.
+										if (e.key === "Escape") {
+											e.preventDefault();
+											e.stopPropagation();
+											onSetIsSearchOpen(false);
+											onSetSearchQuery("");
+										}
+									}}
 								/>
 								{searchQuery && (
 									<button

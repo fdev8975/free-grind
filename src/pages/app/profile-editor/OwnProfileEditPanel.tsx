@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Check, RefreshCw, Save } from "lucide-react";
 import { SHEET_FOOTER_ICON_BUTTON_CLASS, sheetButtonClass } from "../../../components/ui/bottom-sheet";
@@ -130,7 +131,9 @@ export function OwnProfileEditPanel({
 					</button>
 				)}
 			</div>
-			<ProfilePhotoFlows photos={editor.photos} />
+			{/* Into the body like the editor's other sheets: inside the profile
+			    dialog they would be laid out (and clipped) in its box. */}
+			{createPortal(<ProfilePhotoFlows photos={editor.photos} />, document.body)}
 		</>
 	);
 }
