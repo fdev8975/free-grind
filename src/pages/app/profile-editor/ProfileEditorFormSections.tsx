@@ -290,13 +290,19 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 		useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 10 } }),
 	);
 
+	// The dropped order, shown until the save finished and the profile reloaded
+	// — otherwise the tiles snap back to the old order for the round trip and
+	// then jump again. Cleared afterwards, so a failed save reverts.
+	const [pendingPhotoOrder, setPendingPhotoOrder] = useState<string[] | null>(null);
+	const photoHashes = pendingPhotoOrder ?? photos.hashes;
+
 	const liveOrder = useMemo(() => {
-		if (!activeId || !overId || activeId === overId) return photos.hashes;
-		const from = photos.hashes.indexOf(activeId);
-		const to = photos.hashes.indexOf(overId);
-		if (from === -1 || to === -1) return photos.hashes;
-		return arrayMove(photos.hashes, from, to);
-	}, [activeId, overId, photos.hashes]);
+		if (!activeId || !overId || activeId === overId) return photoHashes;
+		const from = photoHashes.indexOf(activeId);
+		const to = photoHashes.indexOf(overId);
+		if (from === -1 || to === -1) return photoHashes;
+		return arrayMove(photoHashes, from, to);
+	}, [activeId, overId, photoHashes]);
 
 	// Haptics: a firm tick when the photo lifts, a light one for each new spot
 	// it moves over, and one more when it lands somewhere new.
@@ -315,11 +321,13 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 		setActiveId(null);
 		setOverId(null);
 		if (!over || active.id === over.id) return;
-		const from = photos.hashes.indexOf(String(active.id));
-		const to = photos.hashes.indexOf(String(over.id));
+		const from = photoHashes.indexOf(String(active.id));
+		const to = photoHashes.indexOf(String(over.id));
 		if (from === -1 || to === -1) return;
 		haptic(10);
-		void photos.handleReorder(arrayMove(photos.hashes, from, to));
+		const nextOrder = arrayMove(photoHashes, from, to);
+		setPendingPhotoOrder(nextOrder);
+		void photos.handleReorder(nextOrder).finally(() => setPendingPhotoOrder(null));
 	};
 
 	const monthsSinceLastTested = useMemo(() => {
@@ -378,9 +386,9 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 					onDragEnd={handleDndDragEnd}
 					onDragCancel={() => { setActiveId(null); setOverId(null); }}
 				>
-					<SortableContext items={photos.hashes} strategy={rectSortingStrategy}>
+					<SortableContext items={photoHashes} strategy={rectSortingStrategy}>
 						<div className={`grid gap-2 ${isDesktop ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-3"} rail:grid-cols-5`}>
-							{photos.hashes.map((hash) => (
+							{photoHashes.map((hash) => (
 								<SortablePhotoSlot
 									key={hash}
 									hash={hash}

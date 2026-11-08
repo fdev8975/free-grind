@@ -326,23 +326,22 @@ export function useProfileEditor() {
 			.map((item) => item.mediaHash ?? "")
 			.filter((hash): hash is string => validateMediaHash(hash));
 
-		const hashes = [...fromMedias];
-
-		// profileImageMediaHash can lag behind medias after deleting every
-		// photo — the server doesn't always clear it once medias is empty —
-		// so only trust it as a primary-photo fallback when at least one real
-		// media entry backs it up. Otherwise a deleted photo keeps reappearing
-		// here even though medias correctly reports none left.
+		// medias is the authoritative slot list (primary first) right after a
+		// PUT; profileImageMediaHash lags behind it. Prepending it when it's
+		// missing from medias brought a just-removed first photo straight back
+		// (medias [b, c], profileImageMediaHash still a), so only fall back to it
+		// when medias has entries but none carries a usable hash — like
+		// getProfilePhotoHash.
 		if (
-			hashes.length > 0 &&
+			fromMedias.length === 0 &&
+			(profile?.medias?.length ?? 0) > 0 &&
 			profile?.profileImageMediaHash &&
-			validateMediaHash(profile.profileImageMediaHash) &&
-			!hashes.includes(profile.profileImageMediaHash)
+			validateMediaHash(profile.profileImageMediaHash)
 		) {
-			hashes.unshift(profile.profileImageMediaHash);
+			return [profile.profileImageMediaHash];
 		}
 
-		return hashes.slice(0, MAX_PROFILE_PHOTOS);
+		return fromMedias.slice(0, MAX_PROFILE_PHOTOS);
 	}, [profile?.medias, profile?.profileImageMediaHash]);
 
 	const photoModerationByHash = useMemo(() => {
