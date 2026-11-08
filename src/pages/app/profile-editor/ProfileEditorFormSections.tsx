@@ -695,10 +695,10 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 				<TextField
 					key={network}
 					icon={NetworkIcon}
-					label={t(`profile_editor.sections.social.${network}`)}
+					label={t("profile_editor.sections.social.username")}
 					value={draft[network]}
 					onChange={(value) => onDraftChange(network, value)}
-					placeholder={t("profile_editor.sections.social.placeholder")}
+					placeholder={t(`profile_editor.sections.social.${network}`)}
 				/>
 			))}
 		</FieldSection>
