@@ -1285,11 +1285,6 @@ export function ProfileDetailsModal({
 		if (!isEditingOwnProfile) setMobileCarouselPhotoIndex(0);
 	}, [activeProfile?.profileId, activeProfilePhotoHashes.length]);
 
-	// Edit mode shows a different slide set (no Right Now / album slides).
-	useEffect(() => {
-		setMobileCarouselPhotoIndex(0);
-	}, [isEditingOwnProfile]);
-
 	useEffect(() => {
 		const update = () => setIsModalSplit(window.innerWidth >= 900);
 		window.addEventListener("resize", update);
@@ -1378,9 +1373,29 @@ export function ProfileDetailsModal({
 		return albumStatus.hasAlbum ? [...withDefault, ALBUM_SLIDE_HASH] : withDefault;
 	}, [hasRightNowSlide, activeProfilePhotoHashes, albumStatus.hasAlbum, showDefaultProfileSlide, ownPhotoControls, ownPhotoOrder]);
 
+	// Whenever the slide set changes (entering or leaving edit mode, a photo
+	// added, removed or moved), stay on the photo that was in view. Gone (a
+	// removed photo): keep the position, clamped. A Right Now / album /
+	// placeholder slide that edit mode doesn't have: back to the start. A
+	// different profile is left to the reset above.
+	const shownCarouselSlideRef = useRef<{ hash: string; profileId: unknown } | null>(null);
 	useEffect(() => {
-		setMobileCarouselPhotoIndex((index) => Math.min(index, Math.max(carouselHashes.length - 1, 0)));
-	}, [carouselHashes.length]);
+		const shown = shownCarouselSlideRef.current;
+		if (!shown || shown.profileId !== activeProfile?.profileId) return;
+		const found = carouselHashes.indexOf(shown.hash);
+		if (found !== -1) {
+			setMobileCarouselPhotoIndex(found);
+		} else if (shown.hash === RIGHT_NOW_SLIDE_HASH || shown.hash === ALBUM_SLIDE_HASH || shown.hash === DEFAULT_PROFILE_SLIDE_HASH) {
+			setMobileCarouselPhotoIndex(0);
+		} else {
+			setMobileCarouselPhotoIndex((index) => Math.min(index, Math.max(carouselHashes.length - 1, 0)));
+		}
+	}, [carouselHashes]);
+	// After the effect above, so it still sees the slide from before the change.
+	useEffect(() => {
+		const hash = carouselHashes[mobileCarouselPhotoIndex];
+		shownCarouselSlideRef.current = hash ? { hash, profileId: activeProfile?.profileId } : null;
+	}, [carouselHashes, mobileCarouselPhotoIndex, activeProfile?.profileId]);
 
 	// Moves one of your photos to another slot (0 = main photo); the carousel follows it.
 	const moveOwnPhoto = (hash: string, to: number) => {
@@ -1390,7 +1405,7 @@ export function ProfileDetailsModal({
 		const nextOrder = ownPhotoOrder.filter((item) => item !== hash);
 		nextOrder.splice(to, 0, hash);
 		haptic(10);
-		setMobileCarouselPhotoIndex(to);
+		// The carousel follows the moved photo by itself (see shownCarouselSlideRef).
 		void ownPhotoControls.reorder(nextOrder);
 	};
 
