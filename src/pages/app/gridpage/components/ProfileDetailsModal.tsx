@@ -2740,7 +2740,7 @@ export function ProfileDetailsModal({
 								<div className="flex flex-col items-center gap-1.5 rounded-full bg-black/30 px-[5px] py-[10px] backdrop-blur-sm">
 									{carouselHashes.map((hash, index) => (
 										<button
-											key={`${hash}-dot`}
+											key={`dot-${index}`}
 											type="button"
 											onClick={() => {
 												setMobileCarouselPhotoIndex(index);
@@ -3007,7 +3007,7 @@ export function ProfileDetailsModal({
 								<div className="flex flex-col items-center gap-2 rounded-full bg-black/30 px-[7px] py-[14px] backdrop-blur-sm">
 									{carouselHashes.map((hash, index) => (
 										<button
-											key={`${hash}-dot`}
+											key={`dot-${index}`}
 											type="button"
 											onClick={() => {
 												setMobileCarouselPhotoIndex(index);
