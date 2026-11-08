@@ -55,15 +55,24 @@ function bundleSide(
 	showVersion: boolean,
 	/** Installed version, for the "… newer" hint on the new build. */
 	comparedTo?: string | null,
+	/** Full commit sha of the build; shown short as the title so the time isn't repeated. */
+	commit?: string | null,
 ): VersionCompareSide {
 	const release = showVersion ? releaseOf(version) : null;
 	const builtAt = buildDate(version);
 	const olderBuild = buildDate(comparedTo ?? null);
 	const newer = builtAt && olderBuild ? newerBy(t, builtAt, olderBuild) : null;
+	const shortCommit = commit && /^[0-9a-f]{7,40}$/i.test(commit) ? commit.slice(0, 7) : null;
 
 	return {
 		label,
-		title: builtAt ? formatBuildTime(builtAt, lang) : t("ota_prompt.built_in", { defaultValue: "Included with the app" }),
+		title: shortCommit ? (
+			<span className="font-mono">{shortCommit}</span>
+		) : builtAt ? (
+			formatBuildTime(builtAt, lang)
+		) : (
+			t("ota_prompt.built_in", { defaultValue: "Included with the app" })
+		),
 		detail:
 			release || builtAt ? (
 				<>
@@ -238,9 +247,25 @@ export function OtaUpdatePromptView({
 					from={
 						installedVersion === undefined
 							? undefined
-							: bundleSide(t, i18n.language, t("ota_prompt.installed", { defaultValue: "Installed build" }), installedVersion, versionChanged)
+							: bundleSide(
+									t,
+									i18n.language,
+									t("ota_prompt.installed", { defaultValue: "Installed build" }),
+									installedVersion,
+									versionChanged,
+									undefined,
+									import.meta.env.VITE_COMMIT_HASH,
+								)
 					}
-					to={bundleSide(t, i18n.language, t("ota_prompt.new", { defaultValue: "New build" }), update.version, versionChanged, installedVersion)}
+					to={bundleSide(
+						t,
+						i18n.language,
+						t("ota_prompt.new", { defaultValue: "New build" }),
+						update.version,
+						versionChanged,
+						installedVersion,
+						newCommit,
+					)}
 				/>
 				{!progressOnly && <ToggleRow
 					checked={autoUpdate}
