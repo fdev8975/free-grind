@@ -16,13 +16,38 @@ type Props = {
 
 const ACCURACY_SOURCE_ID = "accuracy-circle";
 
+const EARTH_RADIUS_METERS = 6371008.8;
+// Web Mercator can't show the poles; keeps fitBounds inside the valid range.
+const MAX_MERCATOR_LAT = 85;
+
+// Geodesic circle (destination-point formula), so even radii of thousands of
+// kilometres yield valid coordinates instead of latitudes beyond ±90.
 function buildCirclePolygon(lat: number, lon: number, radiusMeters: number, steps = 64) {
-	const latRadius = radiusMeters / 111320;
-	const lonRadius = radiusMeters / (111320 * Math.cos((lat * Math.PI) / 180));
+	const toRad = Math.PI / 180;
+	const lat1 = lat * toRad;
+	const lon1 = lon * toRad;
+	const angular = Math.min(radiusMeters / EARTH_RADIUS_METERS, Math.PI);
 	const ring: [number, number][] = [];
+	let prevLon: number | null = null;
 	for (let i = 0; i <= steps; i++) {
-		const angle = (i / steps) * 2 * Math.PI;
-		ring.push([lon + lonRadius * Math.cos(angle), lat + latRadius * Math.sin(angle)]);
+		const bearing = (i / steps) * 2 * Math.PI;
+		const lat2 = Math.asin(
+			Math.sin(lat1) * Math.cos(angular) + Math.cos(lat1) * Math.sin(angular) * Math.cos(bearing),
+		);
+		const lon2 =
+			lon1 +
+			Math.atan2(
+				Math.sin(bearing) * Math.sin(angular) * Math.cos(lat1),
+				Math.cos(angular) - Math.sin(lat1) * Math.sin(lat2),
+			);
+		let lonDeg = lon2 / toRad;
+		// Keep the ring continuous across the antimeridian.
+		if (prevLon !== null) {
+			while (lonDeg - prevLon > 180) lonDeg -= 360;
+			while (lonDeg - prevLon < -180) lonDeg += 360;
+		}
+		prevLon = lonDeg;
+		ring.push([lonDeg, lat2 / toRad]);
 	}
 	return {
 		type: "Feature" as const,
@@ -71,9 +96,16 @@ function syncAccuracyCircle(map: any, lat: number, lon: number, radiusMeters?: n
 function focusPosition(map: any, lat: number, lon: number, radiusMeters: number | undefined, duration: number) {
 	if (radiusMeters && radiusMeters > 0) {
 		const dLat = radiusMeters / 111320;
-		const dLon = radiusMeters / (111320 * Math.cos((lat * Math.PI) / 180));
+		const cosLat = Math.cos((lat * Math.PI) / 180);
+		const dLon = Math.min(180, cosLat > 1e-6 ? radiusMeters / (111320 * cosLat) : 180);
+		const south = Math.max(-MAX_MERCATOR_LAT, lat - dLat);
+		const north = Math.min(MAX_MERCATOR_LAT, lat + dLat);
+		if (!Number.isFinite(dLat) || south >= north) {
+			map.easeTo({ center: [lon, lat], zoom: 0, duration });
+			return;
+		}
 		map.fitBounds(
-			[[lon - dLon, lat - dLat], [lon + dLon, lat + dLat]],
+			[[lon - dLon, south], [lon + dLon, north]],
 			{ padding: 40, maxZoom: 17, duration },
 		);
 		return;
