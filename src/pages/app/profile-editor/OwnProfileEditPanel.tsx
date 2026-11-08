@@ -1,10 +1,25 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Check, RefreshCw, Save } from "lucide-react";
 import { SHEET_FOOTER_ICON_BUTTON_CLASS, sheetButtonClass } from "../../../components/ui/bottom-sheet";
 import { ProfileEditorFormSections } from "./ProfileEditorFormSections";
 import { ProfilePhotoFlows } from "./ProfilePhotoFlows";
-import { useProfileEditor } from "./useProfileEditor";
+import { MAX_PROFILE_PHOTOS } from "./profileEditorUtils";
+import { useProfileEditor, type ProfileEditorState } from "./useProfileEditor";
+
+/** What the host's carousel needs to edit the photos in place: the saved
+ * order, each photo's review state and the actions (all saved right away). */
+export type OwnPhotoControls = {
+	hashes: string[];
+	moderationByHash: ProfileEditorState["photos"]["moderationByHash"];
+	maxPhotos: number;
+	isBusy: boolean;
+	isUploading: boolean;
+	remove: (hash: string) => Promise<void>;
+	reorder: (hashes: string[]) => Promise<void>;
+	/** Opens the picture drawer (upload, pick from the pool, delete). */
+	openManager: () => void;
+};
 
 /** Edit mode of your own profile view: the editor's sections in place of the
  * profile details, with reset/save (or done) pinned to the bottom of the
@@ -13,12 +28,15 @@ export function OwnProfileEditPanel({
 	onDone,
 	onDirtyChange,
 	onPhotoHashesChange,
+	onPhotoControlsChange,
 }: {
 	onDone: () => void;
 	/** Reports unsaved changes, so the host can confirm before leaving edit mode. */
 	onDirtyChange?: (dirty: boolean) => void;
 	/** Photo changes are saved right away — reports the saved order, so the host's carousel can follow. */
 	onPhotoHashesChange?: (hashes: string[]) => void;
+	/** The photos are edited in the host's carousel; null once edit mode ends. */
+	onPhotoControlsChange?: (controls: OwnPhotoControls | null) => void;
 }) {
 	const { t } = useTranslation();
 	const editor = useProfileEditor();
@@ -28,6 +46,26 @@ export function OwnProfileEditPanel({
 	useEffect(() => {
 		if (isProfileLoaded) onPhotoHashesChange?.(photoHashes);
 	}, [isProfileLoaded, photoHashes, onPhotoHashesChange]);
+
+	// The actions go through a ref, so the reported object only changes with
+	// what the carousel shows — a new one every render would loop with the host.
+	const photosRef = useRef(editor.photos);
+	photosRef.current = editor.photos;
+	const { moderationByHash, isSaving: isSavingPhotos, isUploading: isUploadingPhoto } = editor.photos;
+	const photoControls = useMemo<OwnPhotoControls>(() => ({
+		hashes: photoHashes,
+		moderationByHash,
+		maxPhotos: MAX_PROFILE_PHOTOS,
+		isBusy: isSavingPhotos || isUploadingPhoto,
+		isUploading: isUploadingPhoto,
+		remove: (hash) => photosRef.current.handleRemove(hash),
+		reorder: (hashes) => photosRef.current.handleReorder(hashes),
+		openManager: () => photosRef.current.setIsDrawerOpen(true),
+	}), [photoHashes, moderationByHash, isSavingPhotos, isUploadingPhoto]);
+	useEffect(() => {
+		if (isProfileLoaded) onPhotoControlsChange?.(photoControls);
+	}, [isProfileLoaded, photoControls, onPhotoControlsChange]);
+	useEffect(() => () => onPhotoControlsChange?.(null), [onPhotoControlsChange]);
 
 	useEffect(() => {
 		onDirtyChange?.(editor.hasChanges);

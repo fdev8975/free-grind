@@ -1,5 +1,5 @@
 import { TapFlyBurst, tapFlyBurstDuration, createTapFlyBurst, mutualTapIdFor, tapEmoji, tapGlow, type TapFlyBurstState } from "../../../../components/TapFlyBurst";
-import { Album, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, EllipsisVertical, Flag, Flame, Images, Loader2, LockKeyhole, MessageCircle, Pencil, Phone, ShieldCheck, Star, Trash2, X } from "lucide-react";
+import { Album, AlertTriangle, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleUserRound, Clock, EllipsisVertical, Flag, Flame, Images, Loader2, LockKeyhole, MessageCircle, Pencil, Phone, Plus, ShieldCheck, Star, Trash2, X } from "lucide-react";
 import { BananaFilled, EyeFilled, HomeFilled, MapPinFilled, StickyNoteFilled, EyeOffFilled, LocateFixedFilled, PencilLineFilled, SendHorizontalFilled } from "../../../../components/icons/FilledIcons";
 import { RightNowIcon } from "../../../../components/icons/RightNowIcon";
 import toast from "react-hot-toast";
@@ -18,7 +18,7 @@ import { useTravelPlans } from "../../../../hooks/queries/useProfileQueries";
 import type { TravelPlan } from "../../../../types/travel";
 import { useApiFunctions } from "../../../../hooks/useApiFunctions";
 import { useAuth } from "../../../../contexts/useAuth";
-import { profileResponseSchema } from "../../profile-editor/profileEditorUtils";
+import { MEDIA_MODERATION_STATE, profileResponseSchema } from "../../profile-editor/profileEditorUtils";
 import type {
 	BrowseCard,
 	ManagedOption,
@@ -66,7 +66,7 @@ import {
 	shouldHideField,
 } from "../utils";
 import { ProfileDetailsContent } from "./ProfileDetailsContent";
-import { OwnProfileEditPanel } from "../../profile-editor/OwnProfileEditPanel";
+import { OwnProfileEditPanel, type OwnPhotoControls } from "../../profile-editor/OwnProfileEditPanel";
 import { useCarouselSwipe } from "./useCarouselSwipe";
 import { ConfirmDialog } from "../../../../components/ui/confirm-dialog";
 import { setCachedProfileDetail } from "../cache";
@@ -104,6 +104,10 @@ const ALBUM_SLIDE_HASH = "__album_slide__";
 // (and no Right Now slide either) — keeps the default-avatar placeholder as
 // its own slide instead of just disappearing once an album slide is added.
 const DEFAULT_PROFILE_SLIDE_HASH = "__default_profile_slide__";
+
+// Synthetic hash appended while editing your own photos (with a free slot
+// left): the slide that opens the picture drawer to add one.
+const ADD_PHOTO_SLIDE_HASH = "__add_photo_slide__";
 
 type ProfileDetailsModalProps = {
 	isOpen: boolean;
@@ -559,6 +563,11 @@ export function ProfileDetailsModal({
 	// carousel follows right away. It also wins over the reload on leaving edit
 	// mode, which reads /v7/profiles and can lag behind the write.
 	const [editedOwnPhotoHashes, setEditedOwnPhotoHashes] = useState<string[] | null>(null);
+	// Set while the editor is open: the carousel then shows only your photos,
+	// each with its edit controls, plus a slide to add one.
+	const [ownPhotoControls, setOwnPhotoControls] = useState<OwnPhotoControls | null>(null);
+	// A moved photo's new order, shown until the save finished (then cleared, so a failed save reverts).
+	const [pendingOwnPhotoOrder, setPendingOwnPhotoOrder] = useState<string[] | null>(null);
 	const openedProfileId = activeProfileProp?.profileId;
 	// Reset only when switching from one loaded profile to another — not when
 	// the first one arrives, which would undo `initialEditMode`.
@@ -1274,8 +1283,14 @@ export function ProfileDetailsModal({
 
 	useEffect(() => {
 		setSelectedPhotoIndex(null);
-		setMobileCarouselPhotoIndex(0);
+		// While editing, adding or removing a photo keeps your place (clamped below).
+		if (!isEditingOwnProfile) setMobileCarouselPhotoIndex(0);
 	}, [activeProfile?.profileId, activeProfilePhotoHashes.length]);
+
+	// Edit mode shows a different slide set (no Right Now / album slides).
+	useEffect(() => {
+		setMobileCarouselPhotoIndex(0);
+	}, [isEditingOwnProfile]);
 
 	useEffect(() => {
 		const update = () => setIsModalSplit(window.innerWidth >= 900);
@@ -1355,11 +1370,32 @@ export function ProfileDetailsModal({
 	// default-avatar placeholder (if there's no real photo or Right Now slide
 	// to show instead) first, then the Right Now post's image (if any), then
 	// the profile's own photos, then the album slide (if any) last.
+	const ownPhotoOrder = pendingOwnPhotoOrder ?? ownPhotoControls?.hashes ?? null;
 	const carouselHashes = useMemo(() => {
+		if (ownPhotoControls && ownPhotoOrder) {
+			return ownPhotoOrder.length < ownPhotoControls.maxPhotos ? [...ownPhotoOrder, ADD_PHOTO_SLIDE_HASH] : ownPhotoOrder;
+		}
 		const base = hasRightNowSlide ? [RIGHT_NOW_SLIDE_HASH, ...activeProfilePhotoHashes] : activeProfilePhotoHashes;
 		const withDefault = showDefaultProfileSlide ? [DEFAULT_PROFILE_SLIDE_HASH, ...base] : base;
 		return albumStatus.hasAlbum ? [...withDefault, ALBUM_SLIDE_HASH] : withDefault;
-	}, [hasRightNowSlide, activeProfilePhotoHashes, albumStatus.hasAlbum, showDefaultProfileSlide]);
+	}, [hasRightNowSlide, activeProfilePhotoHashes, albumStatus.hasAlbum, showDefaultProfileSlide, ownPhotoControls, ownPhotoOrder]);
+
+	useEffect(() => {
+		setMobileCarouselPhotoIndex((index) => Math.min(index, Math.max(carouselHashes.length - 1, 0)));
+	}, [carouselHashes.length]);
+
+	// Moves one of your photos to another slot (0 = main photo); the carousel follows it.
+	const moveOwnPhoto = (hash: string, to: number) => {
+		if (!ownPhotoControls || !ownPhotoOrder || ownPhotoControls.isBusy) return;
+		const from = ownPhotoOrder.indexOf(hash);
+		if (from === -1 || from === to || to < 0 || to >= ownPhotoOrder.length) return;
+		const nextOrder = ownPhotoOrder.filter((item) => item !== hash);
+		nextOrder.splice(to, 0, hash);
+		haptic(10);
+		setPendingOwnPhotoOrder(nextOrder);
+		setMobileCarouselPhotoIndex(to);
+		void ownPhotoControls.reorder(nextOrder).finally(() => setPendingOwnPhotoOrder(null));
+	};
 
 	// ProfileDetailsContent wires up swiping the mobile carousel; in edit mode it
 	// isn't mounted, so the carousel above the editor gets it from here.
@@ -1400,7 +1436,7 @@ export function ProfileDetailsModal({
 	// would let swiping past the boundary land on an unstyled "photo".
 	const photoUrls = useMemo(() => {
 		return carouselHashes
-			.filter((hash) => hash !== ALBUM_SLIDE_HASH && hash !== DEFAULT_PROFILE_SLIDE_HASH)
+			.filter((hash) => hash !== ALBUM_SLIDE_HASH && hash !== DEFAULT_PROFILE_SLIDE_HASH && hash !== ADD_PHOTO_SLIDE_HASH)
 			.map((hash) => getSlideImageUrl(hash));
 	}, [carouselHashes, rightNowSlideUrl]);
 
@@ -1457,6 +1493,8 @@ export function ProfileDetailsModal({
 	// Bottom left of the profile carousel: "taken on Grindr" for the photo in
 	// view, then when they last tapped you, as matching glass pills.
 	const renderCarouselCornerBadges = () => {
+		// While editing, that corner holds the photo's own labels instead.
+		if (ownPhotoControls) return null;
 		const meta = photoCreatedAtByHash[carouselHashes[mobileCarouselPhotoIndex]];
 		const tapTimestamp = activeProfile?.lastReceivedTapTimestamp ?? null;
 		if (!meta?.takenOnGrindr && tapTimestamp == null) return null;
@@ -2068,10 +2106,122 @@ export function ProfileDetailsModal({
 		</>
 	);
 
+	// The actions for the photo in view: one bar fixed bottom center of the
+	// carousel, so it stays put while swiping (on the add slide only "manage"
+	// works). The avatar button doubles as the main-photo label: highlighted on the first
+	// photo, "make main photo" on the others. A review state hangs off the
+	// bar's left side, so the bar itself never shifts.
+	const renderOwnPhotoActions = () => {
+		if (!ownPhotoControls || !ownPhotoOrder) return null;
+		const hash = carouselHashes[mobileCarouselPhotoIndex] ?? "";
+		const position = ownPhotoOrder.indexOf(hash);
+		const isPhoto = position !== -1;
+		const isPrimary = position === 0;
+		const isBusy = ownPhotoControls.isBusy;
+		const moderation = isPhoto ? ownPhotoControls.moderationByHash.get(hash) : undefined;
+		const isPending = moderation?.state === MEDIA_MODERATION_STATE.PENDING;
+		const isRejected = moderation?.state === MEDIA_MODERATION_STATE.REJECTED;
+		const moderationLabel = isRejected
+			? t("profile_editor.sections.pictures.rejected")
+			: t("profile_editor.sections.pictures.pending_moderation");
+		const actionClass = "flex h-9 w-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/15 disabled:pointer-events-none disabled:opacity-35";
+		const moveUpLabel = t("profile_editor.sections.pictures.move_up", { defaultValue: "Move up" });
+		const moveDownLabel = t("profile_editor.sections.pictures.move_down", { defaultValue: "Move down" });
+		const primaryLabel = isPrimary
+			? t("profile_editor.sections.pictures.primary")
+			: t("profile_editor.sections.pictures.set_primary");
+		return (
+			<div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-black/45 p-1 backdrop-blur-md">
+					{(isPending || isRejected) && (
+						<span
+							title={moderation?.reason ? `${moderationLabel}: ${moderation.reason}` : moderationLabel}
+							aria-label={moderationLabel}
+							className={`absolute right-full mr-2 flex h-9 w-9 items-center justify-center rounded-full text-white shadow-sm ${isRejected ? "bg-red-500/90" : "bg-amber-500/90"}`}
+						>
+							{isRejected ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+						</span>
+					)}
+					<button
+						type="button"
+						onClick={() => moveOwnPhoto(hash, 0)}
+						// On the main photo it's a label, not a no-op button.
+						disabled={isBusy || !isPhoto || isPrimary}
+						aria-label={primaryLabel}
+						aria-pressed={isPhoto ? isPrimary : undefined}
+						title={primaryLabel}
+						className={`${actionClass} ${isPrimary ? "bg-[var(--accent)] shadow-sm disabled:opacity-100" : ""}`}
+					>
+						<CircleUserRound className="h-[18px] w-[18px]" />
+					</button>
+					<button
+						type="button"
+						onClick={() => moveOwnPhoto(hash, position - 1)}
+						disabled={isBusy || !isPhoto || position === 0}
+						aria-label={moveUpLabel}
+						title={moveUpLabel}
+						className={actionClass}
+					>
+						<ChevronUp className="h-[18px] w-[18px]" />
+					</button>
+					<button
+						type="button"
+						onClick={() => moveOwnPhoto(hash, position + 1)}
+						disabled={isBusy || !isPhoto || position === ownPhotoOrder.length - 1}
+						aria-label={moveDownLabel}
+						title={moveDownLabel}
+						className={actionClass}
+					>
+						<ChevronDown className="h-[18px] w-[18px]" />
+					</button>
+					<button
+						type="button"
+						onClick={ownPhotoControls.openManager}
+						aria-label={t("profile_editor.sections.pictures.manage")}
+						title={t("profile_editor.sections.pictures.manage")}
+						className={actionClass}
+					>
+						<Images className="h-[18px] w-[18px]" />
+					</button>
+					<button
+						type="button"
+						onClick={() => { haptic(10); void ownPhotoControls.remove(hash); }}
+						disabled={isBusy || !isPhoto}
+						aria-label={t("profile_editor.sections.pictures.remove")}
+						title={t("profile_editor.sections.pictures.remove")}
+						className={`${actionClass} hover:bg-red-500`}
+					>
+						<Trash2 className="h-[18px] w-[18px]" />
+					</button>
+			</div>
+		);
+	};
+
 	// Shared between both the mobile/inline and split-desktop carousel
 	// blocks below — renders a slide's tappable content for a given hash,
 	// swapping in the album cover/lock overlay in place of a plain photo.
 	const renderCarouselSlideContent = (hash: string, index: number) => {
+		if (hash === ADD_PHOTO_SLIDE_HASH && ownPhotoControls) {
+			return (
+				<button
+					type="button"
+					onClick={ownPhotoControls.openManager}
+					className="group absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-[var(--surface-2)] text-[var(--text-muted)] transition-colors hover:text-[var(--accent)]"
+				>
+					<span className="flex h-16 w-16 items-center justify-center rounded-full ink-tint-6 transition-transform duration-150 group-hover:ink-tint-10 group-active:scale-95">
+						{ownPhotoControls.isUploading ? <Loader2 className="h-7 w-7 animate-spin" /> : <Plus className="h-7 w-7" />}
+					</span>
+					<span className="text-sm font-semibold">
+						{ownPhotoControls.isUploading
+							? t("profile_editor.sections.pictures.uploading")
+							: t("profile_editor.sections.pictures.add_photo", { defaultValue: "Add photo" })}
+					</span>
+					<span className="text-xs tabular-nums opacity-70">
+						{ownPhotoOrder?.length ?? 0}/{ownPhotoControls.maxPhotos}
+					</span>
+				</button>
+			);
+		}
+
 		if (hash === DEFAULT_PROFILE_SLIDE_HASH) {
 			// Non-interactive, same as the old standalone placeholder — there's
 			// no real photo behind this slide to open a viewer for.
@@ -2548,6 +2698,7 @@ export function ProfileDetailsModal({
 							</div>
 						))}
 						{renderCarouselCornerBadges()}
+						{renderOwnPhotoActions()}
 						{carouselHashes.length > 1 && (
 							<div className="absolute inset-y-0 right-3 z-20 flex flex-col items-center justify-center">
 								<div className="flex flex-col items-center gap-1.5 rounded-full bg-black/30 px-[5px] py-[10px] backdrop-blur-sm">
@@ -2602,7 +2753,7 @@ export function ProfileDetailsModal({
 					) : activeProfileError ? (
 						<p className="text-sm text-[var(--text-muted)]">{activeProfileError}</p>
 					) : activeProfile && isOwnProfile && isEditingOwnProfile ? (
-						<OwnProfileEditPanel onDone={finishOwnProfileEdit} onDirtyChange={setHasUnsavedOwnEdits} onPhotoHashesChange={setEditedOwnPhotoHashes} />
+						<OwnProfileEditPanel onDone={finishOwnProfileEdit} onDirtyChange={setHasUnsavedOwnEdits} onPhotoHashesChange={setEditedOwnPhotoHashes} onPhotoControlsChange={setOwnPhotoControls} />
 					) : activeProfile ? (
 						<ProfileDetailsContent
 							activeProfile={activeProfile}
@@ -2792,7 +2943,8 @@ export function ProfileDetailsModal({
 							</div>
 						))}
 						{renderCarouselCornerBadges()}
-						{carouselHashes.length > 1 && (
+						{renderOwnPhotoActions()}
+						{!ownPhotoControls && carouselHashes.length > 1 && (
 							<>
 								<button
 									type="button"
@@ -2974,7 +3126,7 @@ export function ProfileDetailsModal({
 									) : activeProfileError ? (
 										<p className="text-sm text-[var(--text-muted)]">{activeProfileError}</p>
 									) : activeProfile && isOwnProfile && isEditingOwnProfile ? (
-										<OwnProfileEditPanel onDone={finishOwnProfileEdit} onDirtyChange={setHasUnsavedOwnEdits} onPhotoHashesChange={setEditedOwnPhotoHashes} />
+										<OwnProfileEditPanel onDone={finishOwnProfileEdit} onDirtyChange={setHasUnsavedOwnEdits} onPhotoHashesChange={setEditedOwnPhotoHashes} onPhotoControlsChange={setOwnPhotoControls} />
 									) : activeProfile ? (
 										<ProfileDetailsContent
 											activeProfile={activeProfile}

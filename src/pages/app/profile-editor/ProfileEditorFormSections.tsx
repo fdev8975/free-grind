@@ -1,4 +1,4 @@
-import React, { useMemo, useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,19 +8,14 @@ import {
 	Cake,
 	Calendar,
 	ChevronRight,
-	Clock,
 	Compass,
 	Eye,
 	Flame,
 	Globe,
-	Hand,
 	Hash,
 	Heart,
-	Images,
 	MapPin,
 	MessageSquare,
-	Move,
-	Plus,
 	Ruler,
 	Scale,
 	Search,
@@ -30,31 +25,10 @@ import {
 	Tag,
 	User,
 	UserRound,
-	X,
 	type LucideIcon,
 } from "lucide-react";
-import {
-	DndContext,
-	MouseSensor,
-	TouchSensor,
-	useSensor,
-	useSensors,
-	type DragEndEvent,
-	type DragOverEvent,
-	type DragStartEvent,
-} from "@dnd-kit/core";
-import {
-	SortableContext,
-	arrayMove,
-	rectSortingStrategy,
-	useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { usePreferences } from "../../../contexts/PreferencesContext";
-import { haptic } from "../../../utils/haptics";
 import { useDesktopBreakpoint } from "../../../hooks/useDesktopBreakpoint";
-import { getThumbImageUrl } from "../../../utils/media";
-import { proxyMediaUrl } from "../../../utils/mediaProxy";
 import { sheetChipClassName } from "../../../components/ui/sheet-section";
 import { SelectSheet } from "../../../components/ui/select-sheet";
 import { TravelPlansSection } from "./TravelPlansSection";
@@ -62,7 +36,6 @@ import { SpotifyFavoritesSection } from "./SpotifyFavoritesSection";
 import { TagsPickerDialog } from "./TagsPickerDialog";
 import {
 	FieldSection,
-	FieldSectionAction,
 	FIELD_ROW_HOVER_CLASS,
 	MultiSelectField,
 	PickerRow,
@@ -74,109 +47,10 @@ import {
 import { SEXUAL_POSITION_ICONS } from "../profile-option-builders";
 import { FacebookIcon, InstagramIcon, XIcon } from "../../../components/icons/BrandIcons";
 import {
-	MAX_PROFILE_PHOTOS,
 	MAX_PROFILE_TAGS,
-	MEDIA_MODERATION_STATE,
 	toggleProfileTagText,
 } from "./profileEditorUtils";
 import type { ProfileEditorState } from "./useProfileEditor";
-
-export type PhotoModeration = { state: number | null; reason: string | null };
-
-type SortablePhotoSlotProps = {
-	hash: string;
-	slotIndex: number;
-	moderation?: PhotoModeration;
-	isSavingPhotos: boolean;
-	isUploadingPhoto: boolean;
-	onRemovePhoto: (hash: string) => void;
-	t: ReturnType<typeof useTranslation>["t"];
-};
-
-function SortablePhotoSlot({
-	hash,
-	slotIndex,
-	moderation,
-	isSavingPhotos,
-	isUploadingPhoto,
-	onRemovePhoto,
-	t,
-}: SortablePhotoSlotProps) {
-	const isBusy = isSavingPhotos || isUploadingPhoto;
-	// The whole tile is the drag handle (mouse: after 8px, touch: long press —
-	// see the sensors below), so it needs no grip of its own.
-	const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-		useSortable({ id: hash, disabled: isBusy });
-
-	const style: React.CSSProperties = {
-		transform: CSS.Transform.toString(transform),
-		transition,
-	};
-
-	const isPrimary = slotIndex === 0;
-	const isPending = moderation?.state === MEDIA_MODERATION_STATE.PENDING;
-	const isRejected = moderation?.state === MEDIA_MODERATION_STATE.REJECTED;
-	// One pill style for every tile label: primary, pending, rejected.
-	const pillClass = "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white shadow-sm";
-
-	return (
-		<div
-			ref={setNodeRef}
-			style={style}
-			{...attributes}
-			{...listeners}
-			// The long press that starts a touch drag mustn't open the browser's
-			// image menu / callout or start a text selection.
-			onContextMenu={(event) => event.preventDefault()}
-			className={[
-				"group relative aspect-square touch-manipulation select-none overflow-hidden rounded-2xl bg-[var(--surface-2)] outline-none transition-[scale,box-shadow] duration-150 [-webkit-touch-callout:none] focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
-				isBusy ? "" : "cursor-grab active:cursor-grabbing",
-				// Lifted while dragging: a bit bigger, accent ring, shadow.
-				isDragging ? "z-10 scale-105 shadow-xl ring-2 ring-[var(--accent)]" : "",
-			].join(" ")}
-		>
-			<img
-				src={proxyMediaUrl(getThumbImageUrl(hash, "320x320"))}
-				alt={`Profile photo ${slotIndex + 1}`}
-				draggable={false}
-				className={`pointer-events-none h-full w-full object-cover ${isRejected ? "opacity-50 grayscale" : ""}`}
-			/>
-
-			{(isPending || isRejected) && (
-				<span
-					title={moderation?.reason ?? undefined}
-					className={`absolute left-1.5 top-1.5 ${pillClass} ${isRejected ? "bg-red-500/90" : "bg-amber-500/90"}`}
-				>
-					{isRejected ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-					{isRejected
-						? t("profile_editor.sections.pictures.rejected")
-						: t("profile_editor.sections.pictures.pending_moderation")}
-				</span>
-			)}
-
-			{isPrimary && (
-				<span className={`absolute bottom-1.5 left-1.5 ${pillClass} bg-[var(--accent)]`}>
-					{t("profile_editor.sections.pictures.primary")}
-				</span>
-			)}
-
-			{/* Small round remove button, like removing a song; it never starts a drag. */}
-			<button
-				type="button"
-				onClick={() => void onRemovePhoto(hash)}
-				onPointerDown={(event) => event.stopPropagation()}
-				onTouchStart={(event) => event.stopPropagation()}
-				onKeyDown={(event) => event.stopPropagation()}
-				disabled={isBusy}
-				aria-label={t("profile_editor.sections.pictures.remove")}
-				title={t("profile_editor.sections.pictures.remove")}
-				className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-40"
-			>
-				<X className="h-3.5 w-3.5" />
-			</button>
-		</div>
-	);
-}
 
 export type ToggleMultiValueKey =
 	| "lookingFor"
@@ -256,7 +130,6 @@ function LastTestedField({
 export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorState }) {
 	const { t } = useTranslation();
 	const { testReminderDisabled, setPreferences } = usePreferences();
-	const isDesktop = useDesktopBreakpoint();
 	const {
 		draft,
 		unitsPreset,
@@ -275,61 +148,10 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 		travelPlans,
 		isLoadingTravelPlans,
 		setTravelDraft,
-		photos,
 	} = editor;
 	const isImperialHeight = unitsPreset === "uk" || unitsPreset === "american";
 	const isImperialWeight = unitsPreset === "american";
-	const [activeId, setActiveId] = useState<string | null>(null);
-	const [overId, setOverId] = useState<string | null>(null);
 	const [isTagsDialogOpen, setIsTagsDialogOpen] = useState(false);
-
-	// Mouse drags after a few pixels; touch only after a long press, so swiping
-	// across the photos still scrolls the page. (A PointerSensor would also
-	// catch touches and start dragging on every scroll that begins on a photo.)
-	const sensors = useSensors(
-		useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
-		useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 10 } }),
-	);
-
-	// The dropped order, shown until the save finished and the profile reloaded
-	// — otherwise the tiles snap back to the old order for the round trip and
-	// then jump again. Cleared afterwards, so a failed save reverts.
-	const [pendingPhotoOrder, setPendingPhotoOrder] = useState<string[] | null>(null);
-	const photoHashes = pendingPhotoOrder ?? photos.hashes;
-
-	const liveOrder = useMemo(() => {
-		if (!activeId || !overId || activeId === overId) return photoHashes;
-		const from = photoHashes.indexOf(activeId);
-		const to = photoHashes.indexOf(overId);
-		if (from === -1 || to === -1) return photoHashes;
-		return arrayMove(photoHashes, from, to);
-	}, [activeId, overId, photoHashes]);
-
-	// Haptics: a firm tick when the photo lifts, a light one for each new spot
-	// it moves over, and one more when it lands somewhere new.
-	const handleDndDragStart = ({ active }: DragStartEvent) => {
-		setActiveId(String(active.id));
-		haptic(15);
-	};
-
-	const handleDndDragOver = ({ over }: DragOverEvent) => {
-		const nextOverId = over ? String(over.id) : null;
-		if (nextOverId && nextOverId !== overId) haptic(6);
-		setOverId(nextOverId);
-	};
-
-	const handleDndDragEnd = ({ active, over }: DragEndEvent) => {
-		setActiveId(null);
-		setOverId(null);
-		if (!over || active.id === over.id) return;
-		const from = photoHashes.indexOf(String(active.id));
-		const to = photoHashes.indexOf(String(over.id));
-		if (from === -1 || to === -1) return;
-		haptic(10);
-		const nextOrder = arrayMove(photoHashes, from, to);
-		setPendingPhotoOrder(nextOrder);
-		void photos.handleReorder(nextOrder).finally(() => setPendingPhotoOrder(null));
-	};
 
 	const monthsSinceLastTested = useMemo(() => {
 		if (!draft.lastTestedDate) return null;
@@ -341,86 +163,7 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 	const isTestOverdue =
 		monthsSinceLastTested != null && monthsSinceLastTested >= TEST_REMINDER_THRESHOLD_MONTHS;
 
-	const openPhotoDrawer = () => photos.setIsDrawerOpen(true);
 	const PositionIcon = (draft.sexualPosition ? SEXUAL_POSITION_ICONS[Number(draft.sexualPosition)] : undefined) ?? Compass;
-
-	const picturesSection = (
-		<FieldSection
-			title={t("profile_editor.sections.pictures.title")}
-			action={
-				// Always open: the drawer manages the whole pool (upload, delete,
-				// pick), and it limits picking to the free slots itself.
-				<FieldSectionAction onClick={openPhotoDrawer}>
-					<Images className="h-3.5 w-3.5" />
-					{photos.isUploading
-						? t("profile_editor.sections.pictures.uploading")
-						: t("profile_editor.sections.pictures.manage", { defaultValue: "Manage" })}
-					<span className="tabular-nums text-[var(--text-muted)]">
-						{photos.hashes.length}/{MAX_PROFILE_PHOTOS}
-					</span>
-				</FieldSectionAction>
-			}
-			footer={
-				// The app's footnote style under a section (muted icon + text, as in
-				// the sexual health sheets), here naming the reorder gesture.
-				<div className="mt-2 flex gap-2.5 px-1">
-					{isDesktop
-						? <Move className="mt-px h-4 w-4 shrink-0 text-[var(--text-muted)] opacity-60" />
-						: <Hand className="mt-px h-4 w-4 shrink-0 text-[var(--text-muted)] opacity-60" />}
-					<p className="text-xs leading-relaxed text-[var(--text-muted)] opacity-80">
-						{photos.isSaving
-							? t("profile_editor.sections.pictures.saving")
-							: photos.hashes.length > 1
-								// How to reorder — long press on touch, plain drag with a mouse.
-								? t(isDesktop
-									? "profile_editor.sections.pictures.reorder_hint_mouse"
-									: "profile_editor.sections.pictures.reorder_hint_touch")
-								: t("profile_editor.sections.pictures.footer")}
-					</p>
-				</div>
-			}
-		>
-			<div className="p-3">
-				<DndContext
-					sensors={sensors}
-					onDragStart={handleDndDragStart}
-					onDragOver={handleDndDragOver}
-					onDragEnd={handleDndDragEnd}
-					onDragCancel={() => { setActiveId(null); setOverId(null); }}
-				>
-					<SortableContext items={photoHashes} strategy={rectSortingStrategy}>
-						<div className={`grid gap-2 ${isDesktop ? "grid-cols-3" : "grid-cols-2 sm:grid-cols-3"} rail:grid-cols-5`}>
-							{photoHashes.map((hash) => (
-								<SortablePhotoSlot
-									key={hash}
-									hash={hash}
-									slotIndex={liveOrder.indexOf(hash)}
-									moderation={photos.moderationByHash.get(hash)}
-									isSavingPhotos={photos.isSaving}
-									isUploadingPhoto={photos.isUploading}
-									onRemovePhoto={photos.handleRemove}
-									t={t}
-								/>
-							))}
-							{Array.from({ length: MAX_PROFILE_PHOTOS - photos.hashes.length }).map((_, i) => (
-								<button
-									key={`empty-${i}`}
-									type="button"
-									onClick={openPhotoDrawer}
-									className="relative flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl ink-tint-6 text-[var(--text-muted)] transition-[transform,color] duration-150 hover:ink-tint-10 hover:text-[var(--accent)] active:scale-[0.98]"
-								>
-									<Plus className="h-5 w-5" />
-									<span className="text-xs font-medium">
-										{t("profile_editor.sections.pictures.add")}
-									</span>
-								</button>
-							))}
-						</div>
-					</SortableContext>
-				</DndContext>
-			</div>
-		</FieldSection>
-	);
 
 	// The sections below use the profile view's headings and field icons, so
 	// editing reads like the profile it changes. Order follows it too (Expectations,
@@ -720,7 +463,6 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 
 	const firstStack = (
 		<>
-			{picturesSection}
 			{aboutSection}
 			{tagsSection}
 			{expectationsSection}
