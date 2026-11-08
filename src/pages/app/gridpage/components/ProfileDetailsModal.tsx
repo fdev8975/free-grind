@@ -2131,16 +2131,19 @@ export function ProfileDetailsModal({
 			? t("profile_editor.sections.pictures.primary")
 			: t("profile_editor.sections.pictures.set_primary");
 		return (
-			<div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-0.5 rounded-full bg-black/45 p-1 backdrop-blur-md">
-					{(isPending || isRejected) && (
-						<span
-							title={moderation?.reason ? `${moderationLabel}: ${moderation.reason}` : moderationLabel}
-							aria-label={moderationLabel}
-							className={`absolute right-full mr-2 flex h-9 w-9 items-center justify-center rounded-full text-white shadow-sm ${isRejected ? "bg-red-500/90" : "bg-amber-500/90"}`}
-						>
-							{isRejected ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-						</span>
-					)}
+			// The outer box only centers; the glass sits on the bar and on the
+			// round buttons beside it (a blur nested in another blur shows none).
+			<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2">
+				{(isPending || isRejected) && (
+					<span
+						title={moderation?.reason ? `${moderationLabel}: ${moderation.reason}` : moderationLabel}
+						aria-label={moderationLabel}
+						className={`absolute right-full top-1/2 mr-2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-sm ${isRejected ? "bg-red-500/90" : "bg-amber-500/90"}`}
+					>
+						{isRejected ? <AlertTriangle className="h-[18px] w-[18px]" /> : <Clock className="h-[18px] w-[18px]" />}
+					</span>
+				)}
+				<div className="flex items-center gap-0.5 rounded-full bg-black/45 p-1 backdrop-blur-md">
 					<button
 						type="button"
 						onClick={() => moveOwnPhoto(hash, 0)}
@@ -2175,15 +2178,6 @@ export function ProfileDetailsModal({
 					</button>
 					<button
 						type="button"
-						onClick={ownPhotoControls.openManager}
-						aria-label={t("profile_editor.sections.pictures.manage")}
-						title={t("profile_editor.sections.pictures.manage")}
-						className={actionClass}
-					>
-						<Images className="h-[18px] w-[18px]" />
-					</button>
-					<button
-						type="button"
 						onClick={() => { haptic(10); void ownPhotoControls.remove(hash); }}
 						disabled={isBusy || !isPhoto}
 						aria-label={t("profile_editor.sections.pictures.remove")}
@@ -2192,6 +2186,18 @@ export function ProfileDetailsModal({
 					>
 						<Trash2 className="h-[18px] w-[18px]" />
 					</button>
+				</div>
+				{/* Not about the photo in view, so set apart: its own round
+				    button off the bar's right side (the bar stays centered). */}
+				<button
+					type="button"
+					onClick={ownPhotoControls.openManager}
+					aria-label={t("profile_editor.sections.pictures.manage")}
+					title={t("profile_editor.sections.pictures.manage")}
+					className="absolute left-full top-1/2 ml-2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-md transition-colors hover:bg-black/60"
+				>
+					<Images className="h-[18px] w-[18px]" />
+				</button>
 			</div>
 		);
 	};

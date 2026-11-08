@@ -30,6 +30,7 @@ import {
 import { usePreferences } from "../../../contexts/PreferencesContext";
 import { useDesktopBreakpoint } from "../../../hooks/useDesktopBreakpoint";
 import { sheetChipClassName } from "../../../components/ui/sheet-section";
+import { cn } from "../../../utils/cn";
 import { SelectSheet } from "../../../components/ui/select-sheet";
 import { TravelPlansSection } from "./TravelPlansSection";
 import { SpotifyFavoritesSection } from "./SpotifyFavoritesSection";
@@ -193,7 +194,7 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 						style={{ "--chip-accent": "var(--accent)" } as CSSProperties}
 					>
 						{tagList.map((tag) => (
-							<span key={tag} className={sheetChipClassName({ active: true, size: "sm" })}>
+							<span key={tag} className={cn(sheetChipClassName({ active: false, size: "sm" }), "text-[var(--text)]")}>
 								{tagLabelByKey.get(tag) ?? tag}
 							</span>
 						))}
