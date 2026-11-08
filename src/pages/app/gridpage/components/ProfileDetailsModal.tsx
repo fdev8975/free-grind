@@ -2133,7 +2133,7 @@ export function ProfileDetailsModal({
 		return (
 			// The outer box only centers; the glass sits on the bar and on the
 			// round buttons beside it (a blur nested in another blur shows none).
-			<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2">
+			<div className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
 				{(isPending || isRejected) && (
 					<span
 						title={moderation?.reason ? `${moderationLabel}: ${moderation.reason}` : moderationLabel}
@@ -2187,14 +2187,14 @@ export function ProfileDetailsModal({
 						<Trash2 className="h-[18px] w-[18px]" />
 					</button>
 				</div>
-				{/* Not about the photo in view, so set apart: its own round
-				    button off the bar's right side (the bar stays centered). */}
+				{/* Not about the photo in view, so set apart: its own round button
+				    beside the bar; the two are centered as one group. */}
 				<button
 					type="button"
 					onClick={ownPhotoControls.openManager}
 					aria-label={t("profile_editor.sections.pictures.manage")}
 					title={t("profile_editor.sections.pictures.manage")}
-					className="absolute left-full top-1/2 ml-2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-md transition-colors hover:bg-black/60"
+					className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-md transition-colors hover:bg-black/60"
 				>
 					<Images className="h-[18px] w-[18px]" />
 				</button>
