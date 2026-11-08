@@ -37,6 +37,7 @@ import {
 	PanelBottom,
 	LocateFixed,
 	MapPin,
+	MapPinOff,
 	Type,
 	Trash2,
 	UserCircle,
@@ -183,6 +184,18 @@ export function useSettingsSearchIndex(): SettingsSearchEntry[] {
 			section: t("settings.search_sections.look_feel"),
 			icon: Flame,
 			iconClass: "bg-orange-500/15 text-orange-400",
+		},
+		{
+			id: "cust-estimated-distance",
+			route: "/settings/customizability",
+			anchor: "cust-estimated-distance",
+			label: t("customizability.show_estimated_distance", { defaultValue: "Show Estimated Distance" }),
+			description: t("customizability.show_estimated_distance_desc", {
+				defaultValue: "Show the estimated distance on grid tiles of profiles that hide their distance. When off, only the icon is shown.",
+			}),
+			section: t("settings.search_sections.look_feel"),
+			icon: MapPinOff,
+			iconClass: "bg-emerald-500/15 text-emerald-400",
 		},
 		{
 			id: "cust-drawer-layout",

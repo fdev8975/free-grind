@@ -73,7 +73,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 	hidePopular = false,
 }: BrowseCardTileProps) {
 	const { t } = useTranslation();
-	const { unitsPreset, showDebugInfo, doubleTapTapType, doubleTapAction } = usePreferences();
+	const { unitsPreset, showDebugInfo, doubleTapTapType, doubleTapAction, showEstimatedDistance } = usePreferences();
 	const { ref, revealClass } = useRevealOnScroll();
 	const name = localNickname?.trim() || getDisplayName(card);
 	const nicknameRename = getNicknameRename(localNickname, card.displayName, seenDisplayName);
@@ -394,7 +394,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 					<div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 via-black/25 to-transparent pointer-events-none" />
 					<div className="absolute bottom-2 left-2 z-10 flex h-5 items-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
 						{card.distanceMeters == null || !Number.isFinite(card.distanceMeters) ? (
-							card.estimatedDistanceMeters != null && Number.isFinite(card.estimatedDistanceMeters) ? (
+							showEstimatedDistance && card.estimatedDistanceMeters != null && Number.isFinite(card.estimatedDistanceMeters) ? (
 								<span className="inline-flex items-center gap-1 text-xs font-semibold">
 									<MapPinOffFilled className="h-3.5 w-3.5" />
 									{formatDistance(card.estimatedDistanceMeters, t, unitsPreset)}

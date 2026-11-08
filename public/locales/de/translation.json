@@ -1314,6 +1314,8 @@
         },
         "show_grid_tap_status": "Taps im Grid anzeigen",
         "show_grid_tap_status_desc": "Zeigt eine kleine Flamme auf Grid-Kacheln von Profilen, denen du in den letzten 24 Stunden einen Tap gesendet hast oder die dir einen gesendet haben.",
+        "show_estimated_distance": "Geschätzte Distanz anzeigen",
+        "show_estimated_distance_desc": "Zeigt die geschätzte Distanz auf Grid-Kacheln von Profilen, die ihre Distanz verbergen. Ausgeschaltet wird nur das Icon angezeigt.",
         "confirm_before_open_link": "Vor dem Öffnen von Links fragen",
         "confirm_before_open_link_desc": "Zeigt eine Bestätigung, bevor ein in einer Chatnachricht angetippter Link geöffnet wird."
     },

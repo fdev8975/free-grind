@@ -1314,6 +1314,8 @@
     },
     "show_grid_tap_status": "Show Taps on the Grid",
     "show_grid_tap_status_desc": "Show a small flame on grid tiles of profiles you've tapped or who tapped you in the last 24 hours.",
+    "show_estimated_distance": "Show Estimated Distance",
+    "show_estimated_distance_desc": "Show the estimated distance on grid tiles of profiles that hide their distance. When off, only the icon is shown.",
     "confirm_before_open_link": "Ask before opening links",
     "confirm_before_open_link_desc": "Show a confirmation before opening a link tapped inside a chat message."
   },

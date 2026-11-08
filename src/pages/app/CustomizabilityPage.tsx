@@ -1,7 +1,7 @@
 import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
 import { useMemo, useState } from "react";
 import { Columns2, Columns3, Columns4, Languages, LayoutGrid, List, PanelBottom, Ruler, Type, Vibrate } from "lucide-react";
-import { ClockFilled, FlameFilled, ImagesFilled, MessageCircleFilled, LayoutGridFilled, MonitorFilled, MoonFilled, PaletteFilled, SparklesFilled, SunFilled } from "../../components/icons/FilledIcons";
+import { ClockFilled, FlameFilled, ImagesFilled, MapPinOffFilled, MessageCircleFilled, LayoutGridFilled, MonitorFilled, MoonFilled, PaletteFilled, SparklesFilled, SunFilled } from "../../components/icons/FilledIcons";
 import toast from "react-hot-toast";
 import { usePreferences, ACCENT_PRESETS, type ColorScheme } from "../../contexts/PreferencesContext";
 import { PageHeader } from "../../components/PageHeader";
@@ -85,6 +85,7 @@ export function CustomizabilityPage() {
 		revealEffectEnabled,
 		revealEffectStrength,
 		showGridTapStatus,
+		showEstimatedDistance,
 		splitDrawerCategories,
 		compactComposer,
 		setPreferences,
@@ -313,6 +314,18 @@ export function CustomizabilityPage() {
 							})}
 							checked={showGridTapStatus}
 							onChange={(checked) => void setPreferences({ showGridTapStatus: checked })}
+						/>
+						<ToggleRow
+							id="cust-estimated-distance"
+							highlighted={highlightId === "cust-estimated-distance"}
+							icon={<MapPinOffFilled className="h-5 w-5" />}
+							iconClass="bg-emerald-500/15 text-emerald-400"
+							label={t("customizability.show_estimated_distance", { defaultValue: "Show Estimated Distance" })}
+							description={t("customizability.show_estimated_distance_desc", {
+								defaultValue: "Show the estimated distance on grid tiles of profiles that hide their distance. When off, only the icon is shown.",
+							})}
+							checked={showEstimatedDistance}
+							onChange={(checked) => void setPreferences({ showEstimatedDistance: checked })}
 						/>
 					</div>
 				</div>
