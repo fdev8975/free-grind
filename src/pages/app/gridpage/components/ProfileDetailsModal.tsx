@@ -559,15 +559,13 @@ export function ProfileDetailsModal({
 	const [hasUnsavedOwnEdits, setHasUnsavedOwnEdits] = useState(false);
 	const [isDiscardEditsPromptOpen, setIsDiscardEditsPromptOpen] = useState(false);
 	const [refreshedOwnProfile, setRefreshedOwnProfile] = useState<ProfileDetail | null>(null);
-	// Photo edits save immediately; the editor reports the saved order so the
-	// carousel follows right away. It also wins over the reload on leaving edit
-	// mode, which reads /v7/profiles and can lag behind the write.
+	// The editor reports the saved photo order (photo edits are a draft saved
+	// with the profile). It wins over the reload on leaving edit mode, which
+	// reads /v7/profiles and can lag behind the write.
 	const [editedOwnPhotoHashes, setEditedOwnPhotoHashes] = useState<string[] | null>(null);
-	// Set while the editor is open: the carousel then shows only your photos,
-	// each with its edit controls, plus a slide to add one.
+	// Set while the editor is open: the carousel then shows only your photos
+	// (the draft order), each with its edit controls, plus a slide to add one.
 	const [ownPhotoControls, setOwnPhotoControls] = useState<OwnPhotoControls | null>(null);
-	// A moved photo's new order, shown until the save finished (then cleared, so a failed save reverts).
-	const [pendingOwnPhotoOrder, setPendingOwnPhotoOrder] = useState<string[] | null>(null);
 	const openedProfileId = activeProfileProp?.profileId;
 	// Reset only when switching from one loaded profile to another — not when
 	// the first one arrives, which would undo `initialEditMode`.
@@ -1370,7 +1368,7 @@ export function ProfileDetailsModal({
 	// default-avatar placeholder (if there's no real photo or Right Now slide
 	// to show instead) first, then the Right Now post's image (if any), then
 	// the profile's own photos, then the album slide (if any) last.
-	const ownPhotoOrder = pendingOwnPhotoOrder ?? ownPhotoControls?.hashes ?? null;
+	const ownPhotoOrder = ownPhotoControls?.hashes ?? null;
 	const carouselHashes = useMemo(() => {
 		if (ownPhotoControls && ownPhotoOrder) {
 			return ownPhotoOrder.length < ownPhotoControls.maxPhotos ? [...ownPhotoOrder, ADD_PHOTO_SLIDE_HASH] : ownPhotoOrder;
@@ -1392,9 +1390,8 @@ export function ProfileDetailsModal({
 		const nextOrder = ownPhotoOrder.filter((item) => item !== hash);
 		nextOrder.splice(to, 0, hash);
 		haptic(10);
-		setPendingOwnPhotoOrder(nextOrder);
 		setMobileCarouselPhotoIndex(to);
-		void ownPhotoControls.reorder(nextOrder).finally(() => setPendingOwnPhotoOrder(null));
+		void ownPhotoControls.reorder(nextOrder);
 	};
 
 	// ProfileDetailsContent wires up swiping the mobile carousel; in edit mode it

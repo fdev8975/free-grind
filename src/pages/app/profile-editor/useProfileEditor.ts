@@ -307,7 +307,10 @@ export function useProfileEditor() {
 	const travelPlans = travelDraft ?? savedTravelPlans ?? [];
 	const hasTravelChanges = travelDraft !== null && !sameTravelPlans(travelDraft, savedTravelPlans ?? []);
 
-	const hasChanges = hasProfileChanges || hasSpotifyChanges || hasTravelChanges;
+	// The profile's photo slots as well: a draft order (null = untouched),
+	// applied on save. Uploading to and deleting from the picture pool still
+	// happen right away (see handleDeletePoolImage).
+	const [photoDraft, setPhotoDraft] = useState<string[] | null>(null);
 
 	const tagList = useMemo(
 		() => normalizeTagList(draft.profileTagsText),
@@ -344,15 +347,26 @@ export function useProfileEditor() {
 		return fromMedias.slice(0, MAX_PROFILE_PHOTOS);
 	}, [profile?.medias, profile?.profileImageMediaHash]);
 
+	const draftPhotoHashes = photoDraft ?? profilePhotoHashes;
+	const hasPhotoChanges =
+		photoDraft !== null &&
+		(photoDraft.length !== profilePhotoHashes.length || photoDraft.some((hash, index) => hash !== profilePhotoHashes[index]));
+
+	const hasChanges = hasProfileChanges || hasSpotifyChanges || hasTravelChanges || hasPhotoChanges;
+
 	const photoModerationByHash = useMemo(() => {
 		const map = new Map<string, { state: number | null; reason: string | null }>();
+		// Photos picked into the draft but not saved yet only have the pool's state.
+		for (const image of poolImages) {
+			map.set(image.mediaHash, { state: image.state ?? null, reason: null });
+		}
 		for (const item of profile?.medias ?? []) {
 			if (item.mediaHash) {
 				map.set(item.mediaHash, { state: item.state ?? null, reason: item.reason ?? null });
 			}
 		}
 		return map;
-	}, [profile?.medias]);
+	}, [profile?.medias, poolImages]);
 
 	// Text the server rejected for banned terms, with the terms it named. The
 	// error shows (and blocks saving) until that field's text is changed.
@@ -561,6 +575,18 @@ export function useProfileEditor() {
 				setTravelDraft(null);
 			}
 
+			// After the profile itself: that replace sends the last-fetched raw
+			// profile, which mustn't win over the new photo slots.
+			if (hasPhotoChanges && photoDraft) {
+				const [primaryImageHash, ...secondaryImageHashes] = photoDraft;
+				await apiFunctions.updateMyProfileImages({
+					primaryImageHash: primaryImageHash ?? null,
+					secondaryImageHashes,
+				});
+				await loadProfile({ silent: true });
+				setPhotoDraft(null);
+			}
+
 			// Keeps the grid/chat header avatar, account switcher, and the HIV
 			// test reminder in sync with whatever just changed here, instead of
 			// waiting out useMyOwnProfile's 5-minute staleTime.
@@ -683,25 +709,23 @@ export function useProfileEditor() {
 	const handleAddSelectedImages = useCallback(
 		async (hashes: string[]) => {
 			const newHashes = hashes.filter(
-				(hash) => validateMediaHash(hash) && !profilePhotoHashes.includes(hash),
+				(hash) => validateMediaHash(hash) && !draftPhotoHashes.includes(hash),
 			);
 			if (newHashes.length === 0) {
 				return;
 			}
-			const remainingSlots = MAX_PROFILE_PHOTOS - profilePhotoHashes.length;
+			const remainingSlots = MAX_PROFILE_PHOTOS - draftPhotoHashes.length;
 			if (remainingSlots <= 0) {
 				toast.error(t("profile_editor.toasts.error_photo_limit"));
 				return;
 			}
-			await persistProfilePhotos(
-				[...profilePhotoHashes, ...newHashes.slice(0, remainingSlots)],
-				{ successMessage: t("profile_editor.toasts.photo_added") },
-			);
+			// Into the draft only; saved with the profile.
+			setPhotoDraft([...draftPhotoHashes, ...newHashes.slice(0, remainingSlots)]);
 			// Animated close; falls back to unmounting if the drawer is already gone.
 			if (photoDrawerCloseRef.current) photoDrawerCloseRef.current();
 			else setIsPhotoDrawerOpen(false);
 		},
-		[profilePhotoHashes, persistProfilePhotos, t],
+		[draftPhotoHashes, t],
 	);
 
 	// Deleting from the drawer is a real server-side delete (unlike removing a
@@ -713,6 +737,10 @@ export function useProfileEditor() {
 		async (hash: string) => {
 			setDeletingPoolHash(hash);
 			try {
+				// Gone for good, so out of the draft too — a reset mustn't bring it back.
+				setPhotoDraft((current) => current?.filter((currentHash) => currentHash !== hash) ?? null);
+				// Still in the saved profile: unlinked there right away, in the same
+				// step, so the profile never points at a deleted image.
 				if (profilePhotoHashes.includes(hash)) {
 					await persistProfilePhotos(
 						profilePhotoHashes.filter((currentHash) => currentHash !== hash),
@@ -840,30 +868,21 @@ export function useProfileEditor() {
 	// (plain PUT) — the underlying upload stays on the server and can still be
 	// picked again from the picture drawer. Permanently deleting it from the
 	// server is a separate, explicit action there (handleDeletePoolImage).
+	// Both only change the draft; saved with the profile.
 	const handleRemovePhoto = async (hash: string) => {
-		if (!validateMediaHash(hash) || isSavingPhotos || isUploadingPhoto) {
-			return;
-		}
-
-		await persistProfilePhotos(
-			profilePhotoHashes.filter((currentHash) => currentHash !== hash),
-			{
-				successMessage: t("profile_editor.toasts.photo_removed"),
-			},
-		);
+		if (!validateMediaHash(hash)) return;
+		setPhotoDraft(draftPhotoHashes.filter((currentHash) => currentHash !== hash));
 	};
 
 	const handleReorderPhotos = async (newHashes: string[]) => {
-		if (isSavingPhotos || isUploadingPhoto) return;
-		await persistProfilePhotos(newHashes, {
-			successMessage: t("profile_editor.toasts.photos_reordered"),
-		});
+		setPhotoDraft(newHashes);
 	};
 
 	const handleResetDraft = () => {
 		setDraft(savedDraft);
 		setSpotifyDraft(null);
 		setTravelDraft(null);
+		setPhotoDraft(null);
 	};
 
 	return {
@@ -908,7 +927,10 @@ export function useProfileEditor() {
 		handleSaveProfile,
 		handleResetDraft,
 		photos: {
-			hashes: profilePhotoHashes,
+			/** The draft order, as shown while editing. */
+			hashes: draftPhotoHashes,
+			/** The saved order, for the profile view once editing ends. */
+			savedHashes: profilePhotoHashes,
 			moderationByHash: photoModerationByHash,
 			isSaving: isSavingPhotos,
 			isUploading: isUploadingPhoto,

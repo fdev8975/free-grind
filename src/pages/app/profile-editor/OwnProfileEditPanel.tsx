@@ -34,7 +34,7 @@ export function OwnProfileEditPanel({
 	onDone: () => void;
 	/** Reports unsaved changes, so the host can confirm before leaving edit mode. */
 	onDirtyChange?: (dirty: boolean) => void;
-	/** Photo changes are saved right away — reports the saved order, so the host's carousel can follow. */
+	/** Reports the saved photo order, so the host's carousel shows it once editing ends. */
 	onPhotoHashesChange?: (hashes: string[]) => void;
 	/** The photos are edited in the host's carousel; null once edit mode ends. */
 	onPhotoControlsChange?: (controls: OwnPhotoControls | null) => void;
@@ -42,27 +42,34 @@ export function OwnProfileEditPanel({
 	const { t } = useTranslation();
 	const editor = useProfileEditor();
 	const isProfileLoaded = editor.profile != null;
+	// Photo slots are a draft like the rest: the carousel shows the draft
+	// while editing, the profile view the saved order (so leaving without
+	// saving shows the old photos again).
 	const photoHashes = editor.photos.hashes;
+	const savedPhotoHashes = editor.photos.savedHashes;
 
 	useEffect(() => {
-		if (isProfileLoaded) onPhotoHashesChange?.(photoHashes);
-	}, [isProfileLoaded, photoHashes, onPhotoHashesChange]);
+		if (isProfileLoaded) onPhotoHashesChange?.(savedPhotoHashes);
+	}, [isProfileLoaded, savedPhotoHashes, onPhotoHashesChange]);
 
 	// The actions go through a ref, so the reported object only changes with
 	// what the carousel shows — a new one every render would loop with the host.
 	const photosRef = useRef(editor.photos);
 	photosRef.current = editor.photos;
 	const { moderationByHash, isSaving: isSavingPhotos, isUploading: isUploadingPhoto } = editor.photos;
+	// Slot edits only touch the draft, so an upload doesn't block them — a
+	// save or a pool delete (which writes the saved slots) does.
+	const isSavingProfile = editor.isSaving;
 	const photoControls = useMemo<OwnPhotoControls>(() => ({
 		hashes: photoHashes,
 		moderationByHash,
 		maxPhotos: MAX_PROFILE_PHOTOS,
-		isBusy: isSavingPhotos || isUploadingPhoto,
+		isBusy: isSavingPhotos || isSavingProfile,
 		isUploading: isUploadingPhoto,
 		remove: (hash) => photosRef.current.handleRemove(hash),
 		reorder: (hashes) => photosRef.current.handleReorder(hashes),
 		openManager: () => photosRef.current.setIsDrawerOpen(true),
-	}), [photoHashes, moderationByHash, isSavingPhotos, isUploadingPhoto]);
+	}), [photoHashes, moderationByHash, isSavingPhotos, isSavingProfile, isUploadingPhoto]);
 	useEffect(() => {
 		if (isProfileLoaded) onPhotoControlsChange?.(photoControls);
 	}, [isProfileLoaded, photoControls, onPhotoControlsChange]);
@@ -74,8 +81,14 @@ export function OwnProfileEditPanel({
 	useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
 	const handleSave = async () => {
+		// The draft order is what gets saved. Reported here, before onDone ends
+		// edit mode: the effect above would only run after this panel is gone.
+		const savedOrder = editor.photos.hashes;
 		const saved = await editor.handleSaveProfile();
-		if (saved) onDone();
+		if (saved) {
+			onPhotoHashesChange?.(savedOrder);
+			onDone();
+		}
 		return saved;
 	};
 
