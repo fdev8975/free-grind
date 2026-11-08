@@ -91,6 +91,7 @@ import { useSettingsSearchIndex } from "../../data/settingsSearchIndex";
 import { isSexualHealthEnabled } from "../../utils/optionalFeatures";
 import { replayOnboarding } from "../../utils/onboardingStorage";
 import { resetGridGesturesIntro } from "./gridpage/components/GridGesturesIntro";
+import { resetInterestOnboarding } from "./interest/InterestOnboardingModal";
 import { replayRestoreOffer } from "../../utils/restoreOfferStorage";
 import { showLegalAgreementsPrompt } from "../../utils/legalAgreementsDebug";
 import { showAccountWarningsPrompt } from "../../utils/accountWarningsDebug";
@@ -1420,6 +1421,16 @@ export function SettingsPage() {
 							onSelect: () => afterSheetClose(() => {
 								resetGridGesturesIntro();
 								navigate("/");
+							}),
+						},
+						{
+							key: "profile-views-intro",
+							icon: EyeFilled,
+							label: "Profile Views Intro",
+							description: "The one-time intro on the Interest page's Views tab.",
+							onSelect: () => afterSheetClose(() => {
+								resetInterestOnboarding();
+								navigate("/interest?tab=views");
 							}),
 						},
 						{ key: "restore", icon: FileUpFilled, label: "Restore Offer", description: "The first-login backup restore dialog.", onSelect: () => afterSheetClose(replayRestoreOffer) },

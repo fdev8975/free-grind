@@ -17,7 +17,7 @@ import {
 import { InterestTabs, InterestRow, type InterestTabConfig } from "./interest/InterestComponents";
 import { InterestViewsGrid, useViewsGridLayout } from "./interest/InterestViewsGrid";
 import { getAllCachedBrowseCardsById } from "./gridpage/cache";
-import { InterestOnboardingModal } from "./interest/InterestOnboardingModal";
+import { INTEREST_ONBOARDING_SEEN_KEY, InterestOnboardingModal } from "./interest/InterestOnboardingModal";
 import {
 	SCROLL_RESTORATION_TIMEOUT_MS,
 } from "../../config/ui-constants";
@@ -27,7 +27,7 @@ import { PageHeaderBackground } from "../../components/ui/PageHeaderBackground";
 import { FeedScrollContainer } from "../../components/ui/FeedScrollContainer";
 import { usePreferences } from "../../contexts/PreferencesContext";
 
-const ONBOARDING_KEY = "fg-interest-onboarding-seen";
+const ONBOARDING_KEY = INTEREST_ONBOARDING_SEEN_KEY;
 
 const TAB_ICONS: Record<InterestTab, ComponentType<{ className?: string }>> = { views: EyeFilled, taps: FlameFilled, sent: SendFilled };
 

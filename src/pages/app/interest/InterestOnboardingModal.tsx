@@ -2,6 +2,17 @@ import { History, Eye, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { FullscreenPrompt, fullscreenPrimaryButtonClass, fullscreenCardClass } from "../../../components/FullscreenPrompt";
 
+export const INTEREST_ONBOARDING_SEEN_KEY = "fg-interest-onboarding-seen";
+
+/** Clears the seen flag so the Views tab shows the intro again on its next mount (dev tool). */
+export function resetInterestOnboarding(): void {
+	try {
+		window.localStorage.removeItem(INTEREST_ONBOARDING_SEEN_KEY);
+	} catch {
+		// ignore storage errors
+	}
+}
+
 export function InterestOnboardingModal({ onConfirm }: { onConfirm: () => void }) {
 	const { t } = useTranslation();
 
