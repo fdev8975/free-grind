@@ -412,7 +412,7 @@ function ChatConversationRow({
 	onSwipeDeleteRequest,
 }: ChatConversationRowProps) {
 	const { t } = useTranslation();
-	const { showDebugInfo, chatRowSwipeActions } = usePreferences();
+	const { showDebugInfo, chatRowSwipeActions, showOnlineTimeLeft } = usePreferences();
 	const { ref, revealClass } = useRevealOnScroll();
 	useAvatarCache();
 
@@ -586,6 +586,7 @@ function ChatConversationRow({
 		otherParticipant?.onlineUntil,
 		nowTimestamp,
 		t,
+		showOnlineTimeLeft,
 	);
 	const isOtherParticipantOnline = otherParticipantOnlineMeta.isOnline;
 	const databaseUnread = otherProfileId ? chatContactIndexByProfileId[otherProfileId]?.unreadCount ?? 0 : 0;

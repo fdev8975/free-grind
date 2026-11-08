@@ -86,6 +86,7 @@ export function CustomizabilityPage() {
 		revealEffectStrength,
 		showGridTapStatus,
 		showEstimatedDistance,
+		showOnlineTimeLeft,
 		splitDrawerCategories,
 		compactComposer,
 		setPreferences,
@@ -326,6 +327,18 @@ export function CustomizabilityPage() {
 							})}
 							checked={showEstimatedDistance}
 							onChange={(checked) => void setPreferences({ showEstimatedDistance: checked })}
+						/>
+						<ToggleRow
+							id="cust-online-time-left"
+							highlighted={highlightId === "cust-online-time-left"}
+							icon={<ClockFilled className="h-5 w-5" />}
+							iconClass="bg-green-500/15 text-green-400"
+							label={t("customizability.show_online_time_left", { defaultValue: "Show Online Time Left" })}
+							description={t("customizability.show_online_time_left_desc", {
+								defaultValue: "Show how many minutes online profiles have left on profiles and in chats. When off, they just show as online.",
+							})}
+							checked={showOnlineTimeLeft}
+							onChange={(checked) => void setPreferences({ showOnlineTimeLeft: checked })}
 						/>
 					</div>
 				</div>

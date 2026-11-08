@@ -1336,6 +1336,8 @@ export function getParticipantOnlineMeta(
 	onlineUntil: number | null | undefined,
 	nowTimestamp: number,
 	t: TranslateFn,
+	/** Look & Feel "show online time left": false labels online profiles as plain "Online". */
+	showTimeLeft = true,
 ): { isOnline: boolean; isEndingSoon?: boolean; label: string } {
 	// lastOnline/onlineUntil of 0 is the server's "unknown/hidden" sentinel,
 	// not a real epoch timestamp — treat it the same as null/undefined,
@@ -1360,7 +1362,9 @@ export function getParticipantOnlineMeta(
 		return {
 			isOnline: true,
 			isEndingSoon: minsLeft <= ONLINE_ENDING_SOON_MINUTES,
-			label: t("browse_page.status_online_left", { count: minsLeft }),
+			label: showTimeLeft
+				? t("browse_page.status_online_left", { count: minsLeft })
+				: t("browse_page.status_online"),
 		};
 	}
 

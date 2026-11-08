@@ -11,7 +11,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/ui/sta
 import type { ConversationEntry } from "../../../types/chat";
 import { albumViewerFolderKey, type AlbumViewer, type SharedAlbumItem } from "../../../types/shared-albums";
 import { getThumbImageUrl, validateMediaHash } from "../../../utils/media";
-import { formatDistance, getOnlineStatusMeta } from "../gridpage/utils";
+import { formatDistance, getOnlineStatusLabelArgs, getOnlineStatusMeta } from "../gridpage/utils";
 import { useAvatarCache } from "../../../hooks/useAvatarCache";
 import { resolveAvatarSrc } from "../../../services/avatarStore";
 import { PhotoViewer, type PhotoViewerMedia, type PhotoViewerMenuAction } from "../../../components/PhotoViewer";
@@ -44,7 +44,7 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 	useAvatarCache();
 	const navigate = useNavigate();
 	const { userId } = useAuth();
-	const { mobileGridColumns, unitsPreset, showAlbumSensitiveContentWarning } = usePreferences();
+	const { mobileGridColumns, unitsPreset, showAlbumSensitiveContentWarning, showOnlineTimeLeft } = usePreferences();
 	const apiFunctions = useApiFunctions();
 
 	const [isLoading, setIsLoading] = useState(true);
@@ -487,8 +487,9 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 	const albumHeader = useMemo(() => {
 		if (!viewer) return undefined;
 		const statusMeta = getOnlineStatusMeta(null, viewer.onlineUntil);
+		const onlineLabel = getOnlineStatusLabelArgs(statusMeta, showOnlineTimeLeft);
 		const statusLabel = statusMeta.isOnline
-			? t(statusMeta.labelKey, { count: statusMeta.count })
+			? t(onlineLabel.key, { count: onlineLabel.count })
 			: statusMeta.labelKey === "browse_page.status_offline"
 				? t(statusMeta.labelKey)
 				: t(statusMeta.labelKey, { count: statusMeta.count });
@@ -504,7 +505,7 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 			isOnlineEndingSoon: statusMeta.isEndingSoon,
 			onClick: () => handleViewProfile(viewer.profileId),
 		};
-	}, [viewer, t, unitsPreset, handleViewProfile]);
+	}, [viewer, t, unitsPreset, showOnlineTimeLeft, handleViewProfile]);
 
 	const px = isDesktop ? "px-4" : "px-[var(--app-px)]";
 

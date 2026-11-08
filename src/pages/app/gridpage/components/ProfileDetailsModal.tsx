@@ -61,6 +61,7 @@ import {
 	formatHeightCm,
 	formatWeightKg,
 	getOnlineStatusMeta,
+	getOnlineStatusLabelArgs,
 	getEnumLabel,
 	shouldHideField,
 } from "../utils";
@@ -174,9 +175,11 @@ type ProfileStatusLevel = "online" | "ending_soon" | "recent" | "offline";
 function getProfileStatusDisplay(
 	meta: ReturnType<typeof getOnlineStatusMeta>,
 	t: ReturnType<typeof useTranslation>["t"],
+	showTimeLeft: boolean,
 ): { label: string; level: ProfileStatusLevel } {
+	const onlineLabel = getOnlineStatusLabelArgs(meta, showTimeLeft);
 	const label = meta.isOnline
-		? t(meta.labelKey, { count: meta.count })
+		? t(onlineLabel.key, { count: onlineLabel.count })
 		: meta.labelKey === "browse_page.status_offline"
 			? t(meta.labelKey)
 			: t("profile_details.last_online", {
@@ -227,10 +230,10 @@ function ProfileSwipePreviewPanel({
 	renderDetails: (detail: ProfileDetail) => ReactNode;
 }) {
 	const { t } = useTranslation();
-	const { unitsPreset } = usePreferences();
+	const { unitsPreset, showOnlineTimeLeft } = usePreferences();
 	const src = proxyMediaUrl(preview.imageUrl);
 	const hasStatus = preview.lastSeen != null || preview.onlineUntil != null;
-	const status = hasStatus ? getProfileStatusDisplay(getOnlineStatusMeta(preview.lastSeen, preview.onlineUntil), t) : null;
+	const status = hasStatus ? getProfileStatusDisplay(getOnlineStatusMeta(preview.lastSeen, preview.onlineUntil), t, showOnlineTimeLeft) : null;
 	const name = preview.name?.trim() || t("common.unknown_display_name");
 	const hasAge = preview.age != null && Number.isFinite(preview.age);
 	const distanceLabel = preview.distance != null ? formatDistance(preview.distance, t, unitsPreset) : null;
@@ -542,7 +545,7 @@ export function ProfileDetailsModal({
 	initialEditMode = false,
 }: ProfileDetailsModalProps) {
 	const { t } = useTranslation();
-	const { unitsPreset, showAlbumSensitiveContentWarning, openAlbumAsBottomSheet } = usePreferences();
+	const { unitsPreset, showAlbumSensitiveContentWarning, openAlbumAsBottomSheet, showOnlineTimeLeft } = usePreferences();
 	const { userId } = useAuth();
 	const apiFunctions = useApiFunctions();
 	// Own profile only: edit mode swaps the details for the editor sections.
@@ -653,7 +656,7 @@ export function ProfileDetailsModal({
 		profileLastSeen,
 		profileOnlineUntil,
 	);
-	const { label: profileStatusLabel, level: profileStatusLevel } = getProfileStatusDisplay(profileStatusMeta, t);
+	const { label: profileStatusLabel, level: profileStatusLevel } = getProfileStatusDisplay(profileStatusMeta, t, showOnlineTimeLeft);
 	const estimatedCreatedAt = formatEstimatedAccountCreation(activeProfile?.profileId, t);
 	const { data: travelPlans } = useTravelPlans(activeProfile?.profileId);
 	const visualStateValue = typeof tapVisualState === "string" ? tapVisualState : tapVisualState.state;
@@ -2311,7 +2314,7 @@ export function ProfileDetailsModal({
 	const renderPreviewDetails = (detail: ProfileDetail) => {
 		const flags = getContentFlags(detail);
 		const meta = getOnlineStatusMeta(detail.seen, detail.onlineUntil);
-		const status = getProfileStatusDisplay(meta, t);
+		const status = getProfileStatusDisplay(meta, t, showOnlineTimeLeft);
 		return (
 			<ProfileDetailsContent
 				activeProfile={detail}

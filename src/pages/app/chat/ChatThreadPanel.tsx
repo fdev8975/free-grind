@@ -450,7 +450,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 	const { chat: blurChatMedia } = useMediaBlur();
 	useAvatarCache();
     const apiFunctions = useApiFunctions();
-	const { unitsPreset, geohash, amoledMode, enterToSend: enterSends, compactComposer, savedPhraseSendGesture } = usePreferences();
+	const { unitsPreset, geohash, amoledMode, enterToSend: enterSends, compactComposer, savedPhraseSendGesture, showOnlineTimeLeft } = usePreferences();
 	const effectiveColorScheme = useEffectiveColorScheme();
 	// Android 3-button navigation: the composer actions sit right on the system buttons.
 	const systemNavInset = useSystemNavInset();
@@ -1372,6 +1372,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 					targetProfileDetail?.onlineUntil ?? otherParticipant?.onlineUntil,
 					nowTimestamp,
 					t,
+					showOnlineTimeLeft,
 				);
 				const isOnline = onlineMeta.isOnline;
 				const distanceLabel = distanceMetres ? formatDistance(distanceMetres, t, unitsPreset) : null;

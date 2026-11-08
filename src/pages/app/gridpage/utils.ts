@@ -264,6 +264,21 @@ export function getOnlineStatusMeta(
 	};
 }
 
+/**
+ * Online label key/count for a status meta: "Online (12m left)" when the
+ * remaining time should be shown (Look & Feel setting), plain "Online" otherwise.
+ * Offline labels are returned unchanged.
+ */
+export function getOnlineStatusLabelArgs(
+	meta: OnlineStatusMeta,
+	showTimeLeft: boolean,
+): { key: string; count?: number } {
+	if (meta.isOnline && !showTimeLeft) {
+		return { key: "browse_page.status_online" };
+	}
+	return { key: meta.labelKey, count: meta.count };
+}
+
 export function getDisplayName(card: BrowseCard): string {
 	const value = card.displayName?.trim();
 	if (value) {

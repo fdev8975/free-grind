@@ -228,7 +228,8 @@ export const InterestViewTile = memo(function InterestViewTile({
 		? item.displayName
 		: isPrivate
 			? t("interest_page.locked_profile")
-			: t("common.unknown_display_name");
+			// Like the browse grid: no "Someone" placeholder on tiles, only a real name.
+			: null;
 
 	return (
 		<div ref={ref} className={cn(!isDesktop && "bg-black rounded-[6px] overflow-hidden", revealClass)}>
@@ -319,13 +320,13 @@ export const InterestViewTile = memo(function InterestViewTile({
 						<div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
 						<div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-1 p-2 text-white">
 							<div className="min-w-0 flex-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-								{displayName && (
+								{(displayName || age) && (
 									<p className="truncate text-sm font-bold leading-tight">
 										{displayName}
-										{age && <span className="ml-1 font-semibold text-white/90">{age}</span>}
+										{age && <span className={cn("font-semibold text-white/90", displayName && "ml-1")}>{age}</span>}
 									</p>
 								)}
-								<p className={cn("flex items-center gap-1 text-[11px] font-semibold text-white/80", displayName && "mt-0.5")}>
+								<p className={cn("flex items-center gap-1 text-[11px] font-semibold text-white/80", (displayName || age) && "mt-0.5")}>
 									<ClockFilled className="h-3 w-3 shrink-0" />
 									<span className="truncate">{formatTimestamp(item.timestamp, t, now)}</span>
 									{mode !== "sent" && item.distanceMeters != null && (

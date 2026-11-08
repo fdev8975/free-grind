@@ -198,6 +198,18 @@ export function useSettingsSearchIndex(): SettingsSearchEntry[] {
 			iconClass: "bg-emerald-500/15 text-emerald-400",
 		},
 		{
+			id: "cust-online-time-left",
+			route: "/settings/customizability",
+			anchor: "cust-online-time-left",
+			label: t("customizability.show_online_time_left", { defaultValue: "Show Online Time Left" }),
+			description: t("customizability.show_online_time_left_desc", {
+				defaultValue: "Show how many minutes online profiles have left on profiles and in chats. When off, they just show as online.",
+			}),
+			section: t("settings.search_sections.look_feel"),
+			icon: Clock,
+			iconClass: "bg-green-500/15 text-green-400",
+		},
+		{
 			id: "cust-drawer-layout",
 			route: "/settings/customizability",
 			anchor: "cust-drawer-layout",

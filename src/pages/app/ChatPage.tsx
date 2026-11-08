@@ -427,7 +427,7 @@ export function ChatPage() {
 	const { data: blockedProfileIdsData, refetch: refetchBlockedProfileIds } = useBlockedProfileIds();
 	const { data: myProfile } = useMyOwnProfile();
 	const profileImageHash = useMemo(() => getProfilePhotoHash(myProfile), [myProfile]);
-	const { unitsPreset, showAlbumSensitiveContentWarning, sortDrawerMediaByFrequency, defaultExpiringPhotos, openAlbumAsBottomSheet } = usePreferences();
+	const { unitsPreset, showAlbumSensitiveContentWarning, sortDrawerMediaByFrequency, defaultExpiringPhotos, openAlbumAsBottomSheet, showOnlineTimeLeft } = usePreferences();
 	const { userId, settingsReady } = useAuth();
 	const isDesktop = useDesktopBreakpoint();
 	const threadBottomRef = useRef<HTMLDivElement | null>(null);
@@ -6958,6 +6958,7 @@ export function ChatPage() {
 			otherParticipant?.onlineUntil,
 			nowTimestamp,
 			t,
+			showOnlineTimeLeft,
 		);
 		const distanceLabel = otherParticipant?.distanceMetres
 			? formatDistance(otherParticipant.distanceMetres, t, unitsPreset)
@@ -6977,7 +6978,7 @@ export function ChatPage() {
 				? () => openProfile(otherParticipant.profileId, getProfileReturnToChatPath(otherParticipant.profileId))
 				: undefined,
 		};
-	}, [albumViewer, ownProfilePhotoUrl, myProfile, selectedConversation, userId, nowTimestamp, unitsPreset, t, getProfileReturnToChatPath, openProfile]);
+	}, [albumViewer, ownProfilePhotoUrl, myProfile, selectedConversation, userId, nowTimestamp, unitsPreset, showOnlineTimeLeft, t, getProfileReturnToChatPath, openProfile]);
 
 	const toggleAlbumPicker = useCallback(async () => {
 		if (isAlbumPickerOpen) {
