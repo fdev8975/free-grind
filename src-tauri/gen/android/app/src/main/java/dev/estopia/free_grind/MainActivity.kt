@@ -392,6 +392,21 @@ class MainActivity : TauriActivity() {
     @JavascriptInterface
     fun getSafeAreaInsets(): String? = safeAreaJson
 
+    /**
+     * The realtime bridge delivered this chat message while the app was
+     * visible — a late FCM push for it must not notify after the app is left.
+     */
+    @JavascriptInterface
+    fun markMessageSeen(messageId: String?) {
+      NotificationPoster.normalizeNullableString(messageId)?.let(NotificationPoster::markMessageSeenInForeground)
+    }
+
+    /** Same as markMessageSeen, for a tap from [senderId]. */
+    @JavascriptInterface
+    fun markTapSeen(senderId: String?) {
+      NotificationPoster.normalizeNullableString(senderId)?.let(NotificationPoster::markTapSeenInForeground)
+    }
+
     @JavascriptInterface
     fun setActiveRoute(route: String?) {
       activeRoute = route

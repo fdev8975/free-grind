@@ -49,6 +49,13 @@ object NotificationPoster {
     private const val EXTRA_LINE_KEY = "dev.estopia.free_grind.extra.LINE_KEY"
     // Marks a line as the user's own inline reply (see NotificationReply.kt).
     private const val EXTRA_LINE_FROM_ME = "dev.estopia.free_grind.extra.LINE_FROM_ME"
+    // The chat messageId behind a line, when known. FCM lines are keyed by
+    // notificationId (unsend withdraws by it), but Grindr can push the same
+    // message twice under different notificationIds — this catches those.
+    private const val EXTRA_LINE_MESSAGE_ID = "dev.estopia.free_grind.extra.LINE_MESSAGE_ID"
+    // Messages/taps the app showed live while visible (see markSeenInForeground).
+    private const val FOREGROUND_SEEN_MESSAGES_MAX = 500
+    private const val FOREGROUND_SEEN_TAP_WINDOW_MS = 15 * 60_000L
 
     // Messages kept in one conversation's notification (newest win).
     private const val CONVERSATION_LINES_MAX = 8
@@ -67,9 +74,21 @@ object NotificationPoster {
         val dataMimeType: String?,
         val dataUri: Uri?,
         val fromMe: Boolean = false,
+        val messageId: String? = null,
     )
 
     private val recentlyNotifiedKeys = mutableMapOf<String, Long>()
+    // FCM relays with a delay: a push for a message the user already saw in
+    // the app (live in the open chat, or as the in-app banner) often lands
+    // only after they've left the app, when the foreground check no longer
+    // drops it. The realtime bridge reports what it delivered while visible,
+    // so those late pushes are dropped instead of notifying again.
+    private val foregroundSeenMessageIds = object : LinkedHashMap<String, Unit>() {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Unit>?): Boolean =
+            size > FOREGROUND_SEEN_MESSAGES_MAX
+    }
+    // Tap notification key ("tap:<senderId>") → when it was seen live.
+    private val foregroundSeenTaps = mutableMapOf<String, Long>()
     // Grindr has no server-side dedupe and can deliver the same push more
     // than once; its notificationId is the dedupe key.
     private val seenPushNotificationIds = object : LinkedHashMap<String, Unit>() {
@@ -93,6 +112,28 @@ object NotificationPoster {
         if (recentlyNotifiedKeys.containsKey(key)) return true
         recentlyNotifiedKeys[key] = now
         return false
+    }
+
+    /** A chat message was delivered live while the app was visible. */
+    @Synchronized
+    fun markMessageSeenInForeground(messageId: String) {
+        foregroundSeenMessageIds[messageId] = Unit
+    }
+
+    /** A tap from [senderId] was delivered live while the app was visible. */
+    @Synchronized
+    fun markTapSeenInForeground(senderId: String) {
+        val now = System.currentTimeMillis()
+        foregroundSeenTaps.entries.removeAll { now - it.value >= FOREGROUND_SEEN_TAP_WINDOW_MS }
+        foregroundSeenTaps["tap:$senderId"] = now
+    }
+
+    @Synchronized
+    private fun wasSeenInForeground(messageId: String?, tapKey: String?): Boolean {
+        if (messageId != null && foregroundSeenMessageIds.containsKey(messageId)) return true
+        if (tapKey == null) return false
+        val seenAt = foregroundSeenTaps[tapKey] ?: return false
+        return System.currentTimeMillis() - seenAt < FOREGROUND_SEEN_TAP_WINDOW_MS
     }
 
     /** True if a push with this notificationId was already handled. */
@@ -165,6 +206,7 @@ object NotificationPoster {
             Line(
                 key, message.text ?: "", message.timestamp, message.dataMimeType, message.dataUri,
                 fromMe = message.extras.getBoolean(EXTRA_LINE_FROM_ME, false),
+                messageId = message.extras.getString(EXTRA_LINE_MESSAGE_ID),
             )
         }
     }
@@ -172,7 +214,7 @@ object NotificationPoster {
     // Same merge as open-grind's ConversationLines.append: drop keys already
     // shown, sort by time, keep the newest CONVERSATION_LINES_MAX.
     private fun appendLines(lines: List<Line>, added: Line): List<Line> {
-        if (lines.any { it.key == added.key }) return lines
+        if (lines.any { it.key == added.key || (added.messageId != null && it.messageId == added.messageId) }) return lines
         return (lines + added).sortedBy { it.timestamp }.takeLast(CONVERSATION_LINES_MAX)
     }
 
@@ -183,6 +225,7 @@ object NotificationPoster {
                 NotificationCompat.MessagingStyle.Message(line.text, line.timestamp, if (line.fromMe) null else peer).apply {
                     extras.putString(EXTRA_LINE_KEY, line.key)
                     if (line.fromMe) extras.putBoolean(EXTRA_LINE_FROM_ME, true)
+                    if (line.messageId != null) extras.putString(EXTRA_LINE_MESSAGE_ID, line.messageId)
                     if (line.dataMimeType != null && line.dataUri != null) setData(line.dataMimeType, line.dataUri)
                 },
             )
@@ -346,6 +389,11 @@ object NotificationPoster {
             Log.d("FCM", "Suppressing push notification (app visible, realtime bridge covers it)")
             return
         }
+        val messageId = normalizeNullableString(payload.optString("messageId"))
+        if (!fromRealtime && wasSeenInForeground(messageId, if (isTap) notificationKey else null)) {
+            Log.d("FCM", "Suppressing late push (already seen in the app) key=$notificationKey messageId=$messageId")
+            return
+        }
         if (isTap && shouldSuppressAsDuplicate(notificationKey)) {
             Log.d("FCM", "Suppressing notification (already shown via other channel) key=$notificationKey")
             return
@@ -479,7 +527,7 @@ object NotificationPoster {
             builder.addAction(NotificationCompat.Action.Builder(R.drawable.ic_notification_action_profile, NotificationStrings.text(context, NotificationStrings.OPEN_PROFILE), openIntent("profile")).build())
         }
 
-        val added = Line(lineKey, text, timestamp, previewUri?.let { "image/jpeg" }, previewUri)
+        val added = Line(lineKey, text, timestamp, previewUri?.let { "image/jpeg" }, previewUri, messageId = messageId)
         synchronized(postLock) {
             // Taps stay one line per sender; chat appends to the lines the
             // conversation's notification is already showing.

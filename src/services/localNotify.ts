@@ -137,6 +137,28 @@ export function withdrawMessageNotification(conversationId: string, messageId: s
 	}
 }
 
+type SeenBridge = {
+	markMessageSeen?: (messageId: string) => void;
+	markTapSeen?: (senderId: string) => void;
+};
+
+/**
+ * Android: a message/tap reached the user live while the app was visible.
+ * FCM relays with a delay, so its push for the same message often lands only
+ * after the user left the app — NotificationPoster drops it once told here.
+ * No-op elsewhere (no competing push channel).
+ */
+export function markSeenInForeground(seen: { messageId?: string; tapSenderId?: string }): void {
+	const bridge = (window as unknown as { FreeGrindBridge?: SeenBridge }).FreeGrindBridge;
+	if (!bridge) return;
+	try {
+		if (seen.messageId) bridge.markMessageSeen?.(seen.messageId);
+		if (seen.tapSenderId) bridge.markTapSeen?.(seen.tapSenderId);
+	} catch (error) {
+		appLog.warn("[notify] markSeenInForeground (native) failed", error);
+	}
+}
+
 /**
  * Dismisses any already-shown system notification for a conversation once
  * its messages have been read, instead of leaving it in the shade until the

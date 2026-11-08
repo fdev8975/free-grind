@@ -82,6 +82,7 @@ import {
 import {
 	notifyLocal,
 	clearChatNotifications,
+	markSeenInForeground,
 	withdrawMessageNotification,
 } from "../services/localNotify";
 
@@ -733,6 +734,7 @@ export function ChatRealtimeBridge() {
 						shouldProcessIncomingTap(tap.profileId)
 					) {
 						appLog.debug(`[chat-ws:bridge] Incoming tap received from profileId: ${tap.profileId}`);
+						if (isAppForeground()) markSeenInForeground({ tapSenderId: String(tap.profileId) });
 						window.dispatchEvent(
 							new CustomEvent<TapReceivedDetail>(TAP_RECEIVED_EVENT, {
 								detail: tap,
@@ -931,6 +933,9 @@ export function ChatRealtimeBridge() {
 						byConv.set(m.conversationId, list);
 
 						if (isIncoming) {
+							// Already delivered in the app (open chat, banner or
+							// unread badge) — the later FCM push mustn't notify.
+							if (isAppForeground()) markSeenInForeground({ messageId: m.messageId });
 							maybeUnarchiveOnActivity(m.senderId);
 							void unhideConversationOnNewMessage(m.conversationId);
 						}
