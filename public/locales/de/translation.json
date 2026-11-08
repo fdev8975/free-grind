@@ -3072,6 +3072,7 @@
         "delete_confirm_message": "Dadurch wird das Foto dauerhaft aus deinem Konto gelöscht, nicht nur aus deinem Profil.",
         "delete_confirm_label": "Löschen",
         "deleted": "Foto gelöscht",
+        "in_profile": "Im Profil",
         "add_selected": "Hinzufügen ({{count}})",
         "adding": "Wird hinzugefügt…",
         "nudity_notice": "Keine vollständige Nacktheit erlaubt. Fotos, die dagegen verstoßen, können abgelehnt werden oder zu Kontoeinschränkungen führen."

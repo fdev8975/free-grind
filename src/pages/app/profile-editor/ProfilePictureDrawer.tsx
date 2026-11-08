@@ -142,8 +142,10 @@ export function ProfilePictureDrawer({
 		setConfirmDeleteHash(null);
 	}, [deletingHash]);
 
+	// Every picture shows, those already in the profile greyed out: they
+	// can't be picked again, but can still be deleted (which also takes them
+	// out of the profile).
 	const usedSet = new Set(usedHashes);
-	const visibleImages = images.filter((image) => !usedSet.has(image.mediaHash));
 	const hasSelection = selectedHashes.size > 0;
 
 	return (
@@ -176,7 +178,7 @@ export function ProfilePictureDrawer({
 					error={error}
 					onRetry={onRetry}
 					retryLabel={t("profile_photo_drawer.retry")}
-					empty={visibleImages.length === 0 && uploadTiles.length === 0 ? (
+					empty={images.length === 0 && uploadTiles.length === 0 ? (
 						<DrawerEmptyState
 							icon={<ImageIcon className="h-5 w-5" />}
 							title={t("profile_photo_drawer.empty")}
@@ -200,17 +202,21 @@ export function ProfilePictureDrawer({
 							disabled={isSelecting || hasSelection}
 						/>
 						{uploadTiles}
-						{visibleImages.map((image) => {
+						{images.map((image) => {
 							const isPending = image.state === MEDIA_MODERATION_STATE.PENDING;
 							const isRejected = image.state === MEDIA_MODERATION_STATE.REJECTED;
 							const isDeleting = deletingHash === image.mediaHash;
 							const isSelected = selectedHashes.has(image.mediaHash);
+							const isInProfile = usedSet.has(image.mediaHash);
 							// Once the selection has hit the number of free profile slots,
 							// picking anything else would just be rejected by toggleSelection
 							// — mute those tiles the same way the chat drawer dims media that
 							// can't be added to the current selection (e.g. image/video mix).
-							const isMutedByCapacity = !isSelected && selectedHashes.size >= remainingSlots;
-							const isClickable = !isSelecting && !isDeleting && !isMutedByCapacity;
+							// With no free slot at all there's nothing to pick: the tiles
+							// stay plain (not muted, which would also block deleting and
+							// peeking) and just aren't selectable.
+							const isMutedByCapacity = remainingSlots > 0 && !isSelected && selectedHashes.size >= remainingSlots;
+							const isClickable = !isInProfile && remainingSlots > 0 && !isSelecting && !isDeleting && !isMutedByCapacity;
 							const thumbUrl = getThumbImageUrl(image.mediaHash, "320x320");
 							const statusLabel = isPending
 								? t("profile_editor.sections.pictures.pending_moderation")
@@ -225,7 +231,7 @@ export function ProfilePictureDrawer({
 									alt={t("profile_photo_drawer.image_alt")}
 									mediaClassName={isRejected ? "opacity-50 grayscale" : ""}
 									selected={isSelected}
-									muted={isMutedByCapacity}
+									muted={!isInProfile && isMutedByCapacity}
 									busy={isSelecting || isDeleting}
 									onSelect={isClickable ? () => toggleSelection(image.mediaHash) : undefined}
 									// Hold to peek, like the other drawers: the full photo, the thumbnail until it loaded.
@@ -235,6 +241,15 @@ export function ProfilePictureDrawer({
 									isDeleting={isDeleting}
 									deleteLabel={t("profile_photo_drawer.delete_image")}
 								>
+									{/* Like the chat drawer's "Sent": darkened, the label centered. Done
+									    here rather than with `muted`, which would block deleting too. */}
+									{isInProfile ? (
+										<div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
+											<span className="text-[11px] font-semibold uppercase tracking-widest text-white/90">
+												{t("profile_photo_drawer.in_profile", { defaultValue: "In profile" })}
+											</span>
+										</div>
+									) : null}
 									{statusLabel ? (
 										<span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
 											{statusLabel}

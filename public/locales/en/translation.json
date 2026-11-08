@@ -3070,6 +3070,7 @@
     "delete_confirm_message": "This permanently deletes the photo from your account, not just your profile.",
     "delete_confirm_label": "Delete",
     "deleted": "Photo deleted",
+    "in_profile": "In profile",
     "add_selected": "Add ({{count}})",
     "adding": "Adding…",
     "nudity_notice": "No full nudity allowed. Photos that violate this may be rejected or lead to account restrictions."
