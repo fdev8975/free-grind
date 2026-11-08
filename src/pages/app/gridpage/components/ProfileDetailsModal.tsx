@@ -1378,8 +1378,26 @@ export function ProfileDetailsModal({
 	// removed photo): keep the position, clamped. A Right Now / album /
 	// placeholder slide that edit mode doesn't have: back to the start. A
 	// different profile is left to the reset above.
+	// Layout effects: the index is fixed before the browser paints. With a
+	// plain effect the new order showed first under the old index for a frame,
+	// so a moved photo slid away and back.
 	const shownCarouselSlideRef = useRef<{ hash: string; profileId: unknown } | null>(null);
-	useEffect(() => {
+	// The slides jump to their new places without sliding while the set
+	// changes — a swapped neighbour would otherwise glide across the photo
+	// in view (from above it to below it). Back on two frames later.
+	const [isSlideSetChanging, setIsSlideSetChanging] = useState(false);
+	useLayoutEffect(() => {
+		setIsSlideSetChanging(true);
+		let secondFrame = 0;
+		const firstFrame = requestAnimationFrame(() => {
+			secondFrame = requestAnimationFrame(() => setIsSlideSetChanging(false));
+		});
+		return () => {
+			cancelAnimationFrame(firstFrame);
+			cancelAnimationFrame(secondFrame);
+		};
+	}, [carouselHashes]);
+	useLayoutEffect(() => {
 		const shown = shownCarouselSlideRef.current;
 		if (!shown || shown.profileId !== activeProfile?.profileId) return;
 		const found = carouselHashes.indexOf(shown.hash);
@@ -1392,7 +1410,7 @@ export function ProfileDetailsModal({
 		}
 	}, [carouselHashes]);
 	// After the effect above, so it still sees the slide from before the change.
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const hash = carouselHashes[mobileCarouselPhotoIndex];
 		shownCarouselSlideRef.current = hash ? { hash, profileId: activeProfile?.profileId } : null;
 	}, [carouselHashes, mobileCarouselPhotoIndex, activeProfile?.profileId]);
@@ -2709,7 +2727,7 @@ export function ProfileDetailsModal({
 									// --carousel-drag / --carousel-transition are set on the
 									// carousel by ProfileDetailsContent's touch handler.
 									transform: `translateY(calc(${(index - mobileCarouselPhotoIndex) * 100}% + var(--carousel-drag, 0px)))`,
-									transition: "var(--carousel-transition, transform 300ms ease-out)",
+									transition: isSlideSetChanging ? "none" : "var(--carousel-transition, transform 300ms ease-out)",
 								}}
 							>
 								{renderCarouselSlideContent(hash, index)}
@@ -2954,7 +2972,7 @@ export function ProfileDetailsModal({
 								className="absolute inset-0 overflow-hidden"
 								style={{
 									transform: `translateY(${(index - mobileCarouselPhotoIndex) * 100}%)`,
-									transition: "transform 300ms ease-out",
+									transition: isSlideSetChanging ? "none" : "transform 300ms ease-out",
 								}}
 							>
 								{renderCarouselSlideContent(hash, index)}
