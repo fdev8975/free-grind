@@ -13,6 +13,8 @@ import android.provider.Settings
 import android.util.Log
 import org.json.JSONObject
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
@@ -25,15 +27,24 @@ import java.util.concurrent.atomic.AtomicBoolean
  * shows its own install/update confirmation; the outcome comes back through
  * [ApkUpdateResultReceiver].
  *
+ * The download runs under [ApkUpdateService] (foreground service + progress
+ * notification), so it survives minimizing the app and the screen turning
+ * off. If the installer's confirmation arrives while the app is in the
+ * background it's held back until [onAppForeground].
+ *
  * Progress/outcome is reported through [emit] as `fg:apk-update` window
  * events with a `target` (see [Target.key]) and a `state` of downloading |
  * verifying | needs-permission | installing | installed | error (+ `code`).
+ * The last one is kept for [currentState], so a reopened WebView can pick
+ * the status back up.
  */
 object ApkUpdater {
   private const val TAG = "ApkUpdater"
   private const val DIR = "apk-update"
   private const val BUFFER = 1 shl 16
   private const val EXTRA_TARGET = "dev.estopia.free_grind.extra.APK_TARGET"
+  private const val MAX_ATTEMPTS = 5
+  private const val RETRY_DELAY_MS = 3_000L
 
   enum class Target(
     val key: String,
@@ -60,8 +71,33 @@ object ApkUpdater {
   @Volatile
   var emit: (JSONObject) -> Unit = {}
 
+  @Volatile
+  private var lastEvent: JSONObject? = null
+
+  @Volatile
+  private var lastPercent: Int? = null
+
+  /**
+   * The installer's confirmation screen, held back while the app is in the
+   * background (Android blocks activity starts from there).
+   */
+  @Volatile
+  private var pendingConfirmation: Intent? = null
+
+  @Volatile
+  private var appContext: Context? = null
+
+  fun isBusy(): Boolean = busy.get()
+
+  fun progressPercent(): Int? = lastPercent
+
+  /** The last `fg:apk-update` event as JSON, or null when nothing happened in this process. */
+  fun currentState(): String? = lastEvent?.toString()
+
   private fun event(target: Target, state: String, extra: JSONObject.() -> Unit = {}) {
-    emit(JSONObject().put("target", target.key).put("state", state).apply(extra))
+    val json = JSONObject().put("target", target.key).put("state", state).apply(extra)
+    lastEvent = json
+    emit(json)
   }
 
   private fun error(target: Target, code: String, message: String? = null) {
@@ -70,6 +106,21 @@ object ApkUpdater {
       put("code", code)
       if (message != null) put("message", message)
     }
+    appContext?.let { context ->
+      ApkUpdateService.stop(context)
+      if (!MainActivity.inForeground && code != "canceled") {
+        ApkUpdateService.showResult(context, ApkUpdateService.ResultKind.FAILED)
+      }
+    }
+  }
+
+  /** From MainActivity.onResume: clears our result notification and shows a held-back confirmation. */
+  fun onAppForeground(context: Context) {
+    ApkUpdateService.cancelResult(context)
+    val confirm = pendingConfirmation ?: return
+    pendingConfirmation = null
+    runCatching { context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+      .onFailure { error(Target.SELF, "failed", it.message) }
   }
 
   private fun apkFile(context: Context, target: Target): File =
@@ -77,7 +128,7 @@ object ApkUpdater {
 
   /** Drops a leftover APK from an earlier (finished or abandoned) update — they're 150MB+. */
   fun cleanupStale(context: Context) {
-    if (busy.get()) return
+    if (busy.get() || pendingConfirmation != null) return
     runCatching { File(context.cacheDir, DIR).deleteRecursively() }
   }
 
@@ -103,6 +154,17 @@ object ApkUpdater {
   private fun downloadAndInstall(context: Context, target: Target, resolveUrl: (Target) -> String): Boolean {
     if (!busy.compareAndSet(false, true)) return false
     val appContext = context.applicationContext
+    this.appContext = appContext
+    pendingConfirmation = null
+    lastPercent = 0
+    ApkUpdateService.cancelResult(appContext)
+    event(target, "downloading") {
+      put("received", 0)
+      put("total", -1)
+    }
+    // Started while the app is in front (the user just tapped "update"),
+    // which is when Android still allows starting a foreground service.
+    ApkUpdateService.start(appContext)
     Thread({
       try {
         val url = resolveUrl(target)
@@ -116,6 +178,7 @@ object ApkUpdater {
         error(target, "failed", t.message)
       } finally {
         busy.set(false)
+        ApkUpdateService.stop(appContext)
       }
     }, "free-grind-apk-${target.key}").start()
     return true
@@ -127,6 +190,8 @@ object ApkUpdater {
     if (!apk.isFile) return false
     if (!busy.compareAndSet(false, true)) return false
     val appContext = context.applicationContext
+    this.appContext = appContext
+    pendingConfirmation = null
     Thread({
       try {
         if (verify(appContext, target, apk)) installVerified(appContext, target, apk)
@@ -139,67 +204,105 @@ object ApkUpdater {
     return true
   }
 
+  private class HttpStatusException(status: Int) : IOException("HTTP $status")
+
+  /**
+   * Downloads [url] into the target's cache dir. Dropped connections (e.g.
+   * switching between Wi-Fi and mobile data) are retried a few times,
+   * resuming with a Range request where the server supports it.
+   */
   private fun download(context: Context, target: Target, url: String): File? {
     val file = apkFile(context, target)
     file.parentFile?.deleteRecursively()
     file.parentFile?.mkdirs()
     val partial = File(file.parentFile, "${target.fileName}.part")
 
+    var total = -1L
+    var lastError: Throwable? = null
+    for (attempt in 0 until MAX_ATTEMPTS) {
+      if (attempt > 0) Thread.sleep(RETRY_DELAY_MS * attempt)
+      try {
+        total = downloadOnce(context, target, url, partial, total)
+        lastError = null
+        break
+      } catch (e: HttpStatusException) {
+        partial.delete()
+        error(target, "http", e.message)
+        return null
+      } catch (t: IOException) {
+        Log.w(TAG, "download attempt ${attempt + 1} failed", t)
+        lastError = t
+      }
+    }
+    if (lastError != null) {
+      partial.delete()
+      error(target, "network", lastError.message)
+      return null
+    }
+    if (total > 0 && partial.length() != total) {
+      partial.delete()
+      error(target, "incomplete")
+      return null
+    }
+    if (!partial.renameTo(file)) {
+      error(target, "failed", "rename")
+      return null
+    }
+    return file
+  }
+
+  /** One connection's worth of download into [partial]; returns the full size, or -1 if unknown. */
+  private fun downloadOnce(context: Context, target: Target, url: String, partial: File, knownTotal: Long): Long {
+    val offset = if (partial.isFile) partial.length() else 0L
     val connection = (URL(url).openConnection() as HttpURLConnection).apply {
       instanceFollowRedirects = true
       connectTimeout = 20_000
       readTimeout = 30_000
       setRequestProperty("Accept", "application/octet-stream")
+      if (offset > 0) setRequestProperty("Range", "bytes=$offset-")
     }
     try {
       val status = connection.responseCode
-      if (status !in 200..299) {
-        error(target, "http", "HTTP $status")
-        return null
+      if (status == 416 && knownTotal > 0 && offset == knownTotal) return knownTotal
+      if (status !in 200..299) throw HttpStatusException(status)
+      // A 200 to a Range request means the server ignored it: start over.
+      val resumed = offset > 0 && status == HttpURLConnection.HTTP_PARTIAL
+      val length = connection.contentLengthLong
+      val total = when {
+        length < 0 -> knownTotal
+        resumed -> offset + length
+        else -> length
       }
-      val total = connection.contentLengthLong
-      var received = 0L
-      var lastPercent = -1
-      event(target, "downloading") {
-        put("received", 0)
-        put("total", total)
-      }
+      var received = if (resumed) offset else 0L
+      reportProgress(context, target, received, total, force = true)
       connection.inputStream.use { input ->
-        partial.outputStream().use { output ->
+        FileOutputStream(partial, resumed).use { output ->
           val buffer = ByteArray(BUFFER)
           while (true) {
             val read = input.read(buffer)
             if (read < 0) break
             output.write(buffer, 0, read)
             received += read
-            val percent = if (total > 0) ((received * 100) / total).toInt() else -1
-            if (percent != lastPercent) {
-              lastPercent = percent
-              event(target, "downloading") {
-                put("received", received)
-                put("total", total)
-              }
-            }
+            reportProgress(context, target, received, total)
           }
         }
       }
-      if (total > 0 && received != total) {
-        partial.delete()
-        error(target, "incomplete")
-        return null
-      }
-      if (!partial.renameTo(file)) {
-        error(target, "failed", "rename")
-        return null
-      }
-      return file
-    } catch (t: Throwable) {
-      partial.delete()
-      error(target, "network", t.message)
-      return null
+      if (total > 0 && received < total) throw IOException("connection closed at $received/$total")
+      return total
     } finally {
       connection.disconnect()
     }
+  }
+
+  private fun reportProgress(context: Context, target: Target, received: Long, total: Long, force: Boolean = false) {
+    val percent = if (total > 0) ((received * 100) / total).toInt() else null
+    if (!force && percent == lastPercent) return
+    lastPercent = percent
+    event(target, "downloading") {
+      put("received", received)
+      put("total", total)
+    }
+    ApkUpdateService.updateProgress(context, percent)
   }
 
   @Suppress("DEPRECATION")
@@ -244,6 +347,7 @@ object ApkUpdater {
 
   private fun verify(context: Context, target: Target, apk: File): Boolean {
     event(target, "verifying")
+    ApkUpdateService.updateProgress(context, null, verifying = true)
     val pm = context.packageManager
     val archive = archiveInfo(pm, apk)
     if (archive == null) {
@@ -275,6 +379,10 @@ object ApkUpdater {
   private fun installVerified(context: Context, target: Target, apk: File) {
     if (!canInstallNow(context)) {
       event(target, "needs-permission")
+      ApkUpdateService.stop(context)
+      if (!MainActivity.inForeground) {
+        ApkUpdateService.showResult(context, ApkUpdateService.ResultKind.NEEDS_PERMISSION)
+      }
       return
     }
     event(target, "installing")
@@ -312,6 +420,7 @@ object ApkUpdater {
   }
 
   internal fun onInstallStatus(context: Context, intent: Intent) {
+    appContext = context.applicationContext
     val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
     val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
     val target = Target.of(intent.getStringExtra(EXTRA_TARGET)) ?: Target.SELF
@@ -327,8 +436,16 @@ object ApkUpdater {
           error(target, "failed", "missing confirmation intent")
           return
         }
-        runCatching { context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-          .onFailure { error(target, "failed", it.message) }
+        ApkUpdateService.stop(context)
+        if (MainActivity.inForeground) {
+          runCatching { context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            .onFailure { error(target, "failed", it.message) }
+        } else {
+          // Android won't open it from the background: hold it until the
+          // user comes back (or taps the notification) instead of failing.
+          pendingConfirmation = confirm
+          ApkUpdateService.showResult(context, ApkUpdateService.ResultKind.READY)
+        }
       }
       // Never seen for a self-update, which kills this process.
       PackageInstaller.STATUS_SUCCESS -> {

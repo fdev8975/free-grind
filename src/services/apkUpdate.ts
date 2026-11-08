@@ -10,6 +10,8 @@ type ApkUpdateBridge = {
 	downloadApkUpdate?: (url: string) => boolean;
 	installDownloadedApkUpdate?: () => boolean;
 	canInstallApkUpdates?: () => boolean;
+	/** JSON of the last native event, "" when nothing ran in this process. */
+	getApkUpdateState?: () => string;
 	openInstallPermissionSettings?: () => boolean;
 };
 
@@ -56,34 +58,61 @@ export function describeApkUpdateError(code: string): string {
 	return i18n.t(`apk_update.errors.${key}`, { defaultValue: english });
 }
 
+function stateFromEvent(detail: NativeEvent): ApkUpdateState {
+	if (detail.state === "downloading") {
+		return {
+			phase: "downloading",
+			progress: detail.total > 0 ? Math.min(1, detail.received / detail.total) : null,
+		};
+	}
+	if (detail.state === "error") return { phase: "error", code: detail.code, message: detail.message };
+	return { phase: detail.state };
+}
+
+function readNativeState(target: ApkInstallTarget): ApkUpdateState | null {
+	try {
+		const raw = getBridge()?.getApkUpdateState?.();
+		if (!raw) return null;
+		const detail = JSON.parse(raw) as NativeEvent;
+		if ((detail.target ?? "app") !== target) return null;
+		return stateFromEvent(detail);
+	} catch {
+		return null;
+	}
+}
+
 /**
  * Tracks one target's install from its native events, and resumes the
  * install of the already downloaded APK when the user comes back from the
  * "install unknown apps" settings screen.
  */
 function useApkInstall(target: ApkInstallTarget, enabled: boolean, installDownloadedNative: () => boolean | undefined) {
-	const [state, setState] = useState<ApkUpdateState>({ phase: "idle" });
+	// The download keeps running natively while the app is minimized (and
+	// survives this page being remounted), so start from where it is.
+	const [state, setState] = useState<ApkUpdateState>(
+		() => (enabled ? readNativeState(target) : null) ?? { phase: "idle" },
+	);
 
 	useEffect(() => {
 		if (!enabled) return;
 		const handler = (event: Event) => {
 			const detail = (event as CustomEvent<NativeEvent>).detail;
 			if (!detail || (detail.target ?? "app") !== target) return;
-			if (detail.state === "downloading") {
-				setState({
-					phase: "downloading",
-					progress: detail.total > 0 ? Math.min(1, detail.received / detail.total) : null,
-				});
-			} else if (detail.state === "error") {
-				setState({ phase: "error", code: detail.code, message: detail.message });
-			} else {
-				setState({ phase: detail.state });
-
-                
-			}
+			setState(stateFromEvent(detail));
 		};
+		// Events can be missed while the WebView is paused in the background.
+		const resync = () => {
+			if (document.visibilityState !== "visible") return;
+			const native = readNativeState(target);
+			if (native) setState(native);
+		};
+		resync();
 		window.addEventListener("fg:apk-update", handler);
-		return () => window.removeEventListener("fg:apk-update", handler);
+		document.addEventListener("visibilitychange", resync);
+		return () => {
+			window.removeEventListener("fg:apk-update", handler);
+			document.removeEventListener("visibilitychange", resync);
+		};
 	}, [enabled, target]);
 
 	const installDownloadedRef = useRef(installDownloadedNative);

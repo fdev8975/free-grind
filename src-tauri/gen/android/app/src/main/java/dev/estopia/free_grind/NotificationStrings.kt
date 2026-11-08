@@ -40,6 +40,14 @@ object NotificationStrings {
         REPLY_FAILED to "Not sent",
         TAPS_TITLE to "Taps",
         MESSAGE_REACTION_NO_NAME to "Reacted to your message",
+        // App self-update, see ApkUpdateService.kt
+        ApkUpdateService.DOWNLOADING to "Downloading update…",
+        ApkUpdateService.VERIFYING to "Checking update…",
+        ApkUpdateService.READY_TITLE to "Update ready",
+        ApkUpdateService.READY_BODY to "Tap to install",
+        ApkUpdateService.PERMISSION_BODY to "Tap to allow installing the update",
+        ApkUpdateService.FAILED_TITLE to "Update failed",
+        ApkUpdateService.FAILED_BODY to "Tap to open the app and try again",
     )
 
     private val CHAT_FALLBACKS = mapOf(

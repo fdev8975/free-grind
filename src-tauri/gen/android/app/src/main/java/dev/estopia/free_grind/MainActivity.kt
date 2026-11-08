@@ -334,6 +334,9 @@ class MainActivity : TauriActivity() {
   override fun onResume() {
     super.onResume()
     inForeground = true
+    // A self-update that finished downloading in the background: show the
+    // installer confirmation Android didn't let us open from there.
+    ApkUpdater.onAppForeground(this)
     webViewRef?.let { wv -> wv.post { publishSafeArea(wv) } }
     val refreshed = pendingRefreshedFcmToken
     if (refreshed != null) {
@@ -621,6 +624,12 @@ class MainActivity : TauriActivity() {
     @JavascriptInterface
     fun installDownloadedApkUpdate(): Boolean {
       return ApkUpdater.installDownloaded(this@MainActivity)
+    }
+
+    /** The last `fg:apk-update` event (JSON), so a reopened page can show where the update is; "" if none. */
+    @JavascriptInterface
+    fun getApkUpdateState(): String {
+      return ApkUpdater.currentState().orEmpty()
     }
 
     @JavascriptInterface
