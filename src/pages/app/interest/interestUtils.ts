@@ -388,8 +388,46 @@ export function normalizeViews(
 	// same distance. A profile appears once in the views list, so IDs already
 	// in it can't be behind another preview.
 	const takenIds = new Set(Array.from(mergedMap.keys()).filter((id) => !id.startsWith(PREVIEW_ID_PREFIX)));
+	// Previews recovered on an earlier load, by view time. The next load gets
+	// the same view as a fresh locked preview again; without this it would
+	// sit next to its recovered twin whenever today's evidence is weaker
+	// (e.g. a second view event close by now makes the time match ambiguous).
+	const recoveredByTimestamp = new Map<number, InterestItem[]>();
+	for (const item of mergedMap.values()) {
+		if (item.profileId.startsWith(PREVIEW_ID_PREFIX) || !item.isFromCache || item.timestamp == null) continue;
+		const list = recoveredByTimestamp.get(item.timestamp) ?? [];
+		list.push(item);
+		recoveredByTimestamp.set(item.timestamp, list);
+	}
+	const findEarlierRecovery = (item: InterestItem): InterestItem | null => {
+		if (item.timestamp == null) return null;
+		const matches = (recoveredByTimestamp.get(item.timestamp) ?? []).filter(
+			(known) =>
+				(!item.imageHash || !known.imageHash || item.imageHash === known.imageHash) &&
+				(item.distanceMeters == null ||
+					known.distanceMeters == null ||
+					Math.abs(item.distanceMeters - known.distanceMeters) <= distanceTolerance(item.distanceMeters)),
+		);
+		return matches.length === 1 ? matches[0] : null;
+	};
+
 	for (const [id, item] of Array.from(mergedMap)) {
 		if (!id.startsWith(PREVIEW_ID_PREFIX)) continue;
+		const earlier = findEarlierRecovery(item);
+		if (earlier) {
+			// Same view, already identified — fold the fresh preview data in.
+			mergedMap.delete(id);
+			mergedMap.set(earlier.profileId, {
+				...mergeViewItem(item, earlier),
+				displayName: earlier.displayName ?? item.displayName,
+				timestamp: earlier.timestamp,
+				distanceMeters: item.distanceMeters ?? earlier.distanceMeters,
+				isFavorite: item.isFavorite ?? earlier.isFavorite,
+				onlineUntil: item.onlineUntil ?? earlier.onlineUntil,
+				rightNow: item.rightNow ?? earlier.rightNow,
+			});
+			continue;
+		}
 		const byHash = item.imageHash ? hashToProfile.get(item.imageHash) : undefined;
 		const byEvent = byHash ? null : findViewEventMatch(item, viewEvents);
 		const byDistance =
