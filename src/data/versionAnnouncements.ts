@@ -23,6 +23,7 @@ import {
 	LogIn,
 	MapPin,
 	Merge,
+	MessageSquareDot,
 	MonitorSmartphone,
 	Moon,
 	NotebookPen,
@@ -35,9 +36,11 @@ import {
 	ShieldAlert,
 	SlidersHorizontal,
 	Smartphone,
+	Smile,
 	Sticker,
 	Terminal,
 	Timer,
+	TriangleAlert,
 	Unlock,
 	Upload,
 	UserPen,
@@ -238,6 +241,11 @@ export const VERSION_ANNOUNCEMENTS: VersionAnnouncement[] = [
 				description: "Every message now shows up in the notification, grouped per chat, with buttons to jump straight into the chat or the profile. On Android, you can also reply right from the notification.",
 			},
 			{
+				icon: MessageSquareDot,
+				title: "In-App Notifications",
+				description: "New messages and taps now pop up as a banner while you're using the app, so you don't miss anything outside the inbox.",
+			},
+			{
 				icon: Share,
 				title: "Share to Free Grind",
 				description: "On Android, share photos from any app straight to Free Grind and send them to one or several chats at once, with your most recent conversations at the top.",
@@ -271,6 +279,11 @@ export const VERSION_ANNOUNCEMENTS: VersionAnnouncement[] = [
 				icon: Scissors,
 				title: "Video Editor",
 				description: "Pick the part of a video to send on a filmstrip and turn landscape videos upright with bars or a crop. Longer videos are no problem anymore: drag past 15 seconds and they're split into several clips of up to 15 seconds each, sent one after another — up to 2 minutes in total.",
+			},
+			{
+				icon: Smile,
+				title: "Gaymoji",
+				description: "Send Gaymoji from their own tab next to GIFs in the chat composer, sorted into categories.",
 			},
 			{
 				icon: MapPin,
@@ -313,6 +326,11 @@ export const VERSION_ANNOUNCEMENTS: VersionAnnouncement[] = [
 				description: "See exactly why and how long an account is restricted, including the ban type, reason and expiry date. Once a temporary ban ends, accept Grindr's agreement in the app to get back in. Device-related refusals now come with a hint on how to fix them.",
 			},
 			{
+				icon: TriangleAlert,
+				title: "Age Verification Warning",
+				description: "Before you move your location to a region where Grindr requires age verification (UK, Brazil, Australia), Free Grind warns you, because Grindr would lock your account there until you verify your age in the official app. Locate stops before entering these regions too.",
+			},
+			{
 				icon: Smartphone,
 				title: "SMS Verification",
 				description: "If Grindr asks an account to verify a phone number, you can request and enter the SMS code right on the sign-in screen.",
@@ -339,8 +357,8 @@ export const VERSION_ANNOUNCEMENTS: VersionAnnouncement[] = [
 			},
 			{
 				icon: DatabaseBackup,
-				title: "Backup & Restore Fixed",
-				description: "Backing up and restoring your data works reliably again, now with a progress bar so you can see how far along it is.",
+				title: "Better Backup & Restore",
+				description: "Backups now also include your favorites and their notes, your own albums, profile details, saved trips, Spotify songs and recently used Gaymoji. You can restore a backup onto a new profile, restored chats are marked with a note, and a progress bar shows how far along it is.",
 			},
 			{
 				icon: Wrench,
