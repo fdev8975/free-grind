@@ -27,6 +27,17 @@ const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 // tap only opens the profile once the window has passed.
 const DOUBLE_TAP_MS = 250;
 const FLAME_BURST_MS = 1200;
+// A touch that lands while the grid is still scrolling (momentum after a
+// fling) just stops the scroll — holding that finger still must not count as
+// a long press on whatever tile ended up underneath.
+const SCROLL_SETTLE_MS = 120;
+
+// Last time anything scrolled. Scroll events don't bubble, so listen in the
+// capture phase to catch the grid's inner scroll container too.
+let lastScrollAt = 0;
+if (typeof window !== "undefined") {
+	window.addEventListener("scroll", () => { lastScrollAt = performance.now(); }, { capture: true, passive: true });
+}
 
 type BrowseCardTileProps = {
 	card: BrowseCard;
@@ -93,6 +104,8 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 	// doesn't open underneath the menu.
 	const pressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
 	const longPressTriggeredRef = useRef(false);
+	// Defaults to "mouse" so keyboard-triggered context menus still work.
+	const lastPointerTypeRef = useRef<string>("mouse");
 	const canOpenMenu = Boolean(onOpenContextMenu) && !isDemoCard;
 
 	const cancelPress = () => {
@@ -104,14 +117,20 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 
 	const handlePointerDown = (event: React.PointerEvent) => {
 		longPressTriggeredRef.current = false;
+		lastPointerTypeRef.current = event.pointerType;
 		cancelPress();
 		if (!canOpenMenu || event.pointerType === "mouse") return;
+		const startedAt = performance.now();
+		if (startedAt - lastScrollAt < SCROLL_SETTLE_MS) return;
 		const { clientX: x, clientY: y } = event;
 		pressRef.current = {
 			x,
 			y,
 			timer: setTimeout(() => {
 				pressRef.current = null;
+				// The grid scrolled during the hold (the browser doesn't always
+				// send pointercancel/pointermove for it) — this was a scroll.
+				if (lastScrollAt >= startedAt) return;
 				longPressTriggeredRef.current = true;
 				haptic(15);
 				onOpenContextMenu?.(card, x, y);
@@ -131,7 +150,9 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 		event.preventDefault();
 		// Android WebViews also fire contextmenu on a touch long press — the
 		// timer above owns that case.
-		if (!canOpenMenu || pressRef.current || longPressTriggeredRef.current) return;
+		// Checking the pointer type (not just pressRef) matters: a press skipped
+		// because the grid was still scrolling has no pressRef either.
+		if (!canOpenMenu || lastPointerTypeRef.current !== "mouse" || pressRef.current || longPressTriggeredRef.current) return;
 		onOpenContextMenu?.(card, event.clientX, event.clientY);
 	};
 
