@@ -1325,6 +1325,12 @@
         "show_online_time_left_desc": "Toon hoeveel minuten online profielen nog over hebben, op profielen en in chats. Staat dit uit, dan worden ze gewoon als online getoond.",
         "show_last_online": "Laatst online tonen",
         "show_last_online_desc": "Toon op rastertegels wanneer offline profielen voor het laatst online waren. Staat dit uit, dan wordt alleen een lege grijze cirkel getoond.",
+        "quick_filters": "Snelfilters",
+        "quick_filters_desc": "Kies welke filters als snelfilters boven de lijst verschijnen, en in welke volgorde.",
+        "quick_filters_reset": "Herstellen",
+        "quick_filters_edit": "Snelfilters bewerken",
+        "quick_filters_explore_hint": "Verborgen tijdens het verkennen van een andere locatie",
+        "quick_filters_reorder": "Sleep om te herschikken",
         "confirm_before_open_link": "Vragen voor het openen van links",
         "confirm_before_open_link_desc": "Toon een bevestiging voordat een link wordt geopend waarop je in een chatbericht tikt."
     },

@@ -1334,6 +1334,12 @@
         "show_online_time_left_desc": "Affiche combien de minutes il reste aux profils en ligne, sur les profils et dans les conversations. Désactivé, ils apparaissent simplement en ligne.",
         "show_last_online": "Afficher la dernière connexion",
         "show_last_online_desc": "Affiche sur les vignettes quand les profils hors ligne étaient en ligne pour la dernière fois. Désactivé, seul un cercle gris vide est affiché.",
+        "quick_filters": "Filtres rapides",
+        "quick_filters_desc": "Choisis les filtres affichés comme filtres rapides au-dessus de la liste, et dans quel ordre.",
+        "quick_filters_reset": "Réinitialiser",
+        "quick_filters_edit": "Modifier les filtres rapides",
+        "quick_filters_explore_hint": "Masqué pendant l'exploration d'un autre lieu",
+        "quick_filters_reorder": "Fais glisser pour réorganiser",
         "confirm_before_open_link": "Demander avant d'ouvrir les liens",
         "confirm_before_open_link_desc": "Affiche une confirmation avant d'ouvrir un lien touché dans un message."
     },

@@ -1334,6 +1334,12 @@
         "show_online_time_left_desc": "Muestra cuántos minutos les quedan a los perfiles en línea, en los perfiles y en los chats. Si está desactivado, solo aparecen como en línea.",
         "show_last_online": "Mostrar última conexión",
         "show_last_online_desc": "Muestra en las miniaturas cuándo estuvieron en línea por última vez los perfiles desconectados. Si está desactivado, solo se muestra un círculo gris vacío.",
+        "quick_filters": "Filtros rápidos",
+        "quick_filters_desc": "Elige qué filtros aparecen como filtros rápidos sobre la lista y en qué orden.",
+        "quick_filters_reset": "Restablecer",
+        "quick_filters_edit": "Editar filtros rápidos",
+        "quick_filters_explore_hint": "Oculto mientras exploras otra ubicación",
+        "quick_filters_reorder": "Arrastra para reordenar",
         "confirm_before_open_link": "Preguntar antes de abrir enlaces",
         "confirm_before_open_link_desc": "Muestra una confirmación antes de abrir un enlace tocado en un mensaje del chat."
     },

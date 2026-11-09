@@ -1343,6 +1343,12 @@
         "show_online_time_left_desc": "Prikaže, koliko minut je povezanim profilom še ostalo, na profilih in v klepetih. Ko je izklopljeno, so prikazani le kot povezani.",
         "show_last_online": "Prikaži zadnjo prisotnost",
         "show_last_online_desc": "Na ploščicah prikaže, kdaj so bili nepovezani profili nazadnje na spletu. Ko je izklopljeno, je prikazan le prazen siv krog.",
+        "quick_filters": "Hitri filtri",
+        "quick_filters_desc": "Izberi, kateri filtri se prikažejo kot hitri filtri nad seznamom in v kakšnem vrstnem redu.",
+        "quick_filters_reset": "Ponastavi",
+        "quick_filters_edit": "Uredi hitre filtre",
+        "quick_filters_explore_hint": "Skrito med raziskovanjem druge lokacije",
+        "quick_filters_reorder": "Povleci za spremembo vrstnega reda",
         "confirm_before_open_link": "Vprašaj pred odpiranjem povezav",
         "confirm_before_open_link_desc": "Pred odpiranjem povezave, tapnjene v sporočilu, prikaže potrditev."
     },

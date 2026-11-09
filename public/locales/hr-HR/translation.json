@@ -1334,6 +1334,12 @@
         "show_online_time_left_desc": "Prikazuje koliko minuta online profilima još preostaje, na profilima i u razgovorima. Kad je isključeno, samo se prikazuju kao online.",
         "show_last_online": "Prikaži kad je bio zadnji put online",
         "show_last_online_desc": "Prikazuje na pločicama kad su offline profili zadnji put bili online. Kad je isključeno, prikazuje se samo prazan sivi krug.",
+        "quick_filters": "Brzi filteri",
+        "quick_filters_desc": "Odaberi koji se filteri prikazuju kao brzi filteri iznad popisa i kojim redoslijedom.",
+        "quick_filters_reset": "Vrati zadano",
+        "quick_filters_edit": "Uredi brze filtere",
+        "quick_filters_explore_hint": "Skriveno dok istražuješ drugu lokaciju",
+        "quick_filters_reorder": "Povuci za promjenu redoslijeda",
         "confirm_before_open_link": "Pitaj prije otvaranja linkova",
         "confirm_before_open_link_desc": "Prikazuje potvrdu prije otvaranja linka dodirnutog u poruci."
     },
