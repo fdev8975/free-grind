@@ -108,7 +108,7 @@ function RenderCrashPrompt({ raw, onClose }: { raw: string; onClose: () => void 
 					</>
 				}
 			>
-				<section className={`${fullscreenCardClass} px-4 py-4 text-left`}>
+				<section className={`${fullscreenCardClass} px-4 py-4 text-start`}>
 					<p className="text-[11px] font-semibold uppercase tracking-wide text-[var(--accent)]">
 						{t("render_crash.what_happened", { defaultValue: "What happened" })}
 					</p>

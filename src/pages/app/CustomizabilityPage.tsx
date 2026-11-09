@@ -216,7 +216,7 @@ export function CustomizabilityPage() {
 											type="button"
 											onClick={() => handleAccentChange(preset)}
 											aria-pressed={isActive}
-											className={`flex items-center gap-2 rounded-xl py-1.5 pl-1.5 pr-3 transition-[transform,background-color] duration-150 active:scale-[0.97] ${isActive ? "accent-tint-15 ring-2 ring-inset ring-[var(--accent)]" : "bg-[var(--surface-2)] hover:accent-tint-10"}`}
+											className={`flex items-center gap-2 rounded-xl py-1.5 ps-1.5 pe-3 transition-[transform,background-color] duration-150 active:scale-[0.97] ${isActive ? "accent-tint-15 ring-2 ring-inset ring-[var(--accent)]" : "bg-[var(--surface-2)] hover:accent-tint-10"}`}
 										>
 											<span className="h-6 w-6 shrink-0 rounded-lg" style={{ background: preset.color }} />
 											<span className={`text-xs font-medium ${isActive ? "text-[var(--accent-readable)]" : "text-[var(--text)]"}`}>{preset.name}</span>
@@ -231,7 +231,7 @@ export function CustomizabilityPage() {
 										<label
 											htmlFor="accent-color-picker"
 											title={t("customizability.picker")}
-											className={`flex cursor-pointer items-center gap-2 rounded-xl py-1.5 pl-1.5 pr-3 transition-[transform,background-color] duration-150 active:scale-[0.97] ${isCustom ? "accent-tint-15 ring-2 ring-inset ring-[var(--accent)]" : "bg-[var(--surface-2)] hover:accent-tint-10"}`}
+											className={`flex cursor-pointer items-center gap-2 rounded-xl py-1.5 ps-1.5 pe-3 transition-[transform,background-color] duration-150 active:scale-[0.97] ${isCustom ? "accent-tint-15 ring-2 ring-inset ring-[var(--accent)]" : "bg-[var(--surface-2)] hover:accent-tint-10"}`}
 										>
 											<input
 												id="accent-color-picker"

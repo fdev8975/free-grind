@@ -174,7 +174,7 @@ function SelectedOverlay() {
 		<>
 			<div className="pointer-events-none absolute inset-0 rounded-xl bg-[var(--accent)] opacity-25" />
 			<div className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-inset ring-[var(--accent)]" />
-			<span className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] shadow-md">
+			<span className="absolute end-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] shadow-md">
 				<Check className="h-3.5 w-3.5" />
 			</span>
 		</>
@@ -546,7 +546,7 @@ export function StickerPickerSheet({ onClose, onSelect, onSelectGaymoji, isDeskt
 			    right padding, so the grid ends at the same edge as the search pill. */}
 			<div
 				ref={contentRef}
-				className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4 pb-1 [scrollbar-gutter:stable] [@media(hover:hover)_and_(pointer:fine)]:pr-[calc(1rem-10px)]"
+				className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4 pb-1 [scrollbar-gutter:stable] [@media(hover:hover)_and_(pointer:fine)]:pe-[calc(1rem-10px)]"
 				data-lenis-prevent
 				{...tabSwipe}
 			>

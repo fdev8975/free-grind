@@ -72,7 +72,7 @@ export function FieldSectionAction({
 	);
 }
 
-const ROW_CLASS = "flex min-h-12 w-full items-center gap-3 px-4 py-2.5 text-left";
+const ROW_CLASS = "flex min-h-12 w-full items-center gap-3 px-4 py-2.5 text-start";
 
 /** Leading row icon, the muted 16px glyph the profile view puts before its fields. */
 function RowIcon({ icon: Icon }: { icon?: FieldIcon }) {
@@ -107,7 +107,7 @@ export function PickerRow({
 			<span className="shrink-0 text-sm font-medium text-[var(--text)]">{label}</span>
 			<span
 				className={cn(
-					"min-w-0 flex-1 truncate text-right text-sm text-[var(--text-muted)]",
+					"min-w-0 flex-1 truncate text-end text-sm text-[var(--text-muted)]",
 					isEmpty && "opacity-60",
 				)}
 			>
@@ -202,7 +202,7 @@ export function MultiSelectField({
 			<div className={ROW_CLASS}>
 				<RowIcon icon={icon} />
 				<span className="shrink-0 text-sm font-medium text-[var(--text)]">{label}</span>
-				<span className="min-w-0 flex-1 truncate text-right text-sm text-[var(--text-muted)] opacity-60">{unavailableLabel}</span>
+				<span className="min-w-0 flex-1 truncate text-end text-sm text-[var(--text-muted)] opacity-60">{unavailableLabel}</span>
 			</div>
 		);
 	}
@@ -262,7 +262,7 @@ export function ToggleField({
 					className="peer absolute inset-0 z-10 m-0 cursor-pointer opacity-0"
 				/>
 				<span className="absolute inset-0 rounded-full border border-[var(--border)] bg-[var(--surface)] transition-colors peer-checked:border-transparent peer-checked:bg-[var(--toggle-active)]" />
-				<span className="absolute left-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 peer-checked:bg-[var(--toggle-thumb-active)]" />
+				<span className="absolute start-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5 peer-checked:bg-[var(--toggle-thumb-active)]" />
 			</span>
 		</label>
 	);
@@ -303,7 +303,7 @@ export function TextField({
 					maxLength={maxLength}
 					onChange={(event) => onChange(event.target.value)}
 					placeholder={placeholder}
-					className="min-w-0 flex-1 bg-transparent text-right text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)] placeholder:opacity-60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+					className="min-w-0 flex-1 bg-transparent text-end text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)] placeholder:opacity-60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 				/>
 				{counter && <span className="shrink-0 text-xs tabular-nums text-[var(--text-muted)] opacity-70">{counter}</span>}
 			</label>

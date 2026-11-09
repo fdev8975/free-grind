@@ -112,7 +112,7 @@ export function SettingsBlockHistoryPage() {
 									getParticipantAvatarUrl(event.avatarMediaHash),
 								);
 								const isBlocked = event.eventType === "blocked";
-								const rowClassName = "flex w-full items-center gap-3 px-4 py-3 text-left";
+								const rowClassName = "flex w-full items-center gap-3 px-4 py-3 text-start";
 								const content = (
 									<>
 										<div className="relative h-11 w-11 shrink-0 rounded-full overflow-hidden bg-[var(--surface-2)] drop-shadow-sm">

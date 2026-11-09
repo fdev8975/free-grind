@@ -136,7 +136,7 @@ function EntryDetailSheet({
 					{related && (
 						<SheetSection title={entry.direction === "out" ? "Response" : "Command"}>
 							<div className="native-group">
-								<button type="button" onClick={() => onOpen(related)} className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition hover-fill">
+								<button type="button" onClick={() => onOpen(related)} className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-start transition hover-fill">
 									<DirectionIcon entry={related} />
 									<div className="min-w-0 flex-1">
 										<p className="truncate font-mono text-[13px] font-semibold text-[var(--text)]">{related.type}</p>
@@ -364,7 +364,7 @@ export function WebSocketExplorerPage() {
 					<button
 						type="button"
 						onClick={() => setComposerDraft({ type: "", payload: "" })}
-						className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill"
+						className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill"
 					>
 						<div className="shrink-0 rounded-2xl accent-tint-15 p-2.5 text-[var(--accent)]">
 							<Send className="h-5 w-5" />
@@ -385,7 +385,7 @@ export function WebSocketExplorerPage() {
 						<span className="rounded-full ink-tint-10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-[var(--text-muted)]">
 							{filtered.length}
 						</span>
-						<div className="ml-auto flex flex-wrap justify-end gap-1.5">
+						<div className="ms-auto flex flex-wrap justify-end gap-1.5">
 							{filters.map((filter) => (
 								<SheetChip key={filter.value} size="sm" active={direction === filter.value} onClick={() => setDirection(filter.value)}>
 									{filter.label}
@@ -411,7 +411,7 @@ export function WebSocketExplorerPage() {
 									key={entry.id}
 									type="button"
 									onClick={() => setOpenEntry(entry)}
-									className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition hover-fill"
+									className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-start transition hover-fill"
 								>
 									<DirectionIcon entry={entry} />
 									<div className="min-w-0 flex-1">

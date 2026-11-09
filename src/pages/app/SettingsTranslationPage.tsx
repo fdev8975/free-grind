@@ -346,9 +346,9 @@ function ApiKeySheet({ provider, savedApiKey, savedKeyInvalid, targetLang, onSto
 						spellCheck={false}
 						enterKeyHint="done"
 						disabled={isSaving}
-						className={cn(SHEET_FIELD_CLASS, "h-11 px-3 pr-10 font-mono disabled:opacity-60")}
+						className={cn(SHEET_FIELD_CLASS, "h-11 px-3 pe-10 font-mono disabled:opacity-60")}
 					/>
-					<span className="absolute right-3 top-1/2 -translate-y-1/2">
+					<span className="absolute end-3 top-1/2 -translate-y-1/2">
 						<button
 							type="button"
 							onClick={() => setShowApiKey((value) => !value)}
@@ -435,7 +435,7 @@ export function SettingsTranslationPage() {
 							id="translation-provider"
 							type="button"
 							onClick={() => setIsProviderSheetOpen(true)}
-							className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill ${highlightId === "translation-provider" ? "animate-settings-highlight" : ""}`}
+							className={`flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill ${highlightId === "translation-provider" ? "animate-settings-highlight" : ""}`}
 						>
 							<div className={`shrink-0 rounded-2xl p-2.5 ${PROVIDER_ICON_CLASSES[provider]}`}>
 								<ProviderIcon className="h-5 w-5" />
@@ -456,7 +456,7 @@ export function SettingsTranslationPage() {
 							id="translation-api-key"
 							type="button"
 							onClick={() => setIsKeySheetOpen(true)}
-							className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill ${highlightId === "translation-api-key" ? "animate-settings-highlight" : ""}`}
+							className={`flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill ${highlightId === "translation-api-key" ? "animate-settings-highlight" : ""}`}
 						>
 							<div className="relative shrink-0">
 								<div className="rounded-2xl bg-cyan-500/15 p-2.5 text-cyan-400">
@@ -464,7 +464,7 @@ export function SettingsTranslationPage() {
 								</div>
 								{savedApiKey && (
 									<div
-										className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-white ring-2 ring-[var(--surface)] ${
+										className={`absolute -bottom-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full text-white ring-2 ring-[var(--surface)] ${
 											savedKeyInvalid ? "bg-red-500" : "bg-emerald-500"
 										}`}
 									>
@@ -526,7 +526,7 @@ export function SettingsTranslationPage() {
 											<button
 												type="button"
 												onClick={() => void openExternalUrl(step.url!)}
-												className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover-fill"
+												className="flex w-full items-start gap-3 px-4 py-3.5 text-start transition-colors hover-fill"
 											>
 												{content}
 												<ExternalLink className="mt-1.5 h-4 w-4 shrink-0 text-[var(--text-muted)] opacity-50" />
@@ -543,7 +543,7 @@ export function SettingsTranslationPage() {
 								<button
 									type="button"
 									onClick={() => setIsKeySheetOpen(true)}
-									className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover-fill"
+									className="flex w-full items-start gap-3 px-4 py-3.5 text-start transition-colors hover-fill"
 								>
 									<StepNumber value={guideSteps.length + 1} />
 									<div className="min-w-0 flex-1">

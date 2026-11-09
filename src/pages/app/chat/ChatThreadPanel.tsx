@@ -319,7 +319,7 @@ function composerFillClass(isRecording: boolean, recordingMs: number): string {
 function SendCountBadge({ progress }: { progress: { done: number; total: number } | null }) {
 	if (!progress || progress.total <= 1) return null;
 	return (
-		<span className="absolute -right-1 -top-1 min-w-[1.25rem] rounded-full bg-[var(--surface)] px-1 text-center text-[10px] font-semibold leading-4 tabular-nums text-[var(--text)] shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
+		<span className="absolute -end-1 -top-1 min-w-[1.25rem] rounded-full bg-[var(--surface)] px-1 text-center text-[10px] font-semibold leading-4 tabular-nums text-[var(--text)] shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
 			{Math.min(progress.done + 1, progress.total)}/{progress.total}
 		</span>
 	);
@@ -412,7 +412,7 @@ function SortableSavedPhraseRow({ phrase, onUse, onLongPress, onDelete, isDeskto
 			data-sheet-no-drag={isDragging ? "" : undefined}
 			// Inset divider (starts at the text, like native lists), hidden on the
 			// first row and on the row being dragged.
-			className={`group relative flex items-center gap-1 pl-1 pr-2 before:absolute before:right-3 before:top-0 before:h-px before:bg-[var(--border)] before:opacity-60 first:before:hidden before:left-9 ${isDesktop ? "" : "touch-pan-y no-touch-callout"} ${isDragging ? "z-10 rounded-2xl bg-[color-mix(in_srgb,var(--surface-2)_85%,var(--text)_10%)] shadow-lg before:hidden" : ""}`}
+			className={`group relative flex items-center gap-1 ps-1 pe-2 before:absolute before:end-3 before:top-0 before:h-px before:bg-[var(--border)] before:opacity-60 first:before:hidden before:start-9 ${isDesktop ? "" : "touch-pan-y no-touch-callout"} ${isDragging ? "z-10 rounded-2xl bg-[color-mix(in_srgb,var(--surface-2)_85%,var(--text)_10%)] shadow-lg before:hidden" : ""}`}
 		>
 			{/* Drag handle: grabbable on desktop; on touch the whole row reorders
 			    after a long press, so here it only marks the row as movable. */}
@@ -428,7 +428,7 @@ function SortableSavedPhraseRow({ phrase, onUse, onLongPress, onDelete, isDeskto
 			<div className="min-w-0 flex-1" {...bindLongPress(isDesktop ? onLongPress : undefined)}>
 				<SheetClose
 					onClick={onUse}
-					className="w-full rounded-xl py-3 pl-1 pr-2 text-left transition active:ink-tint-6"
+					className="w-full rounded-xl py-3 ps-1 pe-2 text-start transition active:ink-tint-6"
 				>
 					<span className="block break-words text-sm leading-relaxed text-[var(--text)]">{phrase}</span>
 				</SheetClose>
@@ -1474,7 +1474,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 							}
 						>
 							<div
-								className={`group/reveal min-w-0 flex items-center gap-3 ${!isDesktop ? "pl-0" : ""}`}
+								className={`group/reveal min-w-0 flex items-center gap-3 ${!isDesktop ? "ps-0" : ""}`}
 							>
                                 {!isDesktop && (
                                     <button
@@ -1513,7 +1513,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 									type="button"
 									onClick={openHeaderProfile}
 									disabled={profileId == null}
-									className="min-w-0 text-left transition active:opacity-70 disabled:cursor-default disabled:active:opacity-100"
+									className="min-w-0 text-start transition active:opacity-70 disabled:cursor-default disabled:active:opacity-100"
 								>
 									<span className="flex items-center gap-1.5 min-w-0">
 										<span className="block truncate text-base font-semibold leading-tight">
@@ -1617,7 +1617,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 
 								<div
 									ref={headerActionsMenuRef}
-									className={`relative ${!isDesktop ? "pr-0" : ""}`}
+									className={`relative ${!isDesktop ? "pe-0" : ""}`}
 								>
 									<button
 										type="button"
@@ -1634,7 +1634,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 									{headerMenuPresence.rendered ? (
 										<div
 											data-lenis-prevent
-											className="absolute right-0 top-full z-40 mt-1 flex max-h-[70dvh] min-w-[210px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2"
+											className="absolute end-0 top-full z-40 mt-1 flex max-h-[70dvh] min-w-[210px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2"
 											// Mobile: stay within the space between the floating header and composer.
 											style={{
 												...menuTransitionStyle(headerMenuPresence.visible),
@@ -1651,9 +1651,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 													openProfile(profileId, getProfileReturnToChatPath(profileId), true);
 												}}
 												disabled={profileId == null}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-60"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-60"
 											>
-												<UserFilled className="mr-2 h-4 w-4 opacity-70" />
+												<UserFilled className="me-2 h-4 w-4 opacity-70" />
 												{t("chat.view_profile")}
 											</button>
 											)}
@@ -1664,9 +1664,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 													setIsHeaderActionsMenuOpen(false);
 													setIsEncounterSheetOpen(true);
 												}}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 											>
-												<BananaFilled className="mr-2 h-4 w-4 opacity-70" />
+												<BananaFilled className="me-2 h-4 w-4 opacity-70" />
 												{t("chat.log_encounter", { defaultValue: "We just hooked up" })}
 											</button>
 											)}
@@ -1684,12 +1684,12 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														startOutgoingCall(String(profileId), displayName, avatarHash ?? null);
 													}}
 													disabled={videoCallDisabled}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-50"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-50"
 												>
 													{videoCallDisabled ? (
-														<VideoOffFilled className="mr-2 h-4 w-4 opacity-70" />
+														<VideoOffFilled className="me-2 h-4 w-4 opacity-70" />
 													) : (
-														<Video className="mr-2 h-4 w-4 fill-current opacity-70" />
+														<Video className="me-2 h-4 w-4 fill-current opacity-70" />
 													)}
 													<span className="flex flex-col">
 														<span>{t("chat.start_video_call")}</span>
@@ -1716,9 +1716,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														onOpenMediaSheet();
 													}}
 													disabled={!selectedConversation}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
 												>
-													<ImagesFilled className="mr-2 h-4 w-4 opacity-70" />
+													<ImagesFilled className="me-2 h-4 w-4 opacity-70" />
 													{t("chat.received_media")}
 												</button>
 											)}
@@ -1732,9 +1732,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 													toast.success(enabled ? t("auto_translate.enabled_toast", { defaultValue: "Auto-translate turned on for this chat." }) : t("auto_translate.disabled_toast", { defaultValue: "Auto-translate turned off for this chat." }));
 												}}
 												disabled={!selectedConversation}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
 											>
-												<Languages className="mr-2 h-4 w-4 opacity-70" />
+												<Languages className="me-2 h-4 w-4 opacity-70" />
 												<span className="flex flex-col">
 													<span>{t("auto_translate.chat_menu_label", { defaultValue: "Auto-translate" })}</span>
 													<span className="text-xs text-[var(--text-muted)]">
@@ -1760,9 +1760,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														toast.success(newState ? "Read receipts turned off for this chat." : "Read receipts turned on for this chat.");
 													}}
 													disabled={!selectedConversation}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
 												>
-													{readReceiptsHidden ? <Check className="mr-2 h-4 w-4 opacity-70" /> : <CheckCheck className="mr-2 h-4 w-4 opacity-70" />}
+													{readReceiptsHidden ? <Check className="me-2 h-4 w-4 opacity-70" /> : <CheckCheck className="me-2 h-4 w-4 opacity-70" />}
 													<span className="flex flex-col">
 														<span>{t("chat.read_receipts_label")}</span>
 														<span className="text-xs text-[var(--text-muted)]">
@@ -1780,9 +1780,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 													void onEditLocalNickname(profileId, nicknameNameChange.realName || actualProfileName?.trim() || displayName);
 												}}
 												disabled={profileId == null || !onEditLocalNickname}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-60"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-60"
 											>
-												<PencilLineFilled className="mr-2 h-4 w-4 opacity-70" />
+												<PencilLineFilled className="me-2 h-4 w-4 opacity-70" />
 												<NicknameMenuItemLabel
 													label={localNickname ? t("chat.nicknames.edit") : t("chat.nicknames.set")}
 													realName={nicknameNameChange.realName}
@@ -1798,9 +1798,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														setIsMergeSheetOpen(true);
 													}}
 													disabled={isMergingConversation || mergeableConversations.length === 0}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
 												>
-													<GitMerge className="mr-2 h-4 w-4 opacity-70" />
+													<GitMerge className="me-2 h-4 w-4 opacity-70" />
 													{isMergingConversation
 														? t("chat.merge_conversation_in_progress", { defaultValue: "Merging…" })
 														: t("chat.merge_conversation", { defaultValue: "Merge into current chat" })}
@@ -1815,14 +1815,14 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														void onToggleFavorite(profileId, isFavorite);
 													}}
 													disabled={isTogglingFavorite || profileId == null || !onToggleFavorite}
-													className={`flex items-center rounded-sm px-2 py-2 text-left text-sm transition disabled:opacity-60 ${
+													className={`flex items-center rounded-sm px-2 py-2 text-start text-sm transition disabled:opacity-60 ${
 														isFavorite ? "text-[var(--accent)] hover:bg-[var(--accent)]/10" : "text-[var(--text)] hover-fill"
 													}`}
 												>
 													{isTogglingFavorite ? (
-														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+														<Loader2 className="me-2 h-4 w-4 animate-spin" />
 													) : (
-														<Star className={`mr-2 h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+														<Star className={`me-2 h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
 													)}
 													{isFavorite ? t("chat.unfavorite") : t("chat.favorite")}
 												</button>
@@ -1835,9 +1835,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														setIsHeaderActionsMenuOpen(false);
 														void togglePin();
 													}}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
 												>
-													<Pin className={`mr-2 h-4 w-4 opacity-70 ${selectedConversation?.data.pinned ? "fill-current" : ""}`} />
+													<Pin className={`me-2 h-4 w-4 opacity-70 ${selectedConversation?.data.pinned ? "fill-current" : ""}`} />
 													{selectedConversation?.data.pinned ? t("chat.unpin") : t("chat.pin")}
 												</button>
 											)}
@@ -1848,9 +1848,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 													setIsHeaderActionsMenuOpen(false);
 													toggleHide();
 												}}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
 											>
-												{isHidden ? <EyeFilled className="mr-2 h-4 w-4 opacity-70" /> : <EyeOffFilled className="mr-2 h-4 w-4 opacity-70" />}
+												{isHidden ? <EyeFilled className="me-2 h-4 w-4 opacity-70" /> : <EyeOffFilled className="me-2 h-4 w-4 opacity-70" />}
 												{isHidden
 													? t("chat.unhide_conversation", { defaultValue: "Unhide chat" })
 													: t("chat.hide_conversation", { defaultValue: "Hide chat" })}
@@ -1863,12 +1863,12 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														setIsHeaderActionsMenuOpen(false);
 														void toggleMute();
 													}}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-40 disabled:cursor-not-allowed"
 												>
 													{selectedConversation?.data.muted ? (
-														<BellOffFilled className="mr-2 h-4 w-4 opacity-70" />
+														<BellOffFilled className="me-2 h-4 w-4 opacity-70" />
 													) : (
-														<BellOff className="mr-2 h-4 w-4 opacity-70" />
+														<BellOff className="me-2 h-4 w-4 opacity-70" />
 													)}
 													{selectedConversation?.data.muted ? t("chat.unmute") : t("chat.mute")}
 												</button>
@@ -1883,9 +1883,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														setIsHeaderActionsMenuOpen(false);
 														setBanNamePrompt({ text: actualProfileName });
 													}}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 												>
-													<Ban className="mr-2 h-4 w-4 opacity-70" />
+													<Ban className="me-2 h-4 w-4 opacity-70" />
 													{t("profile_details.ban_keyword_menu_name", { defaultValue: "Ban word from name" })}
 												</button>
 												</div>
@@ -1897,9 +1897,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 													type="button"
 													onClick={requestBlockProfile}
 													disabled={isBlockingProfile || profileId == null || !onBlockProfile}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-red-400 transition hover:bg-red-500/10 disabled:opacity-60"
 												>
-													<Ban className="mr-2 h-4 w-4 opacity-70" />
+													<Ban className="me-2 h-4 w-4 opacity-70" />
 													{isBlockingProfile ? t("profile_details.block_in_progress") : t("profile_details.block")}
 												</button>
 											)}
@@ -1908,9 +1908,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 													type="button"
 													onClick={requestUnblockProfile}
 													disabled={isUnblockingProfile || profileId == null || !onUnblockProfile}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-emerald-400 transition hover:bg-emerald-500/10 disabled:opacity-60"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-emerald-400 transition hover:bg-emerald-500/10 disabled:opacity-60"
 												>
-													<ShieldCheckFilled className="mr-2 h-4 w-4 opacity-70" />
+													<ShieldCheckFilled className="me-2 h-4 w-4 opacity-70" />
 													{isUnblockingProfile ? t("profile_details.unblock_in_progress") : t("profile_details.unblock")}
 												</button>
 											)}
@@ -1921,9 +1921,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														setIsHeaderActionsMenuOpen(false);
 														setIsReportDialogOpen(true);
 													}}
-													className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-red-400 transition hover:bg-red-500/10"
+													className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-red-400 transition hover:bg-red-500/10"
 												>
-													<Flag className="mr-2 h-4 w-4 fill-current opacity-70" />
+													<Flag className="me-2 h-4 w-4 fill-current opacity-70" />
 													{t("profile_details.report.menu_item")}
 												</button>
 											)}
@@ -1931,9 +1931,9 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 												type="button"
 												onClick={requestDeleteConversation}
 												disabled={!selectedConversation || !onDeleteConversation || isDeletingConversation}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-red-400 transition hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-red-400 transition hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
 											>
-												<MessageCircleXFilled className="mr-2 h-4 w-4 opacity-70" />
+												<MessageCircleXFilled className="me-2 h-4 w-4 opacity-70" />
 												{isDeletingConversation ? t("chat.delete_conversation_in_progress") : t("chat.delete_conversation")}
 											</button>
 											</div>
@@ -2061,7 +2061,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 				isLoadingThread &&
 				threadConversationId !== selectedConversation.data.conversationId ? (
 				<div className="flex flex-1 items-center justify-center text-[var(--text-muted)]">
-					<Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t("chat.loading_messages")}
+					<Loader2 className="me-2 h-4 w-4 animate-spin" /> {t("chat.loading_messages")}
 				</div>
 			) : threadError ? (
 				<div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
@@ -2205,7 +2205,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 											type="button"
 											onClick={() => handleUsePhrase(phrase)}
 											{...bindPhraseLongPress(phraseLongPressHandler(phrase))}
-											className={`max-w-[200px] no-touch-callout shrink-0 rounded-2xl rounded-br-[3px] border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
+											className={`max-w-[200px] no-touch-callout shrink-0 rounded-2xl rounded-ee-[3px] border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
 												isExact
 													? "border-[var(--accent)] bg-[var(--accent)] text-[var(--accent-contrast)]"
 													: !isDesktop
@@ -2228,7 +2228,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 								onMouseDown={(event) => event.preventDefault()}
 								// A frosted card floating above the pill composer (same material),
 								// anchored above the reply preview too so it never covers it.
-								className="absolute bottom-full left-0 right-0 z-40 mb-2 max-h-64 overflow-hidden rounded-[22px] bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] shadow-[0_-1px_4px_rgba(0,0,0,0.15),0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+								className="absolute bottom-full start-0 end-0 z-40 mb-2 max-h-64 overflow-hidden rounded-[22px] bg-[color-mix(in_srgb,var(--surface)_90%,transparent)] shadow-[0_-1px_4px_rgba(0,0,0,0.15),0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-xl">
 								<div data-lenis-prevent className="max-h-64 overflow-y-auto p-1.5">
 								<div className="flex flex-col gap-1">
 									{slashMatches.map((command, index) => {
@@ -2242,7 +2242,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 												onClick={() => selectSlashCommand(command)}
 												onMouseEnter={() => setSlashSelectedIndex(index)}
 												title={isDisabled ? t("chat.slash_commands.errors.no_conversation", { defaultValue: "Open a chat first" }) : undefined}
-												className={`w-full text-left px-3 py-2 transition disabled:cursor-not-allowed disabled:opacity-40 rounded-2xl active:scale-[0.98] ${
+												className={`w-full text-start px-3 py-2 transition disabled:cursor-not-allowed disabled:opacity-40 rounded-2xl active:scale-[0.98] ${
 													isSelected
 														? "bg-[var(--accent)] text-[var(--accent-contrast)]"
 														: isDesktop
@@ -2351,7 +2351,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 								<div className={`rounded-t-[25px] p-1 pb-0 transition-colors ${
 									props.pendingAudioBlob ? PENDING_AUDIO_FILL_CLASS : composerFillClass(isRecording, recordingMs)
 								}`}>
-								<div className="flex items-center gap-2.5 rounded-[21px] bg-[color-mix(in_srgb,var(--text)_6%,transparent)] py-1.5 pl-1.5 pr-1">
+								<div className="flex items-center gap-2.5 rounded-[21px] bg-[color-mix(in_srgb,var(--text)_6%,transparent)] py-1.5 ps-1.5 pe-1">
 									{thumbUrl ? (
 										// The wrapper clips the blur; clip-path on the img itself lets it bleed out.
 										<div className="h-9 w-9 shrink-0 overflow-hidden rounded-[15px] [clip-path:inset(0_round_15px)]">
@@ -2425,7 +2425,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 						})() : null}
 
 						{props.pendingAudioBlob ? (
-							<div className={`${composerFieldMb} flex items-center gap-2 overflow-hidden py-1 pl-1 pr-1 rounded-[25px] border border-transparent ${PENDING_AUDIO_FILL_CLASS} ${
+							<div className={`${composerFieldMb} flex items-center gap-2 overflow-hidden py-1 ps-1 pe-1 rounded-[25px] border border-transparent ${PENDING_AUDIO_FILL_CLASS} ${
 								selectedConversation && replyTargetMessage ? "rounded-t-none" : ""
 							}`}>
 								{/* No fixed height: like the composer it's border + py-1 + its h-10/h-8
@@ -2460,7 +2460,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 						{!props.pendingAudioBlob && <div className={`relative flex ${isRecording ? "items-center" : "items-end"} gap-2 rounded-[25px] border py-1 ${composerFieldMb} transition-colors ${
 							// No outline, state is shown through the fill instead. The compact
 							// composer's buttons take the recording icon's slot on the left.
-							isRecording || compactComposer ? "pl-1 pr-1" : "pl-3 pr-1"
+							isRecording || compactComposer ? "ps-1 pe-1" : "ps-3 pe-1"
 						} border-transparent ${composerFillClass(isRecording, recordingMs)} ${
 							// A reply preview sits on top as the same field's first row.
 							selectedConversation && replyTargetMessage ? "rounded-t-none" : ""
@@ -2525,7 +2525,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 										</button>
 										{isComposerMenuOpen && (
 											<>
-												<div className="absolute bottom-full left-0 z-50 mb-2 min-w-[220px] rounded-2xl menu-surface p-1.5">
+												<div className="absolute bottom-full start-0 z-50 mb-2 min-w-[220px] rounded-2xl menu-surface p-1.5">
 													{composerActions.filter((action) => action.key !== "drawer").map((action) => (
 														<button
 															key={action.key}
@@ -2533,7 +2533,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 															onPointerDown={composerActionHaptic}
 															onClick={() => { setIsComposerMenuOpen(false); action.onClick(); }}
 															disabled={action.disabled}
-															className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
+															className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm font-medium text-[var(--text)] transition hover-fill disabled:cursor-not-allowed disabled:opacity-40"
 														>
 															<span className="text-[var(--accent)]">{action.icon}</span>
 															{action.label}
@@ -2890,12 +2890,12 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 									onChange={(e) => setNewPhraseInput(e.target.value)}
 									enterKeyHint="done"
 									placeholder={t("settings_saved_phrases.new_placeholder", { defaultValue: "Add a new phrase..." })}
-									className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] pl-3.5 pr-12 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
+									className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] ps-3.5 pe-12 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--accent)]"
 								/>
 								<button
 									type="submit"
 									disabled={!newPhraseInput.trim()}
-									className="absolute right-1.5 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] transition active:scale-90 hover:brightness-110 disabled:bg-[var(--surface-2)] disabled:text-[var(--text-muted)]"
+									className="absolute end-1.5 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] transition active:scale-90 hover:brightness-110 disabled:bg-[var(--surface-2)] disabled:text-[var(--text-muted)]"
 									aria-label={t("settings_saved_phrases.add", { defaultValue: "Add" })}
 									title={t("settings_saved_phrases.add", { defaultValue: "Add" })}
 								>
@@ -2994,7 +2994,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 														afterSheetCloseRef.current = () => setMergeConfirmTarget(conversation);
 														mergeSheetCloseRef.current?.();
 													}}
-													className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:ink-tint-6 active:ink-tint-10"
+													className="flex w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:ink-tint-6 active:ink-tint-10"
 												>
 													<div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-[var(--surface-2)] drop-shadow-sm">
 														<ProfileImage

@@ -53,7 +53,7 @@ export function LocationChip({
 			style={{ "--chip-accent": accentColor, "--chip-accent-contrast": accentContrast } as CSSProperties}
 			// Frosted like the bottom nav bar and the page headers (surface at 80%
 			// + 24px blur), since the chips float over the map sheets' map.
-			className={`flex max-w-[14rem] shrink-0 items-center gap-2.5 rounded-2xl border py-2 pl-2 pr-3.5 text-left backdrop-blur-[24px] transition active:scale-95 disabled:opacity-60 ${
+			className={`flex max-w-[14rem] shrink-0 items-center gap-2.5 rounded-2xl border py-2 ps-2 pe-3.5 text-start backdrop-blur-[24px] transition active:scale-95 disabled:opacity-60 ${
 				isActive
 					? "border-transparent bg-[color-mix(in_srgb,color-mix(in_srgb,var(--chip-accent)_16%,var(--surface))_80%,transparent)] ring-2 ring-inset ring-[var(--chip-accent)]"
 					: "border-[var(--border)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)] hover:bg-[color-mix(in_srgb,var(--surface)_90%,transparent)]"

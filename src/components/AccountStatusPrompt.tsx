@@ -360,7 +360,7 @@ const META_ICON_CLASS = "mt-px h-4 w-4 shrink-0 text-[var(--accent)]";
 function BlockCard({ block }: { block: BlockInfo }) {
 	const { t } = useTranslation();
 	return (
-		<section className={`${fullscreenCardClass} px-4 py-4 text-left`}>
+		<section className={`${fullscreenCardClass} px-4 py-4 text-start`}>
 			<div className="flex items-center justify-between gap-3">
 				<p className={CARD_LABEL_CLASS}>{t("account_status.what_happened", { defaultValue: "What happened" })}</p>
 				<span className="shrink-0 rounded-full ink-tint-8 px-2.5 py-0.5 text-[11px] font-semibold tabular-nums text-[var(--text-muted)]">
@@ -396,7 +396,7 @@ function ReasonCard({ ban, expiresAt, now }: { ban: BanSummary; expiresAt?: numb
 	const remaining = expiresAt != null ? expiryMs(expiresAt) - now : 0;
 
 	return (
-		<section className="native-group text-left">
+		<section className="native-group text-start">
 			<div className="px-4 py-4">
 				<div className="flex items-center justify-between gap-3">
 					<p className={CARD_LABEL_CLASS}>{t("account_status.reason_label", { defaultValue: "Ban reason" })}</p>
@@ -450,7 +450,7 @@ function ReasonCard({ ban, expiresAt, now }: { ban: BanSummary; expiresAt?: numb
 
 function DetailList({ details }: { details: Detail[] }) {
 	return (
-		<dl className={"native-group text-left"}>
+		<dl className={"native-group text-start"}>
 			{details.map(({ icon: Icon, label, value }) => (
 				<div key={label} className="flex items-center gap-3 px-4 py-3.5">
 					<div className="shrink-0 rounded-2xl ink-tint-8 p-2.5 text-[var(--accent)]">
@@ -471,7 +471,7 @@ function AgreementCheckbox({ checked, onChange, disabled }: { checked: boolean; 
 	const { t } = useTranslation();
 	return (
 		<label
-			className={`flex cursor-pointer items-start gap-3 rounded-2xl px-4 py-3.5 text-left transition active:scale-[0.99] native-card ${checked ? "accent-tint-18" : "hover:brightness-110"}`}
+			className={`flex cursor-pointer items-start gap-3 rounded-2xl px-4 py-3.5 text-start transition active:scale-[0.99] native-card ${checked ? "accent-tint-18" : "hover:brightness-110"}`}
 		>
 			<input type="checkbox" className="sr-only" checked={checked} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
 			<span

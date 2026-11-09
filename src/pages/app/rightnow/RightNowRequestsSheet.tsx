@@ -115,7 +115,7 @@ function RequestRow({ request }: { request: RightNowReceivedRequest }) {
 					<ProfileImage src={avatarUrl} alt={name} />
 				</div>
 				{isOnline ? (
-					<span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[var(--surface)] bg-green-500" />
+					<span className="absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-[var(--surface)] bg-green-500" />
 				) : null}
 			</div>
 			<div className="min-w-0 flex-1">

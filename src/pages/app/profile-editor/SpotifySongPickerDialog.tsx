@@ -84,7 +84,7 @@ export function SpotifySongPickerDialog({ selected, onApply, onClose }: SpotifyS
 									key={track.id}
 									type="button"
 									onClick={() => handleToggle(track)}
-									className={`flex min-h-12 w-full min-w-0 items-center gap-3 rounded-2xl px-2 py-1.5 text-left transition-[transform,background-color] duration-150 active:scale-[0.99] ${
+									className={`flex min-h-12 w-full min-w-0 items-center gap-3 rounded-2xl px-2 py-1.5 text-start transition-[transform,background-color] duration-150 active:scale-[0.99] ${
 										active ? "accent-tint-15" : "ink-tint-6 hover:ink-tint-10"
 									}`}
 								>

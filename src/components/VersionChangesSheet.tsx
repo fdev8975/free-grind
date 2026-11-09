@@ -94,13 +94,13 @@ function CommitList({ from, to, url }: { from: string; to: string; url: string }
 	const hidden = state.total > 250 ? state.total - 250 : 0;
 	return (
 		<>
-			<div className="native-group text-left">
+			<div className="native-group text-start">
 				{state.commits.map((commit) => (
 					<button
 						key={commit.sha}
 						type="button"
 						onClick={() => void openExternalUrl(`${REPO_URL}/commit/${commit.sha}`)}
-						className="flex w-full items-start gap-3 px-4 py-3 text-left transition hover:ink-tint-6"
+						className="flex w-full items-start gap-3 px-4 py-3 text-start transition hover:ink-tint-6"
 					>
 						<GitCommitHorizontal className="mt-0.5 h-4 w-4 shrink-0 text-[var(--text-muted)]" />
 						<div className="min-w-0 flex-1">

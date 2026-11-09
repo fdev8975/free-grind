@@ -23,7 +23,7 @@ export function NotificationBanner({ title, body, avatarUrl, fallbackIcon, badge
 		<button
 			type="button"
 			onClick={onOpen}
-			className="flex w-full min-w-0 items-center gap-3 text-left transition-transform duration-150 active:scale-[0.98]"
+			className="flex w-full min-w-0 items-center gap-3 text-start transition-transform duration-150 active:scale-[0.98]"
 		>
 			<span className="relative shrink-0">
 				{avatarUrl ? (
@@ -39,7 +39,7 @@ export function NotificationBanner({ title, body, avatarUrl, fallbackIcon, badge
 					</span>
 				)}
 				{badge ? (
-					<span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--menu-bg)] text-[12px] leading-none">
+					<span className="absolute -bottom-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--menu-bg)] text-[12px] leading-none">
 						{badge}
 					</span>
 				) : null}

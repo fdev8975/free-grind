@@ -179,7 +179,7 @@ export function AssignmentsPage() {
 						<button
 							type="button"
 							onClick={() => setIsSourceSheetOpen(true)}
-							className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill"
+							className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill"
 						>
 							<div className="shrink-0 rounded-2xl bg-sky-500/15 p-2.5 text-sky-400">
 								<Database className="h-5 w-5" />
@@ -204,7 +204,7 @@ export function AssignmentsPage() {
 							<span className="rounded-full ink-tint-10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-[var(--text-muted)]">
 								{filtered.length}
 							</span>
-							<div className="ml-auto flex flex-wrap justify-end gap-1.5">
+							<div className="ms-auto flex flex-wrap justify-end gap-1.5">
 								{TYPE_FILTERS.map((filter) => {
 									const count = searched.filter((a) => matchesType(a, filter.id)).length;
 									return (
@@ -251,7 +251,7 @@ export function AssignmentsPage() {
 												type="button"
 												disabled={!withPayload}
 												onClick={() => setOpenAssignment(a)}
-												className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition enabled:hover-fill"
+												className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-start transition enabled:hover-fill"
 											>
 												<div className="min-w-0 flex-1">
 													<p className="break-all font-mono text-[13px] font-semibold text-[var(--text)]">{a.key}</p>

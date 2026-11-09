@@ -579,7 +579,7 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 									key={`${item.profileId}:${item.album.albumId}`}
 									type="button"
 									onClick={() => void openViewer(item)}
-									className="native-card relative overflow-hidden rounded-2xl text-left transition-transform hover:-translate-y-0.5"
+									className="native-card relative overflow-hidden rounded-2xl text-start transition-transform hover:-translate-y-0.5"
 								>
 									<div className="relative aspect-[4/6] w-full bg-[var(--surface-2)]">
 										{previewUrl ? (
@@ -597,7 +597,7 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 											</div>
 										)}
 										{item.localOnly && (
-											<div className="absolute left-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-semibold text-white/80 backdrop-blur-sm">
+											<div className="absolute start-2 top-2 rounded-full bg-black/50 px-2 py-0.5 text-[9px] font-semibold text-white/80 backdrop-blur-sm">
 												{t("shared_albums.cached_label", { defaultValue: "cached" })}
 											</div>
 										)}

@@ -364,7 +364,7 @@ export function SettingsAutomationPage() {
 										<div className="relative shrink-0 rounded-2xl bg-indigo-500/15 p-2.5 text-indigo-400">
 											<Workflow className="h-5 w-5" />
 											{rule.locked && (
-												<span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--accent)] text-[var(--accent-contrast)]">
+												<span className="absolute -bottom-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[var(--surface)] bg-[var(--accent)] text-[var(--accent-contrast)]">
 													<LockKeyhole className="h-2.5 w-2.5" />
 												</span>
 											)}
@@ -379,7 +379,7 @@ export function SettingsAutomationPage() {
 										</div>
 										<label
 											onClick={(e) => e.stopPropagation()}
-											className="relative ml-1 inline-flex h-7 w-12 shrink-0 cursor-pointer items-center"
+											className="relative ms-1 inline-flex h-7 w-12 shrink-0 cursor-pointer items-center"
 										>
 											<input
 												type="checkbox"
@@ -388,10 +388,10 @@ export function SettingsAutomationPage() {
 												className="peer absolute inset-0 z-10 m-0 cursor-pointer opacity-0"
 											/>
 											<span className="absolute inset-0 rounded-full border border-[var(--border)] bg-[var(--surface-2)] transition-colors peer-checked:border-transparent peer-checked:bg-[var(--accent)]" />
-											<span className="absolute left-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 peer-checked:bg-[var(--accent-contrast)]" />
+											<span className="absolute start-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5 peer-checked:bg-[var(--accent-contrast)]" />
 										</label>
 									</div>
-									<p className="break-words pl-[52px] text-xs leading-relaxed text-[var(--text-muted)]">
+									<p className="break-words ps-[52px] text-xs leading-relaxed text-[var(--text-muted)]">
 										{describeRule(rule, t)}
 									</p>
 								</div>
@@ -412,7 +412,7 @@ export function SettingsAutomationPage() {
 						<button
 							type="button"
 							onClick={() => setIsKeywordsSheetOpen(true)}
-							className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill"
+							className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill"
 						>
 							<div className="shrink-0 rounded-2xl bg-orange-500/15 p-2.5 text-orange-400">
 								<TagFilled className="h-5 w-5" />
@@ -442,7 +442,7 @@ export function SettingsAutomationPage() {
 											key={rule.id}
 											type="button"
 											onClick={() => setEditingRule(rule)}
-											className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-2 rounded-xl px-2 py-2 text-left transition hover-fill"
+											className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-2 rounded-xl px-2 py-2 text-start transition hover-fill"
 										>
 											<Workflow className="h-4 w-4 shrink-0 text-indigo-400" />
 											<span className="min-w-0 flex-1 truncate text-sm">{rule.nameKey ? t(rule.nameKey) : rule.name}</span>

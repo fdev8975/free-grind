@@ -141,7 +141,7 @@ export function TravelPlanEditorSheet({ plan, onSubmit, onDelete, onClose }: Tra
 							<button
 								type="button"
 								onClick={() => setIsDestinationSheetOpen(true)}
-								className="flex w-full items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-left transition hover:ink-tint-8 active:scale-[0.99]"
+								className="flex w-full items-center gap-3 rounded-2xl bg-[var(--surface-2)] px-4 py-3 text-start transition hover:ink-tint-8 active:scale-[0.99]"
 							>
 								<span
 									className={cn(

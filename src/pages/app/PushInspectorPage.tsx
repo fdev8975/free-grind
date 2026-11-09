@@ -345,7 +345,7 @@ export function PushInspectorPage() {
 									: "Android hands it over via fg:fcm-token once Firebase has initialised."}
 							</p>
 							{token && (
-								<div className="mt-2 flex items-start gap-1.5 rounded-xl bg-[var(--surface-2)] py-1.5 pl-3 pr-1.5">
+								<div className="mt-2 flex items-start gap-1.5 rounded-xl bg-[var(--surface-2)] py-1.5 ps-3 pe-1.5">
 									<p className="min-w-0 flex-1 break-all py-0.5 font-mono text-[11px] leading-relaxed select-all">{token}</p>
 									<button
 										type="button"
@@ -363,7 +363,7 @@ export function PushInspectorPage() {
 						type="button"
 						onClick={() => token && void syncToken(token)}
 						disabled={!token || isSyncing}
-						className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill disabled:opacity-50"
+						className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill disabled:opacity-50"
 					>
 						<div className="shrink-0 rounded-2xl accent-tint-15 p-2.5 text-[var(--accent)]">
 							{isSyncing ? <Loader2 className="h-5 w-5 animate-spin" /> : <RefreshCcw className="h-5 w-5" />}
@@ -377,7 +377,7 @@ export function PushInspectorPage() {
 					<button
 						type="button"
 						onClick={() => setIsManualSyncOpen(true)}
-						className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill"
+						className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill"
 					>
 						<div className="shrink-0 rounded-2xl bg-slate-500/15 p-2.5 text-slate-400">
 							<KeyRound className="h-5 w-5" />
@@ -398,7 +398,7 @@ export function PushInspectorPage() {
 						<span className="rounded-full ink-tint-10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-[var(--text-muted)]">
 							{filtered.length}
 						</span>
-						<div className="ml-auto flex flex-wrap justify-end gap-1.5">
+						<div className="ms-auto flex flex-wrap justify-end gap-1.5">
 							{filters.map((option) => (
 								<SheetChip key={option.value} size="sm" active={filter === option.value} onClick={() => setFilter(option.value)}>
 									{option.value !== "all" && counts[option.value] > 0 ? `${option.label} · ${counts[option.value]}` : option.label}
@@ -427,7 +427,7 @@ export function PushInspectorPage() {
 										key={entry.id}
 										type="button"
 										onClick={() => setOpenEntry(entry)}
-										className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition hover-fill"
+										className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-start transition hover-fill"
 									>
 										<EventBadge event={event} className="w-14" />
 										<div className="min-w-0 flex-1">

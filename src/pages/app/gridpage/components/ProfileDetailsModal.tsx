@@ -305,7 +305,7 @@ function ProfileSwipePreviewPanel({
 					<h2 className="truncate text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
 						{name}
 						{hasAge && (
-							<span className="ml-2 text-xl font-normal text-[var(--text-muted)] sm:text-2xl">{preview.age}</span>
+							<span className="ms-2 text-xl font-normal text-[var(--text-muted)] sm:text-2xl">{preview.age}</span>
 						)}
 					</h2>
 					{/* Same status line as ProfileDetailsContent's header. */}
@@ -917,7 +917,7 @@ export function ProfileDetailsModal({
 								className="min-w-0 flex-1 resize-none overflow-hidden bg-transparent text-[15px] leading-relaxed text-[var(--text)] placeholder:text-[var(--text-muted)] outline-none"
 							/>
 						</label>
-						<div className="ml-11 h-px bg-[var(--border)]" />
+						<div className="ms-11 h-px bg-[var(--border)]" />
 						<label className="flex min-h-12 items-center gap-3 px-4">
 							<Phone className="h-4 w-4 shrink-0 fill-current text-[var(--text-muted)]" />
 							<input
@@ -935,7 +935,7 @@ export function ProfileDetailsModal({
 									type="button"
 									onClick={handleDeleteNote}
 									disabled={isSavingNote}
-									className="flex min-h-12 w-full items-center gap-3 px-4 text-left text-[15px] text-red-400 transition active:bg-red-500/10 disabled:opacity-50"
+									className="flex min-h-12 w-full items-center gap-3 px-4 text-start text-[15px] text-red-400 transition active:bg-red-500/10 disabled:opacity-50"
 								>
 									<Trash2 className="h-4 w-4 shrink-0" />
 									{t("favorites.delete_note")}
@@ -953,7 +953,7 @@ export function ProfileDetailsModal({
 								</p>
 							</div>
 						)}
-						{profileNote && profilePhoneNumber && <div className="ml-11 h-px bg-[var(--border)]" />}
+						{profileNote && profilePhoneNumber && <div className="ms-11 h-px bg-[var(--border)]" />}
 						{profilePhoneNumber && (
 							// Tapping the number starts a call (through the opener, like
 							// other external links — a plain tel: link isn't handed on by the webview).
@@ -963,7 +963,7 @@ export function ProfileDetailsModal({
 									const url = `tel:${profilePhoneNumber.replace(/[^\d+]/g, "")}`;
 									openUrl(url).catch((error) => appLog.error("Failed to open phone link", error));
 								}}
-								className="flex min-h-12 w-full items-center gap-3 px-4 text-left transition active:bg-[var(--surface)]"
+								className="flex min-h-12 w-full items-center gap-3 px-4 text-start transition active:bg-[var(--surface)]"
 							>
 								<Phone className="h-4 w-4 shrink-0 fill-current text-[var(--text-muted)]" />
 								<span className="min-w-0 flex-1 truncate text-[15px] text-[var(--accent)]">{profilePhoneNumber}</span>
@@ -975,7 +975,7 @@ export function ProfileDetailsModal({
 						type="button"
 						onClick={() => { setNoteDraft(""); setPhoneNumberDraft(""); setIsEditingNote(true); }}
 						disabled={isLoadingNote}
-						className="flex min-h-12 w-full items-center gap-3 px-4 text-left transition active:bg-[var(--surface)] disabled:opacity-50"
+						className="flex min-h-12 w-full items-center gap-3 px-4 text-start transition active:bg-[var(--surface)] disabled:opacity-50"
 					>
 						<StickyNoteFilled className="h-4 w-4 shrink-0 text-[var(--accent)]" />
 						<span className="text-[15px] text-[var(--text-muted)]">{t("favorites.note_empty")}</span>
@@ -1529,7 +1529,7 @@ export function ProfileDetailsModal({
 		const tapTimestamp = activeProfile?.lastReceivedTapTimestamp ?? null;
 		if (!meta?.takenOnGrindr && tapTimestamp == null) return null;
 		return (
-			<div className="pointer-events-none absolute bottom-3 left-3 z-20 flex flex-row items-center gap-1.5">
+			<div className="pointer-events-none absolute bottom-3 start-3 z-20 flex flex-row items-center gap-1.5">
 				{meta?.takenOnGrindr ? (
 					<TakenOnGrindrBadge variant="pill" label={meta.createdAt ? formatTakenOnGrindrSentence(meta.createdAt, Date.now(), t) : null} />
 				) : null}
@@ -2017,9 +2017,9 @@ export function ProfileDetailsModal({
 			<button
 				type="button"
 				onClick={handleEditNickname}
-				className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+				className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 			>
-				<PencilLineFilled className="mr-2 h-4 w-4 opacity-70" />
+				<PencilLineFilled className="me-2 h-4 w-4 opacity-70" />
 				<NicknameMenuItemLabel
 					label={localNickname ? t("chat.nicknames.edit") : t("chat.nicknames.set")}
 					realName={nicknameNameChange.realName}
@@ -2033,9 +2033,9 @@ export function ProfileDetailsModal({
 		<button
 			type="button"
 			onClick={() => void handleLogEncounter()}
-			className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+			className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 		>
-			<BananaFilled className="mr-2 h-4 w-4 opacity-70" />
+			<BananaFilled className="me-2 h-4 w-4 opacity-70" />
 			{t("chat.log_encounter", { defaultValue: "We just hooked up" })}
 		</button>
 	) : null;
@@ -2051,9 +2051,9 @@ export function ProfileDetailsModal({
 			<button
 				type="button"
 				onClick={() => { setIsActionsMenuOpen(false); setIsReportDialogOpen(true); }}
-				className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-red-400 transition hover:bg-red-500/10 active:bg-red-500/15"
+				className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-red-400 transition hover:bg-red-500/10 active:bg-red-500/15"
 			>
-				<Flag className="mr-2 h-4 w-4 fill-current opacity-70" />
+				<Flag className="me-2 h-4 w-4 fill-current opacity-70" />
 				{t("profile_details.report.menu_item")}
 			</button>
 			</div>
@@ -2168,7 +2168,7 @@ export function ProfileDetailsModal({
 					<span
 						title={moderation?.reason ? `${moderationLabel}: ${moderation.reason}` : moderationLabel}
 						aria-label={moderationLabel}
-						className={`absolute right-full top-1/2 mr-2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-sm ${isRejected ? "bg-red-500/90" : "bg-amber-500/90"}`}
+						className={`absolute end-full top-1/2 me-2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-white shadow-sm ${isRejected ? "bg-red-500/90" : "bg-amber-500/90"}`}
 					>
 						{isRejected ? <AlertTriangle className="h-[18px] w-[18px]" /> : <Clock className="h-[18px] w-[18px]" />}
 					</span>
@@ -2453,7 +2453,7 @@ export function ProfileDetailsModal({
 											// Mutual: ours in front, theirs tucked behind it, as a pair.
 											<span className="inline-flex items-center text-[19px] leading-none">
 												<span className="relative z-10 translate-y-1 drop-shadow-[2px_0_2px_rgba(0,0,0,0.65)]">{barTapEmoji(tapVisualState.tapId)}</span>
-												<span className="-ml-2 -translate-y-1">{barTapEmoji(receivedTapType ?? 1)}</span>
+												<span className="-ms-2 -translate-y-1">{barTapEmoji(receivedTapType ?? 1)}</span>
 											</span>
 										)
 										: isTapActive
@@ -2478,7 +2478,7 @@ export function ProfileDetailsModal({
 									<span className="relative inline-flex">
 										<MessageCircle className="h-5 w-5" strokeWidth={1.8} />
 										{(chatContactStatus?.unreadCount ?? 0) > 0 && (
-											<span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9px] font-bold text-[var(--accent-contrast)] shadow-sm">
+											<span className="absolute -top-1.5 -end-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9px] font-bold text-[var(--accent-contrast)] shadow-sm">
 												{chatContactStatus?.unreadCount}
 											</span>
 										)}
@@ -2627,16 +2627,16 @@ export function ProfileDetailsModal({
 								</button>
 								{nicknameNameChangeBadge}
 								{actionsMenuPresence.rendered && (
-									<div data-lenis-prevent style={menuTransitionStyle(actionsMenuPresence.visible)} className="absolute right-0 top-full z-50 mt-1 flex max-h-[calc(100dvh-8rem)] min-w-[190px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2">
+									<div data-lenis-prevent style={menuTransitionStyle(actionsMenuPresence.visible)} className="absolute end-0 top-full z-50 mt-1 flex max-h-[calc(100dvh-8rem)] min-w-[190px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2">
 										<div className="flex flex-col gap-1 px-2">
 										{showLocate && (
 										<button
 											type="button"
 											disabled={isTriangleDisabled}
 											onClick={() => { setIsActionsMenuOpen(false); if (messageProfileId) onTriangleProfile?.(String(messageProfileId)); }}
-											className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-50"
+											className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-50"
 										>
-											<LocateFixedFilled className="mr-2 h-4 w-4 opacity-70" />
+											<LocateFixedFilled className="me-2 h-4 w-4 opacity-70" />
 											{locateLabel ?? t("profile_details.locate")}
 										</button>
 										)}
@@ -2645,9 +2645,9 @@ export function ProfileDetailsModal({
 											type="button"
 											disabled={isProfileUnavailable}
 											onClick={() => { setIsActionsMenuOpen(false); if (!messageProfileId || isProfileUnavailable) return; isHidden ? onUnhideProfile?.(String(messageProfileId)) : onHideProfile?.(String(messageProfileId)); }}
-											className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-50"
+											className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-50"
 										>
-											{isHidden ? <EyeFilled className="mr-2 h-4 w-4 opacity-70" /> : <EyeOffFilled className="mr-2 h-4 w-4 opacity-70" />}
+											{isHidden ? <EyeFilled className="me-2 h-4 w-4 opacity-70" /> : <EyeOffFilled className="me-2 h-4 w-4 opacity-70" />}
 											{isHidden ? t("profile_details.unhide") : t("profile_details.hide")}
 										</button>
 										)}
@@ -2661,9 +2661,9 @@ export function ProfileDetailsModal({
 											<button
 												type="button"
 												onClick={handleBanBioPhrase}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 											>
-												<Ban className="mr-2 h-4 w-4 opacity-70" />
+												<Ban className="me-2 h-4 w-4 opacity-70" />
 												{t("profile_details.ban_keyword_menu_bio", { defaultValue: "Ban word from bio" })}
 											</button>
 										)}
@@ -2671,9 +2671,9 @@ export function ProfileDetailsModal({
 											<button
 												type="button"
 												onClick={handleBanProfileName}
-												className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+												className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 											>
-												<Ban className="mr-2 h-4 w-4 opacity-70" />
+												<Ban className="me-2 h-4 w-4 opacity-70" />
 												{t("profile_details.ban_keyword_menu_name", { defaultValue: "Ban word from name" })}
 											</button>
 										)}
@@ -2736,7 +2736,7 @@ export function ProfileDetailsModal({
 						{renderCarouselCornerBadges()}
 						{renderOwnPhotoActions()}
 						{carouselHashes.length > 1 && (
-							<div className="absolute inset-y-0 right-3 z-20 flex flex-col items-center justify-center">
+							<div className="absolute inset-y-0 end-3 z-20 flex flex-col items-center justify-center">
 								<div className="flex flex-col items-center gap-1.5 rounded-full bg-black/30 px-[5px] py-[10px] backdrop-blur-sm">
 									{carouselHashes.map((hash, index) => (
 										<button
@@ -3003,7 +3003,7 @@ export function ProfileDetailsModal({
 							</>
 						)}
 						{carouselHashes.length > 1 && (
-							<div className="absolute inset-y-0 right-4 z-20 flex flex-col items-center justify-center">
+							<div className="absolute inset-y-0 end-4 z-20 flex flex-col items-center justify-center">
 								<div className="flex flex-col items-center gap-2 rounded-full bg-black/30 px-[7px] py-[14px] backdrop-blur-sm">
 									{carouselHashes.map((hash, index) => (
 										<button
@@ -3097,13 +3097,13 @@ export function ProfileDetailsModal({
 												</button>
 												{nicknameNameChangeBadge}
 												{actionsMenuPresence.rendered && (
-													<div data-lenis-prevent style={menuTransitionStyle(actionsMenuPresence.visible)} className="absolute right-0 top-full z-50 mt-1 flex max-h-[calc(100dvh-8rem)] min-w-[190px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2">
+													<div data-lenis-prevent style={menuTransitionStyle(actionsMenuPresence.visible)} className="absolute end-0 top-full z-50 mt-1 flex max-h-[calc(100dvh-8rem)] min-w-[190px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2">
 														<div className="flex flex-col gap-1 px-2">
 														{showLocate && (
 														<button type="button" disabled={isTriangleDisabled}
 															onClick={() => { setIsActionsMenuOpen(false); if (messageProfileId) onTriangleProfile?.(String(messageProfileId)); }}
-															className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-50">
-															<LocateFixedFilled className="mr-2 h-4 w-4 opacity-70" />
+															className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-50">
+															<LocateFixedFilled className="me-2 h-4 w-4 opacity-70" />
 															{locateLabel ?? t("profile_details.locate")}
 														</button>
 														)}
@@ -3112,9 +3112,9 @@ export function ProfileDetailsModal({
 															type="button"
 															disabled={isProfileUnavailable}
 															onClick={() => { setIsActionsMenuOpen(false); if (!messageProfileId || isProfileUnavailable) return; isHidden ? onUnhideProfile?.(String(messageProfileId)) : onHideProfile?.(String(messageProfileId)); }}
-															className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill disabled:opacity-50"
+															className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill disabled:opacity-50"
 														>
-															{isHidden ? <EyeFilled className="mr-2 h-4 w-4 opacity-70" /> : <EyeOffFilled className="mr-2 h-4 w-4 opacity-70" />}
+															{isHidden ? <EyeFilled className="me-2 h-4 w-4 opacity-70" /> : <EyeOffFilled className="me-2 h-4 w-4 opacity-70" />}
 															{isHidden ? t("profile_details.unhide") : t("profile_details.hide")}
 														</button>
 														)}
@@ -3128,9 +3128,9 @@ export function ProfileDetailsModal({
 															<button
 																type="button"
 																onClick={handleBanBioPhrase}
-																className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+																className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 															>
-																<Ban className="mr-2 h-4 w-4 opacity-70" />
+																<Ban className="me-2 h-4 w-4 opacity-70" />
 																{t("profile_details.ban_keyword_menu_bio", { defaultValue: "Ban word from bio" })}
 															</button>
 														)}
@@ -3138,9 +3138,9 @@ export function ProfileDetailsModal({
 															<button
 																type="button"
 																onClick={handleBanProfileName}
-																className="flex items-center rounded-sm px-2 py-2 text-left text-sm text-[var(--text)] transition hover-fill"
+																className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
 															>
-																<Ban className="mr-2 h-4 w-4 opacity-70" />
+																<Ban className="me-2 h-4 w-4 opacity-70" />
 																{t("profile_details.ban_keyword_menu_name", { defaultValue: "Ban word from name" })}
 															</button>
 														)}
@@ -3234,7 +3234,7 @@ export function ProfileDetailsModal({
 						disabled={!onPrevProfile}
 						aria-label={t("profile_details.previous_profile")}
 						title={t("profile_details.previous_profile")}
-						className="absolute left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 disabled:opacity-0 disabled:pointer-events-none"
+						className="absolute start-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 disabled:opacity-0 disabled:pointer-events-none"
 					>
 						<ChevronLeft className="h-6 w-6" />
 					</button>
@@ -3247,7 +3247,7 @@ export function ProfileDetailsModal({
 						disabled={!onNextProfile}
 						aria-label={t("profile_details.next_profile")}
 						title={t("profile_details.next_profile")}
-						className="absolute right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 disabled:opacity-0 disabled:pointer-events-none"
+						className="absolute end-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition hover:bg-black/60 disabled:opacity-0 disabled:pointer-events-none"
 					>
 						<ChevronRight className="h-6 w-6" />
 					</button>

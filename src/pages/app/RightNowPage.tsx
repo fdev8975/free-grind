@@ -304,7 +304,7 @@ function RightNowRow({
 		<div
 			ref={ref}
 			className={cn(
-				"group/reveal flex items-center gap-4 pl-4 pr-4 py-3 border-b border-[var(--surface-2)]",
+				"group/reveal flex items-center gap-4 ps-4 pe-4 py-3 border-b border-[var(--surface-2)]",
 				revealClass,
 				className,
 			)}
@@ -325,7 +325,7 @@ function RightNowRow({
 			<div className="min-w-0 flex-1">
 				<button
 					type="button"
-					className="w-full text-left"
+					className="w-full text-start"
 					onClick={() => onSelect(item.profileId)}
 				>
 					{item.text && (
@@ -514,13 +514,13 @@ function RightNowTile({
 					<div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
 				) : null}
 				{item.hosting ? (
-					<span className="pointer-events-none absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--right-now)_85%,black)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+					<span className="pointer-events-none absolute start-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--right-now)_85%,black)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
 						<HomeFilled className="h-3 w-3" />
 						{t("right_now.hosting")}
 					</span>
 				) : null}
 				{photos.length > 1 ? (
-					<span className="pointer-events-none absolute bottom-12 right-3 z-10 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md">
+					<span className="pointer-events-none absolute bottom-12 end-3 z-10 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md">
 						+{photos.length - 1}
 					</span>
 				) : null}
@@ -551,7 +551,7 @@ function RightNowTile({
 							/>
 						</svg>
 						{isOnline ? (
-							<span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[var(--surface)] ${isEndingSoon ? "bg-amber-500" : "bg-green-500"}`} />
+							<span className={`absolute -bottom-0.5 -end-0.5 h-3.5 w-3.5 rounded-full border-2 border-[var(--surface)] ${isEndingSoon ? "bg-amber-500" : "bg-green-500"}`} />
 						) : null}
 					</div>
 
@@ -728,7 +728,7 @@ function RightNowDiscreetRow({
 	return (
 		<div
 			ref={ref}
-			className={cn("group/reveal flex items-center gap-4 pl-4 pr-4 py-3 border-b border-[var(--surface-2)]", revealClass)}
+			className={cn("group/reveal flex items-center gap-4 ps-4 pe-4 py-3 border-b border-[var(--surface-2)]", revealClass)}
 		>
 			<DiscreetAvatar className="h-15 w-15 shrink-0" />
 
@@ -839,13 +839,13 @@ function RightNowDiscreetTile({
 					<div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent" />
 				) : null}
 				{item.hosting ? (
-					<span className="pointer-events-none absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--right-now)_85%,black)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
+					<span className="pointer-events-none absolute start-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--right-now)_85%,black)] px-2.5 py-1 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
 						<HomeFilled className="h-3 w-3" />
 						{t("right_now.hosting")}
 					</span>
 				) : null}
 				{photos.length > 1 ? (
-					<span className="pointer-events-none absolute bottom-12 right-3 z-10 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md">
+					<span className="pointer-events-none absolute bottom-12 end-3 z-10 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md">
 						+{photos.length - 1}
 					</span>
 				) : null}
@@ -941,7 +941,7 @@ function RightNowMapCard({
 			{/* Close, pinned to the card's corner (over the photo when there is one).
 			    Positioned by a wrapper: SHEET_ICON_BUTTON_CLASS's ink-tint sets
 			    position: relative, which would override an absolute on the button. */}
-			<div className="absolute right-3 top-3 z-10">
+			<div className="absolute end-3 top-3 z-10">
 				<button
 					type="button"
 					onClick={onClose}
@@ -971,7 +971,7 @@ function RightNowMapCard({
 					{/* Fades the photo into the card */}
 					<div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[color-mix(in_srgb,var(--surface)_92%,transparent)]" />
 					{photos.length > 1 ? (
-						<span className="absolute bottom-12 right-3 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md">
+						<span className="absolute bottom-12 end-3 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-md">
 							+{photos.length - 1}
 						</span>
 					) : null}
@@ -1010,11 +1010,11 @@ function RightNowMapCard({
 							/>
 						</svg>
 						{isOnline ? (
-							<span className={`absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[var(--surface)] ${isEndingSoon ? "bg-amber-500" : "bg-green-500"}`} />
+							<span className={`absolute -bottom-0.5 -end-0.5 h-3.5 w-3.5 rounded-full border-2 border-[var(--surface)] ${isEndingSoon ? "bg-amber-500" : "bg-green-500"}`} />
 						) : null}
 					</button>
 
-					<button type="button" onClick={() => onSelect(item.profileId)} className={cn("min-w-0 flex-1 pb-0.5 text-left", !heroSrc && "pr-8")}>
+					<button type="button" onClick={() => onSelect(item.profileId)} className={cn("min-w-0 flex-1 pb-0.5 text-start", !heroSrc && "pe-8")}>
 						<div className="flex min-w-0 items-center gap-1.5">
 							<p className="truncate text-base font-bold text-[var(--text)]">{name}</p>
 							{item.isFavorite && <Star className="h-3.5 w-3.5 shrink-0 fill-current text-[var(--accent)]" />}
@@ -1089,7 +1089,7 @@ function RightNowTileSkeleton() {
 
 function RightNowSkeleton() {
 	return (
-		<div className="flex items-center gap-4 border-b border-[var(--surface-2)] py-3 pl-4 pr-4">
+		<div className="flex items-center gap-4 border-b border-[var(--surface-2)] py-3 ps-4 pe-4">
 			<div className="h-15 w-15 shrink-0 rounded-full overflow-hidden animate-pulse bg-[var(--surface-2)]" />
 			<div className="flex flex-1 flex-col gap-2">
 				<div className="flex items-center justify-between gap-3">
@@ -1616,7 +1616,7 @@ export function RightNowPage() {
 							>
 								<Inbox className="h-5 w-5" />
 								{pendingRequests.length > 0 ? (
-									<span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--right-now)] px-1 text-[9px] font-bold leading-none tabular-nums text-white">
+									<span className="absolute end-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--right-now)] px-1 text-[9px] font-bold leading-none tabular-nums text-white">
 										{pendingRequests.length > 99 ? "99+" : pendingRequests.length}
 									</span>
 								) : null}
@@ -1658,7 +1658,7 @@ export function RightNowPage() {
 								<PhosphorSlidersHorizontal weight="fill" className="h-3.5 w-3.5" />
 							</span>
 							{hasAdvancedFilters ? (
-								<span className="ml-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-[var(--right-now)]">
+								<span className="ms-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-[var(--right-now)]">
 									{activeFilterCount}
 								</span>
 							) : null}
@@ -1713,7 +1713,7 @@ export function RightNowPage() {
 				<div
 					// Full bleed, running up behind the header and, on desktop, on under
 					// the (unfilled) nav rail instead of being cut off at its edge.
-					className="relative flex-1 min-h-0 rail:-ml-[var(--nav-rail-width)]"
+					className="relative flex-1 min-h-0 rail:-ms-[var(--nav-rail-width)]"
 					style={{ marginTop: -headerBottom }}
 				>
 					<RightNowMap
@@ -1729,7 +1729,7 @@ export function RightNowPage() {
 					{/* Keeps the rail's tabs readable over the map, like the mobile nav bar's fade. */}
 					<div
 						aria-hidden="true"
-						className="pointer-events-none absolute inset-y-0 left-0 z-10 hidden w-[calc(var(--nav-rail-width)+4rem)] rail:block"
+						className="pointer-events-none absolute inset-y-0 start-0 z-10 hidden w-[calc(var(--nav-rail-width)+4rem)] rail:block"
 						style={{ background: "linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.75) 55%, transparent 100%)" }}
 					/>
 					{/* The page's bottom scrim behind the action pill, here inside the map so it
@@ -1756,7 +1756,7 @@ export function RightNowPage() {
 						<div
 							className={cn(
 								// Desktop: centered in the part of the map beside the rail.
-								"absolute inset-x-0 z-20 px-3 rail:pl-[calc(var(--nav-rail-width)+0.75rem)]",
+								"absolute inset-x-0 z-20 px-3 rail:ps-[calc(var(--nav-rail-width)+0.75rem)]",
 								// Clear of the nav bar, a bit more room above the floating one.
 								navFullWidth
 									? "bottom-[calc(var(--nav-height,var(--safe-area-bottom))+0.75rem)]"
@@ -1881,15 +1881,15 @@ export function RightNowPage() {
 		<div
 			aria-hidden="true"
 			// The map view draws its own, full-bleed one.
-			className={cn("pointer-events-none fixed bottom-0 left-[var(--nav-rail-width,0px)] right-0 z-[55] hidden h-36", !isMapView && "rail:block")}
+			className={cn("pointer-events-none fixed bottom-0 start-[var(--nav-rail-width,0px)] end-0 z-[55] hidden h-36", !isMapView && "rail:block")}
 			style={{ background: BOTTOM_SCRIM_GRADIENT }}
 		/>
-		<div className="fixed left-[var(--nav-rail-width,0px)] right-0 bottom-[calc(var(--nav-height,var(--safe-area-bottom))+0.75rem)] rail:bottom-[var(--page-bottom)] z-[60] pointer-events-none">
+		<div className="fixed start-[var(--nav-rail-width,0px)] end-0 bottom-[calc(var(--nav-height,var(--safe-area-bottom))+0.75rem)] rail:bottom-[var(--page-bottom)] z-[60] pointer-events-none">
 			<div className="relative mx-auto h-full w-full max-w-4xl rail:max-w-none px-4 md:px-10">
 				{developerMode && showDebugInfo && (
 					<div
 						className={cn(
-							"absolute bottom-0 left-4 transition-all duration-300 pointer-events-auto",
+							"absolute bottom-0 start-4 transition-all duration-300 pointer-events-auto",
 							(isPosting || isFiltersOpen || isMapCardOpen || isRequestsOpen) ? "pointer-events-none opacity-0 translate-y-4" : "opacity-100 translate-y-0",
 						)}
 					>

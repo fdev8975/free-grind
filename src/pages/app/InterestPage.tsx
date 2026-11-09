@@ -56,8 +56,8 @@ function InterestViewsGridSkeleton() {
 						isDesktop ? "rounded-xl" : "rounded-[6px]",
 					)}
 				>
-					<div className="absolute left-2 top-2 h-4 w-9 rounded-full bg-white/20" />
-					<div className="absolute bottom-2 left-2 flex flex-col gap-1.5">
+					<div className="absolute start-2 top-2 h-4 w-9 rounded-full bg-white/20" />
+					<div className="absolute bottom-2 start-2 flex flex-col gap-1.5">
 						<div className="h-2.5 w-16 rounded-full bg-white/20" />
 						<div className="h-2 w-10 rounded-full bg-white/15" />
 					</div>
@@ -69,7 +69,7 @@ function InterestViewsGridSkeleton() {
 
 function InterestSkeleton({ mode }: { mode: InterestTab }) {
 	return (
-		<div className="flex items-center gap-4 border-b border-[var(--surface-2)] py-3 pl-4 pr-4">
+		<div className="flex items-center gap-4 border-b border-[var(--surface-2)] py-3 ps-4 pe-4">
 			<div className="h-15 w-15 shrink-0 rounded-full overflow-hidden animate-pulse bg-[var(--surface-2)]" />
 			<div className="flex flex-1 flex-col gap-2">
 				<div className="h-3 w-28 animate-pulse rounded-full bg-[var(--surface-2)]" />
@@ -641,7 +641,7 @@ export function InterestPage() {
 					</div>
 
 					<div className="flex flex-col gap-3">
-						<div className="flex items-center justify-between pl-[var(--app-px)] pr-4">
+						<div className="flex items-center justify-between ps-[var(--app-px)] pe-4">
 							<InterestTabs
 								activeTab={activeTab}
 								tabs={tabConfigs}

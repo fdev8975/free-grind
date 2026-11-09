@@ -192,7 +192,7 @@ function AlertConfirmDialog({
 								className="peer absolute inset-0 z-10 m-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
 							/>
 							<span className="absolute inset-0 rounded-full bg-[color-mix(in_srgb,var(--sheet-bg,var(--surface))_82%,var(--accent))] transition-colors peer-checked:bg-[var(--accent)] peer-disabled:opacity-60" />
-							<span className="absolute left-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 peer-checked:bg-[var(--accent-contrast)]" />
+							<span className="absolute start-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5 peer-checked:bg-[var(--accent-contrast)]" />
 						</span>
 					</label>
 				) : null}

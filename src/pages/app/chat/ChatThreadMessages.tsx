@@ -174,7 +174,7 @@ const MISSING_CLICK_WAIT_MS = 120;
 
 function MediaBadge({ icon, label }: { icon: React.ReactNode; label: React.ReactNode }) {
 	return (
-		<div className="pointer-events-none absolute left-2 top-2 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 pl-1.5 pr-2.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md">
+		<div className="pointer-events-none absolute start-2 top-2 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 ps-1.5 pe-2.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md">
 			{icon}
 			{label}
 		</div>
@@ -227,7 +227,7 @@ function AlbumExpirationCountdown({ expiresAt, isOnce, t, className = "mt-1" }: 
 				`}
 			</style>
 			<div className={`flex items-center ${className}`}>
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 pl-1.5 pr-2.5 text-[11px] font-semibold tracking-wide text-[var(--accent)] shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md uppercase">
+				<span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 ps-1.5 pe-2.5 text-[11px] font-semibold tracking-wide text-[var(--accent)] shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md uppercase">
 					<Hourglass className="h-3 w-3 animate-hourglass-rotate" />
 					<span>
 						{isOnce ? t("chat.expiration.once") : `${parts.join(" ")} ${t("chat.expiration.remaining")}`}
@@ -338,7 +338,7 @@ function MessageContextMenu({
 							onClose();
 							action.onClick();
 						}}
-						className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm transition disabled:cursor-default disabled:opacity-50 ${
+						className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-start text-sm transition disabled:cursor-default disabled:opacity-50 ${
 							action.danger
 								? "text-red-500 hover:bg-red-500/10 active:bg-red-500/15"
 								: "text-[var(--text)] hover-fill"
@@ -1629,7 +1629,7 @@ export function ChatThreadMessages({
                         Boolean(audioUrl) && messageText === t("chat.thread.shared_audio");
                     const isMediaOnlyBubble =
                         isImageOnlyBubble || isVideoOnlyBubble || isAlbumOnlyBubble || isLocationOnlyBubble || isAlbumReactionBubble;
-                    const tailCorner = mine ? "rounded-br-[3px]" : "rounded-bl-[3px]";
+                    const tailCorner = mine ? "rounded-ee-[3px]" : "rounded-es-[3px]";
                     const shouldBlurIncomingMedia =
                         blurIncomingMedia &&
                         message.type !== "Giphy" &&
@@ -1642,8 +1642,8 @@ export function ChatThreadMessages({
                         selectedThreadMessageMatches[activeThreadSearchIndex]
                             ?.messageId === message.messageId;
                     const fireButtonClass = mine
-                        ? "absolute -left-2 -top-2"
-                        : "absolute -right-2 -top-2";
+                        ? "absolute -start-2 -top-2"
+                        : "absolute -end-2 -top-2";
                     const reactionEmoji = getReactionEmoji(message.reactions[0]?.reactionType ?? 1);
                     const flameOutline = "drop-shadow(1px 0 0 var(--surface)) drop-shadow(-1px 0 0 var(--surface)) drop-shadow(0 1px 0 var(--surface)) drop-shadow(0 -1px 0 var(--surface))";
                     const multiReaction = message.reactions.length >= 2;
@@ -1741,7 +1741,7 @@ export function ChatThreadMessages({
                         >
                             <div
                                 ref={(el) => { if (el) swipeIconRef.current.set(message.messageId, el); else swipeIconRef.current.delete(message.messageId); }}
-                                className={`pointer-events-none absolute ${swipeSignFor(message) > 0 ? "left-2" : "right-2"} top-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)]`}
+                                className={`pointer-events-none absolute ${swipeSignFor(message) > 0 ? "start-2" : "end-2"} top-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface-3)]`}
                                 style={{ opacity: 0, transform: "translateY(-50%) scale(0.5)" }}
                             >
                                 <Reply className="h-4 w-4 text-[var(--text-muted)]" />
@@ -1766,17 +1766,17 @@ export function ChatThreadMessages({
                                     }}
                                     className={`relative group/bubble w-full rounded-2xl text-base no-touch-callout ${
                                         isMediaOnlyBubble && hasReply
-                                            ? `p-0 ${mine ? "rounded-br-[3px]" : "rounded-bl-[3px]"}`
+                                            ? `p-0 ${mine ? "rounded-ee-[3px]" : "rounded-es-[3px]"}`
                                             : isMediaOnlyBubble
                                                 ? "bg-transparent p-0"
                                                 : `px-3 py-2 ${
                                                     mine
-                                                        ? "bg-[var(--accent)] text-[var(--accent-contrast)] rounded-br-[3px]"
-                                                        : "bg-[var(--surface-2)] text-[var(--text)] rounded-bl-[3px]"
+                                                        ? "bg-[var(--accent)] text-[var(--accent-contrast)] rounded-ee-[3px]"
+                                                        : "bg-[var(--surface-2)] text-[var(--text)] rounded-es-[3px]"
                                                 }`
                                     } ${isActiveSearchMatch ? "ring-2 ring-[var(--accent)]" : ""} ${highlightedMessageId === message.messageId ? (mine ? "animate-jump-highlight-mine" : "animate-jump-highlight-other") : ""} ${(localOnly || isCachedExpiredAlbum) ? "opacity-50" : ""}`}
                                 >
-                                    <div className={isMediaOnlyBubble && hasReply ? `overflow-hidden rounded-2xl ${mine ? "rounded-br-[3px]" : "rounded-bl-[3px]"}` : "contents"}>
+                                    <div className={isMediaOnlyBubble && hasReply ? `overflow-hidden rounded-2xl ${mine ? "rounded-ee-[3px]" : "rounded-es-[3px]"}` : "contents"}>
                                     {message.type !== "ProfilePhotoReply" && (replyText || replyThumbUrl || replyVideoUrl || replyIsAudio || hasReply) ? (
                                         <div className={isMediaOnlyBubble && hasReply
                                             // Takes the media's width rather than setting it: a long
@@ -1809,15 +1809,15 @@ export function ChatThreadMessages({
                                                 ? `mx-3 mt-3 mb-3 rounded-[6px] ${mine ? "bg-black/15" : "bg-black/[0.06]"}`
                                                 : `mt-1 mb-2 rounded-[6px] ${mine ? "bg-black/15" : "bg-black/[0.06]"}`
                                         }`}>
-                                            <div className={`absolute left-0 top-0 h-full w-[3px] shrink-0 ${
+                                            <div className={`absolute start-0 top-0 h-full w-[3px] shrink-0 ${
                                                 mine ? "bg-white/75" : "bg-[var(--accent)]"
                                             }`} />
-                                            <div className="min-w-0 flex-1 self-center py-2 pl-3 pr-2.5">
+                                            <div className="min-w-0 flex-1 self-center py-2 ps-3 pe-2.5">
                                                 <p className={`mb-0.5 truncate font-semibold ${mine ? "opacity-90" : "text-[var(--accent)]"}`}>{replyLabel}</p>
                                                 <p className="line-clamp-2 break-words text-[13px] leading-snug opacity-75">{replyText ?? replyDescription}</p>
                                             </div>
                                             {replyThumbUrl ? (
-                                                <div className={`relative my-1.5 mr-1.5 h-10 w-10 shrink-0 self-center overflow-hidden rounded-[6px] ${replyIsGaymoji ? "" : "bg-black/20"}`}>
+                                                <div className={`relative my-1.5 me-1.5 h-10 w-10 shrink-0 self-center overflow-hidden rounded-[6px] ${replyIsGaymoji ? "" : "bg-black/20"}`}>
                                                     <img
                                                         src={proxyMediaUrl(replyThumbUrl)}
                                                         alt=""
@@ -1825,7 +1825,7 @@ export function ChatThreadMessages({
                                                     />
                                                 </div>
                                             ) : replyVideoUrl ? (
-                                                <div className="relative my-1.5 mr-1.5 h-10 w-10 shrink-0 self-center overflow-hidden rounded-[6px] bg-black">
+                                                <div className="relative my-1.5 me-1.5 h-10 w-10 shrink-0 self-center overflow-hidden rounded-[6px] bg-black">
                                                     <div className="js-video-spinner pointer-events-none absolute inset-0 flex animate-delayed-appear items-center justify-center">
                                                         <Loader2 className="h-3.5 w-3.5 animate-spin text-white/60" />
                                                     </div>
@@ -1851,14 +1851,14 @@ export function ChatThreadMessages({
                                                     </div>
                                                 </div>
                                             ) : replyIsAudio ? (
-                                                <div className={`flex w-14 shrink-0 items-center justify-end py-2.5 pr-3 ${mine ? "opacity-80" : "opacity-60"}`}>
+                                                <div className={`flex w-14 shrink-0 items-center justify-end py-2.5 pe-3 ${mine ? "opacity-80" : "opacity-60"}`}>
                                                     <div className="flex flex-col items-center gap-1">
                                                         <Mic className="h-4 w-4" />
                                                         <span className="text-[10px] opacity-80">{replyAudioDuration ?? "0:00"}</span>
                                                     </div>
                                                 </div>
                                             ) : replyLocation ? (
-                                                <div className="relative my-1.5 mr-1.5 h-10 w-10 shrink-0 self-center overflow-hidden rounded-[6px] bg-[var(--surface-2)]">
+                                                <div className="relative my-1.5 me-1.5 h-10 w-10 shrink-0 self-center overflow-hidden rounded-[6px] bg-[var(--surface-2)]">
                                                     <MapLocationPreview lat={replyLocation.lat} lon={replyLocation.lon} zoom={14} marker={false} className="pointer-events-none absolute inset-0" />
                                                     {/* A small pin with its tip on the centered spot (the map's own is too big here). */}
                                                     <MapPinFilled className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-[85%] text-[var(--accent)] drop-shadow" />
@@ -1929,7 +1929,7 @@ export function ChatThreadMessages({
                                                     `}</style>
                                                     {/* Image-only bubbles render it in the footer row, level with the time. */}
                                                     {!isImageOnlyBubble ? (
-                                                        <div className="absolute bottom-1.5 left-2.5 z-10">
+                                                        <div className="absolute bottom-1.5 start-2.5 z-10">
                                                             <TakenOnGrindrBadge
                                                                 label={imageCreatedAt != null ? formatTakenOnGrindrTime(imageCreatedAt, nowTimestamp, t) : null}
                                                             />
@@ -2390,7 +2390,7 @@ export function ChatThreadMessages({
                                                 }
                                                 scheduleMobileTap(message, doOpen);
                                             }}
-                                            className={`block overflow-hidden ${isLocationOnlyBubble && hasReply ? "" : `rounded-2xl ${tailCorner}`} text-left transition hover:brightness-110`}
+                                            className={`block overflow-hidden ${isLocationOnlyBubble && hasReply ? "" : `rounded-2xl ${tailCorner}`} text-start transition hover:brightness-110`}
                                         >
                                             <div className="relative">
                                                 <MapLocationPreview lat={location.lat} lon={location.lon} className={`h-48 pointer-events-none ${isLocationOnlyBubble && hasReply ? "w-64 sm:w-72" : "w-48"}`} />
@@ -2492,8 +2492,8 @@ export function ChatThreadMessages({
                                                 } : undefined}
                                                 className={`relative mb-2.5 mt-1 flex overflow-hidden rounded-[6px] text-xs ${fullPhotoUrl ? "cursor-pointer active:opacity-70" : ""} ${mine ? "bg-black/20" : "bg-black/[0.08]"}`}
                                             >
-                                                <div className={`absolute left-0 top-0 h-full w-[3px] shrink-0 ${mine ? "bg-white/60" : "bg-[var(--accent)]/50"}`} />
-                                                <div className="min-w-0 flex-1 py-[13px] pl-[13px] pr-2.5">
+                                                <div className={`absolute start-0 top-0 h-full w-[3px] shrink-0 ${mine ? "bg-white/60" : "bg-[var(--accent)]/50"}`} />
+                                                <div className="min-w-0 flex-1 py-[13px] ps-[13px] pe-2.5">
                                                     <p className="mb-0.5 font-semibold opacity-60 truncate">{mine
                                                         ? t("chat.thread.replied_to_name", {
                                                                 name: localNickname || selectedConversation.data.name || t("common.unknown_display_name"),
@@ -2649,7 +2649,7 @@ export function ChatThreadMessages({
                                     // Absolutely positioned so a long label ("Read yesterday") doesn't widen the bubble column.
                                     <div className="relative h-5 w-full">
                                         <span
-                                            className="absolute right-1 top-1 whitespace-nowrap text-[8px] font-medium uppercase tracking-wider text-[var(--text-muted)] opacity-80"
+                                            className="absolute end-1 top-1 whitespace-nowrap text-[8px] font-medium uppercase tracking-wider text-[var(--text-muted)] opacity-80"
                                             title={
                                                 threadLastReadTimestamp != null && message.timestamp <= threadLastReadTimestamp
                                                     ? t("chat.read_at", { time: formatFullDateTime(threadLastReadTimestamp) })
@@ -2674,7 +2674,7 @@ export function ChatThreadMessages({
             </div>
             {isPartnerTyping && (
                 <div className="flex items-end gap-2 px-4 py-1">
-                    <div className="flex items-center gap-1 rounded-2xl rounded-bl-sm bg-[var(--surface-2)] px-3 py-2.5">
+                    <div className="flex items-center gap-1 rounded-2xl rounded-es-sm bg-[var(--surface-2)] px-3 py-2.5">
                         <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--text-muted)]" style={{ animationDelay: "0ms" }} />
                         <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--text-muted)]" style={{ animationDelay: "160ms" }} />
                         <span className="h-2 w-2 animate-bounce rounded-full bg-[var(--text-muted)]" style={{ animationDelay: "320ms" }} />

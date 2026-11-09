@@ -251,7 +251,7 @@ export function ProfilePictureDrawer({
 										</div>
 									) : null}
 									{statusLabel ? (
-										<span className="absolute bottom-1 right-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+										<span className="absolute bottom-1 end-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
 											{statusLabel}
 										</span>
 									) : null}

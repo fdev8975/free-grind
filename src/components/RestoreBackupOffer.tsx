@@ -213,7 +213,7 @@ export function RestoreBackupOffer({ userId, onDone }: { userId: number; onDone:
 
 				{localBackups && localBackups.length > 0 ? (
 					<div className="mt-6">
-						<p className="mb-2 px-1 text-left text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
+						<p className="mb-2 px-1 text-start text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">
 							{t("local_backups.found_title", { defaultValue: "Found on this device" })}
 						</p>
 						<LocalBackupList

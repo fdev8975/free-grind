@@ -298,7 +298,7 @@ export function ShareChatPicker({
 										type="button"
 										onClick={() => removeFile(file)}
 										aria-label={t("chat.share_target.remove_image", { defaultValue: "Remove image" })}
-										className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white"
+										className="absolute end-1 top-1 rounded-full bg-black/60 p-0.5 text-white"
 									>
 										<X className="h-3.5 w-3.5" />
 									</button>
@@ -337,7 +337,7 @@ export function ShareChatPicker({
 									onClick={() => toggleSelected(chat.conversationId)}
 									disabled={isSending}
 									aria-pressed={selectedIds.includes(chat.conversationId)}
-									className="flex w-full items-center gap-4 border-b border-[var(--surface-2)] py-3 pl-4 pr-4 text-left transition hover-fill"
+									className="flex w-full items-center gap-4 border-b border-[var(--surface-2)] py-3 ps-4 pe-4 text-start transition hover-fill"
 								>
 									<Avatar chat={chat} selected={selectedIds.includes(chat.conversationId)} />
 									<div className="min-w-0 flex-1">

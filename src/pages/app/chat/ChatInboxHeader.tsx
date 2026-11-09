@@ -115,7 +115,7 @@ export function ChatInboxHeader({
 							<h1 className="app-title relative w-fit">
 								{t("nav.inbox")}
 								<span
-									className="absolute -top-0.5 -right-2.5 h-2 w-2 rounded-full transition-colors duration-500"
+									className="absolute -top-0.5 -end-2.5 h-2 w-2 rounded-full transition-colors duration-500"
 									style={{
 										backgroundColor:
 											realtimeStatusMeta.symbol === "✓"
@@ -203,7 +203,7 @@ export function ChatInboxHeader({
 										<PhosphorSlidersHorizontal weight="fill" className="h-3.5 w-3.5" />
 									</span>
 									{hasActiveInboxFilters && activeFilterCount > 0 && (
-										<span className="ml-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent-contrast)] px-1 text-[9px] font-bold text-[var(--accent)]">
+										<span className="ms-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent-contrast)] px-1 text-[9px] font-bold text-[var(--accent)]">
 											{activeFilterCount}
 										</span>
 									)}
@@ -245,13 +245,13 @@ export function ChatInboxHeader({
 								className="glass-pill relative flex h-[38px] items-center"
 								style={{ "--pill-color": "var(--accent)" } as CSSProperties}
 							>
-								<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+								<Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
 								<input
 									autoFocus
 									value={searchQuery}
 									onChange={(e) => onSetSearchQuery(e.target.value)}
 									placeholder={t("chat_search.placeholder")}
-									className="h-full w-full bg-transparent pl-9 pr-8 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+									className="h-full w-full bg-transparent ps-9 pe-8 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
 									onKeyDown={(e) => {
 										// Escape cancels the search, like the header's search toggle;
 										// kept from reaching window-level Escape handlers.
@@ -267,7 +267,7 @@ export function ChatInboxHeader({
 									<button
 										type="button"
 										onClick={() => onSetSearchQuery("")}
-										className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--text-muted)] hover:text-[var(--text)]"
+										className="absolute end-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--text-muted)] hover:text-[var(--text)]"
 									>
 										<X className="h-3.5 w-3.5" />
 									</button>

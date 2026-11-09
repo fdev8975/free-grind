@@ -35,7 +35,7 @@ function PolicyRow({
 		<button
 			type="button"
 			onClick={() => openExternal(url)}
-			className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:ink-tint-6"
+			className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover:ink-tint-6"
 		>
 			<div className="shrink-0 rounded-2xl ink-tint-8 p-2.5 text-[var(--accent)]">
 				<Icon className="h-5 w-5" />
@@ -144,7 +144,7 @@ export function LegalAgreementsGate({ userId, children }: { userId: number; chil
 				</>
 			}
 		>
-			<div className={"native-group text-left"}>
+			<div className={"native-group text-start"}>
 				<PolicyRow
 					icon={ScrollText}
 					title={t("legal_agreements.tos_title", { defaultValue: "Terms of Service" })}

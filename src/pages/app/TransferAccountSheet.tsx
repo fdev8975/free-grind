@@ -37,7 +37,7 @@ function formatCountdown(ms: number): string {
 function TransferWarning() {
 	const { t } = useTranslation();
 	return (
-		<div className="flex w-full items-start gap-3 rounded-2xl bg-amber-500/12 px-4 py-3.5 text-left">
+		<div className="flex w-full items-start gap-3 rounded-2xl bg-amber-500/12 px-4 py-3.5 text-start">
 			<ShieldAlertFilled className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
 			<div className="min-w-0 flex-1">
 				<p className="text-sm font-semibold leading-snug text-amber-500">
@@ -201,7 +201,7 @@ export function TransferAccountSheet({ isDesktop, onClose }: { isDesktop: boolea
 					    Grindr's servers, so the code alone doesn't bring them along. */}
 					<SheetClose
 						onClick={() => afterSheetClose(() => navigate("/settings/data#data-export"))}
-						className="flex w-full items-center gap-3 rounded-2xl ink-tint-5 p-4 text-left transition active:scale-[0.99]"
+						className="flex w-full items-center gap-3 rounded-2xl ink-tint-5 p-4 text-start transition active:scale-[0.99]"
 					>
 						<div className="shrink-0 rounded-2xl bg-teal-500/15 p-2.5 text-teal-400">
 							<DatabaseBackup className="h-5 w-5" />

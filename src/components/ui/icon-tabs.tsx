@@ -117,14 +117,14 @@ export function IconTabs<K extends string>({
 							"relative z-10 flex h-8 items-center justify-center rounded-full transition-[color,transform] duration-300 ease-out active:scale-95",
 							isActive
 								// Without a total badge the label ends the pill, so it needs the same inset as the icon.
-								? cn("gap-2 pl-3 text-[var(--icon-tabs-contrast)]", tab.total != null ? "pr-1" : "pr-3.5")
+								? cn("gap-2 ps-3 text-[var(--icon-tabs-contrast)]", tab.total != null ? "pe-1" : "pe-3.5")
 								: "w-9 text-[var(--text-muted)] hover:text-[var(--text)]",
 						)}
 					>
 						<span className="relative flex shrink-0">
 							<Icon className="h-[1.15rem] w-[1.15rem]" />
 							{hasUnread && (
-								<span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-[var(--icon-tabs-color)] ring-2 ring-[var(--surface)]" />
+								<span className="absolute -end-1 -top-1 h-2 w-2 rounded-full bg-[var(--icon-tabs-color)] ring-2 ring-[var(--surface)]" />
 							)}
 						</span>
 						{isActive && (

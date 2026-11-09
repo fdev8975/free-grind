@@ -254,7 +254,7 @@ function ComposerSheet({
 							<div className="relative">
 								<pre
 									className={cn(
-										"min-w-0 whitespace-pre-wrap break-all rounded-xl px-3 py-2.5 pr-10 font-mono text-xs leading-relaxed",
+										"min-w-0 whitespace-pre-wrap break-all rounded-xl px-3 py-2.5 pe-10 font-mono text-xs leading-relaxed",
 										result.ok ? "bg-[var(--surface-2)] text-[var(--text)]" : "bg-red-500/10 text-red-500",
 									)}
 								>
@@ -264,7 +264,7 @@ function ComposerSheet({
 									type="button"
 									onClick={() => copyText(result.text, "Response")}
 									aria-label="Copy response"
-									className="absolute right-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:ink-tint-10 hover:text-[var(--text)]"
+									className="absolute end-1.5 top-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full text-[var(--text-muted)] transition hover:ink-tint-10 hover:text-[var(--text)]"
 								>
 									<Copy className="h-3.5 w-3.5" />
 								</button>
@@ -362,7 +362,7 @@ export function ApiInspectorPage() {
 					<button
 						type="button"
 						onClick={() => setComposerDraft({ method: "GET", path: "", body: "" })}
-						className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill"
+						className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill"
 					>
 						<div className="shrink-0 rounded-2xl accent-tint-15 p-2.5 text-[var(--accent)]">
 							<Send className="h-5 w-5" />
@@ -383,7 +383,7 @@ export function ApiInspectorPage() {
 						<span className="rounded-full ink-tint-10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-[var(--text-muted)]">
 							{filtered.length}
 						</span>
-						<div className="ml-auto flex flex-wrap justify-end gap-1.5">
+						<div className="ms-auto flex flex-wrap justify-end gap-1.5">
 							{filters.map((filter) => (
 								<SheetChip key={filter.value} size="sm" active={kind === filter.value} onClick={() => setKind(filter.value)}>
 									{filter.label}
@@ -409,7 +409,7 @@ export function ApiInspectorPage() {
 									key={entry.id}
 									type="button"
 									onClick={() => setOpenEntry(entry)}
-									className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left transition hover-fill"
+									className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-start transition hover-fill"
 								>
 									<span className={cn("w-14 shrink-0 rounded-md py-0.5 text-center font-mono text-[10px] font-bold", methodBadgeClass(entry.method))}>
 										{entry.method.length > 6 ? entry.method.slice(0, 6) : entry.method}

@@ -220,7 +220,7 @@ export function SettingsHiddenPage() {
 									<div key={profile.profileId} className="flex items-center gap-3 px-4 py-3">
 										<button
 											type="button"
-											className="flex min-w-0 flex-1 items-center gap-3 text-left"
+											className="flex min-w-0 flex-1 items-center gap-3 text-start"
 											onClick={() => navigate(`/profile/${profile.profileId}`, { state: { returnTo: location.pathname } })}
 										>
 											<div className="h-11 w-11 shrink-0 rounded-full overflow-hidden bg-[var(--surface-2)] drop-shadow-sm">

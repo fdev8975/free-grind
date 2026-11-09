@@ -1192,8 +1192,8 @@
 	   since these screens also carry the !px-0 utility. */
 	:root[data-nav="rail"] .app-screen.w-full {
 		width: calc(100% + var(--nav-rail-width)) !important;
-		margin-left: calc(-1 * var(--nav-rail-width)) !important;
-		padding-left: var(--nav-rail-width) !important;
+		margin-inline-start: calc(-1 * var(--nav-rail-width)) !important;
+		padding-inline-start: var(--nav-rail-width) !important;
 	}
 
 
@@ -1257,7 +1257,7 @@
 		background-repeat: no-repeat;
 		background-position: right 12px center;
 		background-size: 16px 16px;
-		padding-right: 40px;
+		padding-inline-end: 40px;
 		cursor: pointer;
 	}
 
@@ -1294,7 +1294,7 @@
 		background-repeat: no-repeat;
 		background-position: right 8px center;
 		background-size: 14px 14px;
-		padding-right: 28px;
+		padding-inline-end: 28px;
 		cursor: pointer;
 	}
 
@@ -1397,8 +1397,8 @@
 		border-radius: 6px;
 	}
 	.native-group > :first-child {
-		border-top-left-radius: 20px;
-		border-top-right-radius: 20px;
+		border-start-start-radius: 20px;
+		border-start-end-radius: 20px;
 	}
 	.native-group > :last-child {
 		border-bottom-left-radius: 20px;
@@ -2175,4 +2175,27 @@ html.qr-scanning #app {
 	background:
 		radial-gradient(ellipse 120% 60% at 50% 0%, rgba(120, 0, 10, 0.28) 0%, transparent 45%),
 		radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(90, 0, 8, 0.38) 100%);
+}
+
+/* Right-to-left (Arabic): <html dir> follows the app language
+   (services/documentDirection.ts). Directional icons (back arrows, row
+   chevrons) point the other way; rotated ones (expand indicators) and
+   `no-rtl-flip` ones (media prev/next that stay physical) keep theirs. */
+[dir="rtl"] select.input-field {
+	background-position: left 12px center;
+}
+[dir="rtl"] select.input-field-compact {
+	background-position: left 8px center;
+}
+[dir="rtl"] :is(
+	.lucide-chevron-left,
+	.lucide-chevron-right,
+	.lucide-chevrons-left,
+	.lucide-chevrons-right,
+	.lucide-arrow-left,
+	.lucide-arrow-right,
+	.lucide-move-left,
+	.lucide-move-right
+):not([class*="rotate-"], .no-rtl-flip) {
+	scale: -1 1;
 }

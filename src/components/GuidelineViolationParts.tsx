@@ -19,7 +19,7 @@ export function CardDetailsSheet({ label, title, children }: { label: string; ti
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-[var(--accent)] transition hover:ink-tint-6"
+				className="flex w-full items-center justify-between gap-3 px-4 py-3 text-start text-sm font-semibold text-[var(--accent)] transition hover:ink-tint-6"
 			>
 				{label}
 				<ChevronRight className="h-4 w-4 shrink-0" />
@@ -52,7 +52,7 @@ export function RichText({ text, className = "" }: { text: string; className?: s
 					<div key={blockIndex}>
 						{intro.length > 0 ? <p>{intro.join(" ")}</p> : null}
 						{items.length > 0 ? (
-							<ul className="mt-1.5 flex list-disc flex-col gap-1 pl-5 marker:text-[var(--accent)]">
+							<ul className="mt-1.5 flex list-disc flex-col gap-1 ps-5 marker:text-[var(--accent)]">
 								{items.map((item) => (
 									<li key={item}>{item}</li>
 								))}

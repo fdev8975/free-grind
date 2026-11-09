@@ -177,10 +177,10 @@ function VideoTile({ item, onClick }: { item: GalleryVideo; onClick: () => void 
 			<div className="absolute inset-0 flex items-center justify-center bg-black/15">
 				<Play className="h-8 w-8 text-white drop-shadow" fill="white" />
 			</div>
-			<div className="absolute left-2 top-2 inline-flex items-center rounded-full bg-black/50 p-1 text-white/85 backdrop-blur-sm">
+			<div className="absolute start-2 top-2 inline-flex items-center rounded-full bg-black/50 p-1 text-white/85 backdrop-blur-sm">
 				{item.source === "album" ? <Images className="h-3 w-3" /> : <MessageCircle className="h-3 w-3" />}
 			</div>
-			<div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6 text-left">
+			<div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 bg-gradient-to-t from-black/70 to-transparent px-2 pb-2 pt-6 text-start">
 				<div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-white/15">
 					<ProfileImage
 						src={item.profileMediaHash ? getThumbImageUrl(item.profileMediaHash, "75x75") : null}

@@ -46,7 +46,7 @@ export function ActionPill({
 			{progress !== undefined && (
 				<span
 					aria-hidden="true"
-					className="absolute inset-y-0 left-0 transition-[width] duration-1000 ease-linear"
+					className="absolute inset-y-0 start-0 transition-[width] duration-1000 ease-linear"
 					style={{ width: `${Math.max(0, Math.min(1, progress)) * 100}%`, background: color }}
 				/>
 			)}

@@ -21,6 +21,7 @@ import { installNativeSafeArea } from "./services/safeAreaBridge";
 import { installAppLocaleSync } from "./services/appLocaleBridge";
 import { applySystemLanguage } from "./services/systemLanguage";
 import { installApiLocaleSync } from "./services/apiLocale";
+import { installDocumentDirectionSync } from "./services/documentDirection";
 import "./index.css";
 
 installGlobalCrashHandlers();
@@ -31,6 +32,7 @@ if (!installAppLocaleSync(i18n, isFirstLanguageStart) && isFirstLanguageStart) {
 	void applySystemLanguage(i18n);
 }
 installApiLocaleSync(i18n);
+installDocumentDirectionSync(i18n);
 installTouchUiClass();
 startPushEventLog();
 

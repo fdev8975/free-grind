@@ -93,7 +93,7 @@ export function PageHeader({
 							<HeaderBackButton onClick={handleBack} label={backLabel} />
 						</div>
 					) : <span />}
-					<div className={cn("flex h-[var(--header-row-h)] min-w-0 items-center gap-2", subtitle && "rail:h-auto", !handleBack && "-ml-2")}>
+					<div className={cn("flex h-[var(--header-row-h)] min-w-0 items-center gap-2", subtitle && "rail:h-auto", !handleBack && "-ms-2")}>
 						<h1 className="min-w-0 truncate text-lg font-semibold">{title}</h1>
 						{titleAccessory}
 					</div>
@@ -103,7 +103,7 @@ export function PageHeader({
 					{/* Desktop: the subtitle sits in the header right under the title, so it
 					    stays visible while the page scrolls. */}
 					{subtitle && (
-						<p className={cn("app-subtitle col-start-2 hidden rail:block", !handleBack && "-ml-2")}>
+						<p className={cn("app-subtitle col-start-2 hidden rail:block", !handleBack && "-ms-2")}>
 							{subtitle}
 						</p>
 					)}

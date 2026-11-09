@@ -541,7 +541,7 @@ function RightNowPostSheetContent({ onPost }: Pick<RightNowPostPageProps, "onPos
 						title={t("right_now.weekly_limit")}
 						aria-label={`${t("right_now.weekly_limit")}: ${remainingLabel}`}
 						className={cn(
-							"flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5",
+							"flex items-center gap-1.5 rounded-full py-1 ps-1 pe-2.5",
 							rightNowRemaining > 0
 								? "bg-[color-mix(in_srgb,var(--right-now)_16%,var(--surface-2))] shadow-md shadow-[var(--right-now)]/20"
 								: "bg-[var(--surface-2)]",
@@ -602,7 +602,7 @@ function RightNowPostSheetContent({ onPost }: Pick<RightNowPostPageProps, "onPos
 										aria-label={t("right_now.section_message", { defaultValue: "Message" })}
 										className="block min-h-[96px] w-full resize-none bg-transparent px-4 pb-7 pt-3.5 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
 									/>
-									<div className="pointer-events-none absolute bottom-2.5 right-4 text-[10px] font-medium tabular-nums text-[var(--text-muted)]">
+									<div className="pointer-events-none absolute bottom-2.5 end-4 text-[10px] font-medium tabular-nums text-[var(--text-muted)]">
 										{t("right_now.char_limit", { count: text.length })}
 									</div>
 								</div>
@@ -834,7 +834,7 @@ function PostPhotoRow({
 				type="button"
 				onClick={onPick}
 				disabled={isUploading}
-				className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-wait"
+				className="flex min-w-0 flex-1 items-center gap-3 text-start disabled:cursor-wait"
 			>
 				{thumbnailUrl ? (
 					<img
@@ -1044,7 +1044,7 @@ function PostDiscreetRow({
 				<button
 					type="button"
 					onClick={() => setIsPickerOpen(true)}
-					className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill"
+					className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition hover-fill"
 				>
 					<div className={`shrink-0 rounded-2xl p-2.5 ${ROW_ICON_CLASS}`}>
 						<ListChecks className="h-5 w-5" />

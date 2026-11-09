@@ -116,14 +116,14 @@ export function BackupExportSheet({
 				<BackupProgressView kind="export" />
 			) : (
 				<>
-					<div className="flex items-center justify-between px-4 pb-3 text-left">
+					<div className="flex items-center justify-between px-4 pb-3 text-start">
 						<p className="text-sm font-semibold text-[var(--text)]">
 							{t("data_backup.export_categories_title", { defaultValue: "What do you want to export?" })}
 						</p>
 						<SheetCloseButton disabled={isExporting} />
 					</div>
 					{/* text-left: on the account-status prompt the sheet would inherit its centered text. */}
-					<div className="min-h-0 flex-1 overflow-y-auto pb-4 text-left" data-lenis-prevent>
+					<div className="min-h-0 flex-1 overflow-y-auto pb-4 text-start" data-lenis-prevent>
 						<BackupCategoryPicker categories={categories} selected={selected} onToggle={toggle} />
 						<div className="px-4 pt-4">
 							<p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">

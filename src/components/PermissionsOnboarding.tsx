@@ -459,7 +459,7 @@ export function PermissionsOnboarding({ onComplete }: { onComplete: () => void }
 										type="button"
 										onClick={() => setPreferences({ colorScheme: value, amoledMode: amoled })}
 										aria-pressed={active}
-										className={`flex items-center gap-4 px-4 py-3.5 text-left transition-[transform,background-color] duration-150 active:scale-[0.99] ${active ? "accent-tint-14" : "hover-fill"}`}
+										className={`flex items-center gap-4 px-4 py-3.5 text-start transition-[transform,background-color] duration-150 active:scale-[0.99] ${active ? "accent-tint-14" : "hover-fill"}`}
 									>
 										<SchemePreview scheme={value} amoled={amoled} className="w-16 shrink-0 rounded-lg" />
 
@@ -531,11 +531,11 @@ export function PermissionsOnboarding({ onComplete }: { onComplete: () => void }
 											onClick={() => setPreferences({ accentColor: preset.color, accentContrast: preset.contrast })}
 											aria-pressed={active}
 											className={cn(
-												"flex items-center gap-3 !rounded-[6px] px-3 py-3 text-left transition-[transform,background-color] duration-150 active:scale-[0.99]",
-												index === 0 && "!rounded-tl-[20px]",
-												index === 1 && "!rounded-tr-[20px]",
-												lastRow && index % 2 === 0 && "!rounded-bl-[20px]",
-												lastRow && index % 2 === 1 && "!rounded-br-[20px]",
+												"flex items-center gap-3 !rounded-[6px] px-3 py-3 text-start transition-[transform,background-color] duration-150 active:scale-[0.99]",
+												index === 0 && "!rounded-ss-[20px]",
+												index === 1 && "!rounded-se-[20px]",
+												lastRow && index % 2 === 0 && "!rounded-es-[20px]",
+												lastRow && index % 2 === 1 && "!rounded-ee-[20px]",
 												active ? "accent-tint-14" : "hover-fill",
 											)}
 										>
@@ -592,7 +592,7 @@ export function PermissionsOnboarding({ onComplete }: { onComplete: () => void }
 							<div className={fullscreenIconTileClass}>
 								<RefreshCcw className="h-9 w-9" />
 							</div>
-							<div className="absolute -right-2 -top-2">
+							<div className="absolute -end-2 -top-2">
 								<StatusBadge status={updatesStatus} />
 							</div>
 						</div>
@@ -745,7 +745,7 @@ export function PermissionsOnboarding({ onComplete }: { onComplete: () => void }
 						<div className={fullscreenIconTileClass}>
 							<Icon className="h-9 w-9" />
 						</div>
-						<div className="absolute -right-2 -top-2">
+						<div className="absolute -end-2 -top-2">
 							<StatusBadge status={status} isRequesting={isRequesting} />
 						</div>
 					</div>

@@ -724,7 +724,7 @@ export function ChatDrawerPanel({
 					</div>
 				) : null}
 				{!isSelected && collectionPosition > 0 ? (
-					<span className="pointer-events-none absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[11px] font-bold text-[var(--accent-contrast)]">
+					<span className="pointer-events-none absolute end-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[11px] font-bold text-[var(--accent-contrast)]">
 						{collectionPosition}
 					</span>
 				) : null}
@@ -983,11 +983,11 @@ export function ChatDrawerPanel({
 										<>
 											{canSendExpiringAlbums && (
 												<div className={`${SHEET_FOOTER_FIELD_CLASS} min-w-0 flex-1`}>
-													<Hourglass className="pointer-events-none absolute left-3 h-4 w-4 shrink-0" />
+													<Hourglass className="pointer-events-none absolute start-3 h-4 w-4 shrink-0" />
 													<select
 														value={albumExpirationType}
 														onChange={(e) => setAlbumExpirationType(e.target.value)}
-														className="h-full w-full appearance-none rounded-full bg-transparent pl-9 pr-3 text-sm font-semibold text-[var(--text)] focus:outline-none cursor-pointer text-center"
+														className="h-full w-full appearance-none rounded-full bg-transparent ps-9 pe-3 text-sm font-semibold text-[var(--text)] focus:outline-none cursor-pointer text-center"
 													>
 														{EXPIRY_OPTIONS.map((opt) => (
 															<option key={opt} value={opt}>{EXPIRY_LABELS[opt]}</option>

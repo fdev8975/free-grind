@@ -69,23 +69,23 @@ export function MapSheetSearch({
 			style={{ "--focus-color": focusColor } as React.CSSProperties}
 		>
 			<div className="relative shrink-0">
-				<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+				<Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
 				<input
 					ref={inputRef}
 					type="text"
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
 					placeholder={placeholder}
-					className="h-12 w-full bg-transparent pl-11 pr-11 text-[15px] text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+					className="h-12 w-full bg-transparent ps-11 pe-11 text-[15px] text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
 				/>
 				{isLoading ? (
-					<Loader2 className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--text-muted)]" />
+					<Loader2 className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--text-muted)]" />
 				) : query ? (
 					<button
 						type="button"
 						onClick={() => clear(true)}
 						aria-label={t("common.clear", { defaultValue: "Clear" })}
-						className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-[var(--text-muted)] transition hover:text-[var(--text)]"
+						className="absolute end-2.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-[var(--text-muted)] transition hover:text-[var(--text)]"
 					>
 						<X className="h-3.5 w-3.5" />
 					</button>
@@ -108,7 +108,7 @@ export function MapSheetSearch({
 										clear(false);
 										onSelect(result, label);
 									}}
-									className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-[var(--text)]/5 active:bg-[var(--text)]/10"
+									className="flex w-full items-center gap-3 px-3 py-2.5 text-start transition hover:bg-[var(--text)]/5 active:bg-[var(--text)]/10"
 								>
 									<span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full ink-tint-8 text-[var(--text-muted)]">
 										<MapPin className="h-3.5 w-3.5" />

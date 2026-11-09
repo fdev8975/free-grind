@@ -59,7 +59,7 @@ export const InterestRow = memo(function InterestRow({
 		<div
 			ref={ref}
 			className={cn(
-				"group/reveal relative flex items-center gap-4 border-b border-[var(--surface-2)] pl-4 pr-4 py-3 transition-colors",
+				"group/reveal relative flex items-center gap-4 border-b border-[var(--surface-2)] ps-4 pe-4 py-3 transition-colors",
 				isLocked ? "opacity-75 grayscale-[0.3]" : "hover-fill/40",
 				revealClass
 			)}
@@ -97,7 +97,7 @@ export const InterestRow = memo(function InterestRow({
 					type="button"
 					onClick={() => !isLocked && onOpenProfile(item.profileId)}
 					disabled={isLocked}
-					className="w-full text-left"
+					className="w-full text-start"
 				>
 					<div className="flex items-center gap-1.5">
 						<p className={`truncate text-sm font-bold ${isLocked ? "text-[var(--text-muted)]" : "text-[var(--text)]"}`}>
@@ -158,7 +158,7 @@ export const InterestRow = memo(function InterestRow({
 						</span>
 						{mode === "taps" && item.isMutual && (
 							<span
-								className="absolute -bottom-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full text-white shadow-md"
+								className="absolute -bottom-0.5 -end-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full text-white shadow-md"
 								style={{ backgroundColor: `rgb(${emojiColorMap[item.tapType ?? -1] || "255, 200, 0"})` }}
 								title={t("interest_page.mutual_tap_tooltip")}
 							>
@@ -167,7 +167,7 @@ export const InterestRow = memo(function InterestRow({
 						)}
 						{mode === "sent" && item.isRead && (
 							<span
-								className="absolute -bottom-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full text-white shadow-md"
+								className="absolute -bottom-0.5 -end-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full text-white shadow-md"
 								style={{ backgroundColor: `rgb(${emojiColorMap[item.tapType ?? -1] || "255, 200, 0"})` }}
 								title={t("interest_page.sent_read_tooltip")}
 							>
@@ -245,7 +245,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 				onClick={() => !isLocked && onOpenProfile(item.profileId)}
 				disabled={isLocked}
 				className={cn(
-					"group/reveal no-touch-callout touch-manipulation surface-card-grid relative block w-full overflow-hidden text-left transition-transform",
+					"group/reveal no-touch-callout touch-manipulation surface-card-grid relative block w-full overflow-hidden text-start transition-transform",
 					!isLocked && "active:scale-95",
 					isRightNow ? "p-[2px]" : "p-0",
 					isDesktop ? "rounded-xl shadow-sm" : "rounded-[6px]",
@@ -285,14 +285,14 @@ export const InterestViewTile = memo(function InterestViewTile({
 						{/* Top-left: view count, or the tap emoji (with mutual / read mark) */}
 						{mode === "views" ? (
 							<span
-								className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur-sm"
+								className="absolute start-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur-sm"
 								title={t("interest_page.total_viewed_count")}
 							>
 								<EyeFilled className="h-3 w-3" />
 								<span className="tabular-nums">{item.viewCount || 1}</span>
 							</span>
 						) : !isPrivate ? (
-							<span className="absolute left-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm">
+							<span className="absolute start-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm">
 								<span
 									className="select-none text-lg leading-none"
 									style={{ filter: `drop-shadow(0 0 3px rgba(${tapColor}, 0.55))` }}
@@ -301,7 +301,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 								</span>
 								{(mode === "taps" && item.isMutual) || (mode === "sent" && item.isRead) ? (
 									<span
-										className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-white shadow-md"
+										className="absolute -bottom-0.5 -end-0.5 flex h-4 w-4 items-center justify-center rounded-full text-white shadow-md"
 										style={{ backgroundColor: `rgb(${tapColor})` }}
 										title={mode === "taps" ? t("interest_page.mutual_tap_tooltip") : t("interest_page.sent_read_tooltip")}
 									>
@@ -312,7 +312,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 						) : null}
 
 						{/* Top-right: presence */}
-						<div className="absolute right-2 top-2 z-10 flex h-5 items-center gap-1">
+						<div className="absolute end-2 top-2 z-10 flex h-5 items-center gap-1">
 							{isRightNow && (
 								<span className="inline-flex" title={rightNow === "HOSTING" ? t("right_now.hosting") : t("right_now.not_hosting", { defaultValue: "Right Now" })}>
 									<RightNowIcon className={cn("h-4 w-4 text-[var(--right-now)]", TILE_ICON_SHADOW)} />
@@ -339,14 +339,14 @@ export const InterestViewTile = memo(function InterestViewTile({
 								{(displayName || age) && (
 									<p className="truncate text-sm font-bold leading-tight">
 										{displayName}
-										{age && <span className={cn("font-semibold text-white/90", displayName && "ml-1")}>{age}</span>}
+										{age && <span className={cn("font-semibold text-white/90", displayName && "ms-1")}>{age}</span>}
 									</p>
 								)}
 								<p className={cn("flex items-center gap-1 text-[11px] font-semibold text-white/80", (displayName || age) && "mt-0.5")}>
 									<ClockFilled className="h-3 w-3 shrink-0" />
 									<span className="truncate">{formatTimestamp(item.timestamp, t, now)}</span>
 									{mode !== "sent" && item.distanceMeters != null && (
-										<span className="ml-1.5 flex shrink-0 items-center gap-1">
+										<span className="ms-1.5 flex shrink-0 items-center gap-1">
 											<Navigation className="h-3 w-3 fill-current" />
 											<span className="tabular-nums">{formatDistance(item.distanceMeters, t, unitsPreset)}</span>
 										</span>

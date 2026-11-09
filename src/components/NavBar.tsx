@@ -586,7 +586,7 @@ export function NavBar() {
 						// (--header-top), so the first tab lines up with the page title;
 						// bottom padding = the pages' --page-bottom, so the profile tab ends
 						// level with the page content.
-						"fixed inset-y-0 left-0 w-[var(--nav-rail-width)] pt-[var(--header-top)] pb-[var(--page-bottom)]"
+						"fixed inset-y-0 start-0 w-[var(--nav-rail-width)] pt-[var(--header-top)] pb-[var(--page-bottom)]"
 					: "fixed inset-x-0 bottom-0",
 				// While the account switcher is open, lift the bar (and the switcher
 				// inside it) above the pages' floating action buttons (z-[60]).
@@ -695,7 +695,7 @@ export function NavBar() {
 							<div
 								aria-hidden
 								className={cn(
-									"pointer-events-none absolute inset-y-0 left-0",
+									"pointer-events-none absolute inset-y-0 start-0",
 									"transition-[transform,color] duration-[340ms] ease-[cubic-bezier(0.3,1.25,0.55,1)] motion-reduce:transition-none",
 									activeTab === "right-now" || (activeTab === "browse" && isRightNowLive)
 										? "text-[var(--right-now)]"
@@ -829,7 +829,7 @@ export function NavBar() {
 										)}
 										{(item.value === "inbox" && inboxUnseen) ||
 										(item.value === "interest" && interestUnseen) ? (
-											<span className="absolute -right-1 -top-1 flex h-2 w-2">
+											<span className="absolute -end-1 -top-1 flex h-2 w-2">
 												<span
 													className={cn(
 														"absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
@@ -882,7 +882,7 @@ export function NavBar() {
 							// Rail: right of the rail, level with the avatar (railSwitcherPos).
 							rail
 								? "fixed slide-in-from-left-2"
-								: cn("absolute bottom-full mb-2 slide-in-from-bottom-2", fullWidth ? "right-3" : "right-0"),
+								: cn("absolute bottom-full mb-2 slide-in-from-bottom-2", fullWidth ? "end-3" : "end-0"),
 						)}
 						style={rail && railSwitcherPos ? { left: railSwitcherPos.left, bottom: railSwitcherPos.bottom } : undefined}
 					>
@@ -897,7 +897,7 @@ export function NavBar() {
 										type="button"
 										onClick={() => void handleSwitchAccount(account.profileId)}
 										disabled={isActive || isSwitching}
-										className="flex min-w-0 items-center gap-2.5 rounded-sm px-1.5 py-1.5 text-left transition-colors hover-fill disabled:cursor-default"
+										className="flex min-w-0 items-center gap-2.5 rounded-sm px-1.5 py-1.5 text-start transition-colors hover-fill disabled:cursor-default"
 									>
 										<div className="relative h-10 w-10 shrink-0">
 											<Avatar
@@ -911,7 +911,7 @@ export function NavBar() {
 												</div>
 											)}
 											{isActive && (
-												<div className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-white ring-2 ring-[var(--surface)]">
+												<div className="absolute -bottom-0.5 -end-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-white ring-2 ring-[var(--surface)]">
 													<Check className="h-2.5 w-2.5" strokeWidth={3} />
 												</div>
 											)}

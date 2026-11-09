@@ -141,7 +141,7 @@ function SortableAlbumMediaItem({
 			>
 				{isRejected && (
 					// Bottom left: the top corners hold delete and the grip.
-					<div className="absolute bottom-1.5 left-1.5 max-w-[calc(100%-0.75rem)]">
+					<div className="absolute bottom-1.5 start-1.5 max-w-[calc(100%-0.75rem)]">
 						<span className="inline-flex max-w-full items-center gap-0.5 rounded-md bg-red-500/90 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white shadow-sm">
 							<AlertTriangle className="h-2.5 w-2.5 shrink-0" />
 							<span className="truncate">{t("settings_albums.rejected", { defaultValue: "Rejected" })}</span>
@@ -160,7 +160,7 @@ function SortableAlbumMediaItem({
 						}}
 						onClick={(event) => event.stopPropagation()}
 						// Placed and drawn like the tile's corner buttons (see DrawerTileCornerButton).
-						className="absolute right-1.5 top-1.5 z-[1] inline-flex h-5 w-5 cursor-grab touch-none items-center justify-center rounded-full bg-black/60 text-white active:cursor-grabbing"
+						className="absolute end-1.5 top-1.5 z-[1] inline-flex h-5 w-5 cursor-grab touch-none items-center justify-center rounded-full bg-black/60 text-white active:cursor-grabbing"
 					>
 						<GripVertical className="h-3 w-3" />
 					</div>
@@ -1021,7 +1021,7 @@ export function AlbumEditorSheet({
 										>
 											<SheetClose
 												onClick={() => { pendingProfileIdRef.current = profile.profileId; }}
-												className="flex min-w-0 flex-1 items-center gap-3 text-left active:opacity-70"
+												className="flex min-w-0 flex-1 items-center gap-3 text-start active:opacity-70"
 											>
 												<div className="h-12 w-12 shrink-0 rounded-full overflow-hidden bg-[var(--surface-2)] drop-shadow-sm">
 													<ProfileImage src={profile.avatarUrl} alt={profile.displayName} />

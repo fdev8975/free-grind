@@ -80,7 +80,7 @@ export function QuickFiltersSheet({
 				role="checkbox"
 				aria-checked={selected}
 				onClick={() => toggle(key)}
-				className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-left"
+				className="flex min-w-0 flex-1 items-center gap-3 px-3 py-3 text-start"
 			>
 				<span
 					className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors"
@@ -191,7 +191,7 @@ function SortableQuickFilterRow({
 		<div
 			ref={setNodeRef}
 			style={style}
-			className={cn("relative flex items-center gap-1 rounded-2xl pr-1.5", isDragging && "z-10 shadow-lg shadow-black/25")}
+			className={cn("relative flex items-center gap-1 rounded-2xl pe-1.5", isDragging && "z-10 shadow-lg shadow-black/25")}
 		>
 			{children}
 			<button

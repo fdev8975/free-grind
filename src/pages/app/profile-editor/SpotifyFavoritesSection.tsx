@@ -54,7 +54,7 @@ export function SpotifyFavoritesSection({ tracks, isLoading, disabled, onChange 
 					type="button"
 					onClick={() => setPickerOpen(true)}
 					disabled={disabled}
-					className={`flex w-full items-center gap-3 p-3 pr-4 text-left transition ${FIELD_ROW_HOVER_CLASS} disabled:cursor-not-allowed disabled:opacity-50`}
+					className={`flex w-full items-center gap-3 p-3 pe-4 text-start transition ${FIELD_ROW_HOVER_CLASS} disabled:cursor-not-allowed disabled:opacity-50`}
 				>
 					<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ink-tint-8 text-[var(--text-muted)]">
 						<Plus className="h-4 w-4" />
@@ -67,7 +67,7 @@ export function SpotifyFavoritesSection({ tracks, isLoading, disabled, onChange 
 						.filter((part) => part && part.trim().length > 0)
 						.join(" · ");
 					return (
-						<div key={track.id} className="flex items-center gap-3 p-3 pr-2">
+						<div key={track.id} className="flex items-center gap-3 p-3 pe-2">
 							{track.albumImageUrl ? (
 								<img
 									src={track.albumImageUrl}

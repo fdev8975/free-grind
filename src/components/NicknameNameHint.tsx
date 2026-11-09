@@ -36,7 +36,7 @@ export function NicknameNameChangeBadge() {
 	return (
 		<span
 			aria-hidden="true"
-			className="pointer-events-none absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--surface)]"
+			className="pointer-events-none absolute -end-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-[var(--accent)] ring-2 ring-[var(--surface)]"
 		/>
 	);
 }

@@ -57,8 +57,8 @@ export function RightNowRequestBubble({ body, mine }: { body: unknown; mine: boo
 				mine ? "bg-black/20" : "bg-[color-mix(in_srgb,var(--right-now)_14%,transparent)]",
 			)}
 		>
-			<div className={cn("absolute left-0 top-0 h-full w-[3px] shrink-0", mine ? "bg-white/60" : "bg-[var(--right-now)]")} />
-			<div className="flex min-w-0 flex-1 items-start gap-2.5 py-[13px] pl-[13px] pr-2.5">
+			<div className={cn("absolute start-0 top-0 h-full w-[3px] shrink-0", mine ? "bg-white/60" : "bg-[var(--right-now)]")} />
+			<div className="flex min-w-0 flex-1 items-start gap-2.5 py-[13px] ps-[13px] pe-2.5">
 				<span
 					className={cn(
 						"flex h-7 w-7 shrink-0 items-center justify-center rounded-full",

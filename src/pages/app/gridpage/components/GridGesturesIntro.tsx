@@ -71,7 +71,7 @@ export function GridGesturesIntro({ isDesktop, onConfirm }: { isDesktop: boolean
 				</button>
 			}
 		>
-			<div className={"native-group text-left"}>
+			<div className={"native-group text-start"}>
 				<GestureRow
 					icon={<Pointer className="h-5 w-5" />}
 					title={isDesktop
@@ -142,7 +142,7 @@ export function GridGesturesIntro({ isDesktop, onConfirm }: { isDesktop: boolean
 				)}
 			</div>
 			{/* Footnote under the group, like the settings pages' group footnotes. */}
-			<p className="mt-2 px-4 text-left text-xs leading-relaxed text-[var(--text-muted)]">
+			<p className="mt-2 px-4 text-start text-xs leading-relaxed text-[var(--text-muted)]">
 				{t("browse_page.gestures_intro.settings_hint_change", {
 					defaultValue: "You can change this and the tap type later in Settings → Behavior.",
 				})}

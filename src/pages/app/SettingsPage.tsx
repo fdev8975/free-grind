@@ -646,7 +646,7 @@ export function SettingsPage() {
 				{right ?? <ChevronRight className="h-4 w-4 shrink-0 text-[var(--text-muted)] opacity-50" />}
 			</>
 		);
-		const cls = `flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors ${disabled ? "opacity-50 cursor-not-allowed" : "hover-fill"}`;
+		const cls = `flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors ${disabled ? "opacity-50 cursor-not-allowed" : "hover-fill"}`;
 		return onClick ? (
 			<button type="button" onClick={onClick} disabled={disabled} className={cls}>
 				{inner}
@@ -836,7 +836,7 @@ export function SettingsPage() {
 												}
 												navigate(entry.anchor ? `${entry.route}#${entry.anchor}` : entry.route);
 											}}
-											className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover-fill"
+											className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors hover-fill"
 										>
 											<div className={`rounded-2xl p-2.5 shrink-0 ${entry.iconClass}`}>
 												<entry.icon className="h-5 w-5" />
@@ -877,7 +877,7 @@ export function SettingsPage() {
 											<button
 												type="button"
 												onClick={openOwnProfileEditor}
-												className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left"
+												className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-start"
 											>
 												<Avatar
 													src={activeProfile?.photoHash ? getThumbImageUrl(activeProfile.photoHash, "75x75") : null}
@@ -906,7 +906,7 @@ export function SettingsPage() {
 												type="button"
 												onClick={() => setLogoutConfirmTarget("active")}
 												aria-label={t("settings.logout")}
-												className="mr-2 shrink-0 rounded-full p-2.5 text-[var(--text-muted)] transition hover:bg-red-500/12 hover:text-red-500"
+												className="me-2 shrink-0 rounded-full p-2.5 text-[var(--text-muted)] transition hover:bg-red-500/12 hover:text-red-500"
 											>
 												<LogOut className="h-4 w-4" />
 											</button>
@@ -926,7 +926,7 @@ export function SettingsPage() {
 													type="button"
 													onClick={() => void handleSwitchAccount(account.profileId)}
 													disabled={isSwitching || isRemoving}
-													className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-left disabled:cursor-not-allowed"
+													className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-start disabled:cursor-not-allowed"
 												>
 													<div className="relative h-10 w-10 shrink-0">
 														<Avatar
@@ -954,7 +954,7 @@ export function SettingsPage() {
 													onClick={() => setLogoutConfirmTarget(account.profileId)}
 													disabled={isSwitching || isRemoving}
 													aria-label={t("settings.logout")}
-													className="mr-2 shrink-0 rounded-full p-2.5 text-[var(--text-muted)] transition hover:bg-red-500/12 hover:text-red-500 disabled:opacity-60"
+													className="me-2 shrink-0 rounded-full p-2.5 text-[var(--text-muted)] transition hover:bg-red-500/12 hover:text-red-500 disabled:opacity-60"
 												>
 													{isRemoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
 												</button>
@@ -964,7 +964,7 @@ export function SettingsPage() {
 								<button
 									type="button"
 									onClick={() => navigate("/auth/sign-in?mode=add-profile")}
-									className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover-fill"
+									className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors hover-fill"
 								>
 									<div className="rounded-2xl bg-slate-500/15 text-slate-400 p-2.5 shrink-0">
 										<UserPlusFilled className="h-5 w-5" />
@@ -992,7 +992,7 @@ export function SettingsPage() {
 											<DatabaseBackup className="h-5 w-5" />
 										</div>
 										<div
-											className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full ring-2 ring-[var(--surface)] ${inboxSyncDisplay.badgeClass}`}
+											className={`absolute -bottom-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full ring-2 ring-[var(--surface)] ${inboxSyncDisplay.badgeClass}`}
 											style={inboxSyncDisplay.badgeStyle}
 										>
 											{inboxSyncDisplay.badgeIcon}
@@ -1175,14 +1175,14 @@ export function SettingsPage() {
 									type="button"
 									onClick={() => void handleCheckUpdates()}
 									disabled={isCheckingUpdates || isSwitchingChannel}
-									className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover-fill disabled:cursor-default"
+									className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors hover-fill disabled:cursor-default"
 								>
 									<div className="relative shrink-0">
 										<div className="rounded-2xl bg-green-500/15 p-2.5 text-green-400">
 											<RefreshCcw className="h-5 w-5" />
 										</div>
 										{isContributorChannel(updateChannel) && (
-											<div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] ring-2 ring-[var(--surface)]">
+											<div className="absolute -bottom-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)] ring-2 ring-[var(--surface)]">
 												<GitBranch className="h-3 w-3" />
 											</div>
 										)}

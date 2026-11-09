@@ -82,7 +82,7 @@ export function LocalBackupList({
 	groups.sort((a, b) => Number(isCurrent(b.ownerUserId)) - Number(isCurrent(a.ownerUserId)));
 
 	return (
-		<div className={`space-y-4 text-left ${className}`}>
+		<div className={`space-y-4 text-start ${className}`}>
 			{groups.map((group) => {
 				// Name and photo as last seen in the account switcher, for profiles used on this device.
 				const saved = getSavedAccountProfile(String(group.ownerUserId));
@@ -92,7 +92,7 @@ export function LocalBackupList({
 						<div className="mb-2 flex min-w-0 items-center gap-2 px-1" title={profileId}>
 							<p className="min-w-0 truncate text-xs font-semibold text-[var(--text-muted)]">{saved.displayName || profileId}</p>
 							{isCurrent(group.ownerUserId) ? (
-								<span className="ml-auto shrink-0 text-xs font-semibold text-[var(--accent)]">
+								<span className="ms-auto shrink-0 text-xs font-semibold text-[var(--accent)]">
 									{t("local_backups.this_profile", { defaultValue: "This profile" })}
 								</span>
 							) : null}
@@ -119,7 +119,7 @@ export function LocalBackupList({
 										onClick={() => onSelect(backup)}
 										disabled={disabled}
 										title={`${profileId} · ${backup.fileName}`}
-										className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover-fill disabled:opacity-50"
+										className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors hover-fill disabled:opacity-50"
 									>
 										{saved.photoHash ? (
 											<Avatar

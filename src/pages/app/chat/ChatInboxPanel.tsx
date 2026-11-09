@@ -376,7 +376,7 @@ function ConversationContextMenu({
 					<button
 						type="button"
 						onClick={action.onSelect}
-						className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm transition ${
+						className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-start text-sm transition ${
 							action.destructive
 								? "text-red-500 hover:bg-red-500/10 active:bg-red-500/15"
 								: "text-[var(--text)] hover-fill"
@@ -622,7 +622,7 @@ function ChatConversationRow({
 				onTouchMove={handleTouchMove}
 				onTouchCancel={handleTouchCancel}
 				style={{ touchAction: "pan-y" }}
-				className={`group/reveal no-touch-callout relative flex cursor-pointer items-center gap-4 text-left transition ${
+				className={`group/reveal no-touch-callout relative flex cursor-pointer items-center gap-4 text-start transition ${
 					isDesktop
 						? `rounded-xl px-3 py-2.5 ${isSelected ? "accent-tint-14" : "hover:bg-[color-mix(in_srgb,var(--surface-2)_55%,transparent)]"}`
 						: "border-b border-[var(--surface-2)] px-4 py-3"

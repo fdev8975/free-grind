@@ -92,7 +92,7 @@ function AlbumCard({
 				<button
 					type="button"
 					onClick={onClick}
-					className="relative block aspect-[4/6] w-full text-left"
+					className="relative block aspect-[4/6] w-full text-start"
 				>
 					{previewUrl ? (
 						<img
@@ -107,7 +107,7 @@ function AlbumCard({
 						</div>
 					)}
 					{showsAlbumNumber ? (
-						<div className="absolute left-2 top-2 inline-flex h-6 items-center gap-1 rounded-full bg-black/60 px-2 text-[10px] font-semibold leading-none tabular-nums text-white/85">
+						<div className="absolute start-2 top-2 inline-flex h-6 items-center gap-1 rounded-full bg-black/60 px-2 text-[10px] font-semibold leading-none tabular-nums text-white/85">
 							<Layers className="h-3 w-3" />
 							{item.albumNumber}/{item.totalAlbumsShared}
 						</div>
@@ -151,7 +151,7 @@ function AlbumCard({
 					}}
 					disabled={isDeleting}
 					title={t("shared_albums.delete")}
-					className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/85 transition hover:bg-red-500/80 hover:text-white disabled:opacity-50"
+					className="absolute end-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/85 transition hover:bg-red-500/80 hover:text-white disabled:opacity-50"
 				>
 					<Trash2 className="h-3 w-3" />
 				</button>

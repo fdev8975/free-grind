@@ -131,7 +131,7 @@ function SelectSheetContent<T extends string>({
 							disabled={disabled || pending !== null || option.disabled}
 							onClick={() => handleSelect(option.value)}
 							className={cn(
-								"flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-60",
+								"flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-start transition disabled:cursor-not-allowed disabled:opacity-60",
 								!selected && "hover-fill",
 							)}
 							style={selected ? { background: `color-mix(in srgb, ${accentColor} 12%, transparent)` } : undefined}

@@ -176,7 +176,7 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 			<button
 				type="button"
 				onClick={() => setIsTagsDialogOpen(true)}
-				className={`block w-full px-4 py-3 text-left transition ${FIELD_ROW_HOVER_CLASS}`}
+				className={`block w-full px-4 py-3 text-start transition ${FIELD_ROW_HOVER_CLASS}`}
 			>
 				<span className="flex min-h-6 items-center gap-3">
 					<Tag className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
@@ -200,7 +200,7 @@ export function ProfileEditorFormSections({ editor }: { editor: ProfileEditorSta
 						))}
 					</span>
 				) : (
-					<span className="mt-1 block pl-7 text-sm text-[var(--text-muted)] opacity-60">
+					<span className="mt-1 block ps-7 text-sm text-[var(--text-muted)] opacity-60">
 						{t("profile_editor.sections.profile.no_tags_added")}
 					</span>
 				)}

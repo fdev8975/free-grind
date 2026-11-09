@@ -155,7 +155,7 @@ export function PersonPicker({ onPick }: PersonPickerProps) {
 									avatarSrc: row.avatarSrc,
 								})
 							}
-							className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:ink-tint-6 active:ink-tint-10"
+							className="flex w-full items-center gap-3 px-4 py-2.5 text-start transition-colors hover:ink-tint-6 active:ink-tint-10"
 						>
 							<div className="h-11 w-11 shrink-0 rounded-full overflow-hidden bg-[var(--surface-2)] drop-shadow-sm">
 								<ProfileImage src={row.avatarSrc} alt={row.name} />
@@ -172,7 +172,7 @@ export function PersonPicker({ onPick }: PersonPickerProps) {
 				<button
 					type="button"
 					onClick={() => setFreeTextMode(true)}
-					className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-semibold text-[var(--accent)] transition-colors hover:ink-tint-6 active:ink-tint-10"
+					className="flex w-full items-center gap-3 px-4 py-2.5 text-start text-sm font-semibold text-[var(--accent)] transition-colors hover:ink-tint-6 active:ink-tint-10"
 				>
 					<span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full overflow-hidden accent-tint-14">
 						<UserPlus className="h-5 w-5" />

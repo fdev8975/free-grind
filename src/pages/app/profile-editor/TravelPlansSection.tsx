@@ -93,7 +93,7 @@ export function TravelPlansSection({ plans, isLoading, disabled, onChange }: Tra
 					type="button"
 					onClick={() => setEditingPlan(null)}
 					disabled={disabled}
-					className={`flex w-full items-center gap-3 p-3 pr-4 text-left transition ${FIELD_ROW_HOVER_CLASS} disabled:cursor-not-allowed disabled:opacity-50`}
+					className={`flex w-full items-center gap-3 p-3 pe-4 text-start transition ${FIELD_ROW_HOVER_CLASS} disabled:cursor-not-allowed disabled:opacity-50`}
 				>
 					<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ink-tint-8 text-[var(--text-muted)]">
 						<Plus className="h-4 w-4" />
@@ -106,7 +106,7 @@ export function TravelPlansSection({ plans, isLoading, disabled, onChange }: Tra
 						key={plan.travelPlanId}
 						type="button"
 						onClick={() => setEditingPlan(plan)}
-						className={`flex w-full items-center gap-3 p-3 pr-4 text-left transition ${FIELD_ROW_HOVER_CLASS}`}
+						className={`flex w-full items-center gap-3 p-3 pe-4 text-start transition ${FIELD_ROW_HOVER_CLASS}`}
 					>
 						<div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ink-tint-8 text-[var(--accent)]">
 							<Plane className="h-4 w-4" />

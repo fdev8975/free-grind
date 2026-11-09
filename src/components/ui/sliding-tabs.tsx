@@ -35,7 +35,7 @@ export function SlidingTabs<T extends string>({
 			{/* Sliding active indicator: one tab's share of the track minus the p-1 padding and gap-1 between the tabs. */}
 			<span
 				aria-hidden="true"
-				className="absolute inset-y-1 left-1 rounded-[10px] bg-[var(--accent)] shadow-md shadow-[var(--accent)]/25 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+				className="absolute inset-y-1 start-1 rounded-[10px] bg-[var(--accent)] shadow-md shadow-[var(--accent)]/25 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
 				style={{
 					width: `calc((100% - ${8 + (count - 1) * 4}px) / ${count})`,
 					transform: `translateX(calc(${index * 100}% + ${index * 4}px))`,

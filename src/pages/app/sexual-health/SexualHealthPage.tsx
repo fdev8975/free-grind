@@ -128,7 +128,7 @@ export function SexualHealthPage() {
 										badge={
 											tab.value === "doses" && prepBadge ? (
 												<span
-													className={`ml-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 ${
+													className={`ms-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 ${
 														prepBadge === "protected" ? "bg-emerald-500 text-white" : "bg-amber-500 text-white"
 													}`}
 												>
@@ -170,10 +170,10 @@ export function SexualHealthPage() {
 			    sheet's scrim, so the pill stands out from the feed scrolling under it. */}
 			<div
 				aria-hidden="true"
-				className="pointer-events-none fixed bottom-0 left-[var(--nav-rail-width,0px)] right-0 z-[55] hidden h-36 rail:block"
+				className="pointer-events-none fixed bottom-0 start-[var(--nav-rail-width,0px)] end-0 z-[55] hidden h-36 rail:block"
 				style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 45%, transparent 100%)" }}
 			/>
-			<div className="fixed left-[var(--nav-rail-width,0px)] right-0 bottom-[calc(var(--nav-height,var(--safe-area-bottom))+0.75rem)] rail:bottom-[var(--page-bottom)] z-[60] pointer-events-none">
+			<div className="fixed start-[var(--nav-rail-width,0px)] end-0 bottom-[calc(var(--nav-height,var(--safe-area-bottom))+0.75rem)] rail:bottom-[var(--page-bottom)] z-[60] pointer-events-none">
 				<div className="relative mx-auto h-full w-full max-w-4xl rail:max-w-none px-4 md:px-10">
 					{/* Desktop: the FAB renders as a pill centered at the bottom (see RightNowPage). */}
 					<div ref={setFabSlotEl} className="absolute bottom-0 right-[16%] translate-x-1/2 rail:right-1/2 pointer-events-auto empty:pointer-events-none" />

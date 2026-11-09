@@ -309,7 +309,7 @@ export function SettingsDataPage() {
 							id="data-export"
 							type="button"
 							onClick={openExportSheet}
-							className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover-fill ${highlightId === "data-export" ? "animate-settings-highlight" : ""}`}
+							className={`flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors hover-fill ${highlightId === "data-export" ? "animate-settings-highlight" : ""}`}
 						>
 							<div className="shrink-0 rounded-2xl bg-teal-500/15 p-2.5 text-teal-400">
 								<FileDown className="h-5 w-5" />
@@ -345,7 +345,7 @@ export function SettingsDataPage() {
 								});
 							}}
 							disabled={isImporting}
-							className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors ${isImporting ? "opacity-50" : "hover-fill"} ${highlightId === "data-import" ? "animate-settings-highlight" : ""}`}
+							className={`flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors ${isImporting ? "opacity-50" : "hover-fill"} ${highlightId === "data-import" ? "animate-settings-highlight" : ""}`}
 						>
 							<div className="shrink-0 rounded-2xl bg-violet-500/15 p-2.5 text-violet-400">
 								<FileUpFilled className="h-5 w-5" />
@@ -453,7 +453,7 @@ export function SettingsDataPage() {
 								type="button"
 								onClick={() => void handleExportEncountersIcs()}
 								disabled={isExportingEncounters}
-								className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors ${isExportingEncounters ? "opacity-50" : "hover-fill"} ${highlightId === "data-encounters-export" ? "animate-settings-highlight" : ""}`}
+								className={`flex w-full items-center gap-3 px-4 py-3.5 text-start transition-colors ${isExportingEncounters ? "opacity-50" : "hover-fill"} ${highlightId === "data-encounters-export" ? "animate-settings-highlight" : ""}`}
 							>
 								<div className="shrink-0 rounded-2xl bg-teal-500/15 p-2.5 text-teal-400">
 									<CalendarDaysFilled className="h-5 w-5" />

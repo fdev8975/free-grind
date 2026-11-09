@@ -77,7 +77,7 @@ export function PhotoActionBar({ onSendText, onReact, reacted = false, placehold
 			>
 				{/* Like the chat composer: the field floats as a frosted pill with
 				    the send button inside it; the tap/reaction sits next to it. */}
-				<div className="flex min-w-0 flex-1 items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] py-1 pl-1 pr-1 shadow-[0_2px_6px_rgba(0,0,0,0.18),0_8px_28px_rgba(0,0,0,0.32)] ring-1 ring-[var(--border)]/50 backdrop-blur-xl focus-within:ring-2 focus-within:ring-[var(--accent)]">
+				<div className="flex min-w-0 flex-1 items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] py-1 ps-1 pe-1 shadow-[0_2px_6px_rgba(0,0,0,0.18),0_8px_28px_rgba(0,0,0,0.32)] ring-1 ring-[var(--border)]/50 backdrop-blur-xl focus-within:ring-2 focus-within:ring-[var(--accent)]">
 					<input
 						type="text"
 						value={text}

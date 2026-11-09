@@ -208,7 +208,7 @@ function DesktopTileMenu({
 							onClose();
 							action.onClick();
 						}}
-						className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-left text-sm transition ${
+						className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-start text-sm transition ${
 							action.danger
 								? "text-red-500 hover:bg-red-500/10 active:bg-red-500/15"
 								: "text-[var(--text)] hover-fill"

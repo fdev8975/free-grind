@@ -112,7 +112,7 @@ function TravelPlanRow({
 		<button
 			type="button"
 			onClick={handleOpenMaps}
-			className="flex min-h-12 w-full items-start gap-3 px-4 py-2.5 text-left transition hover-fill"
+			className="flex min-h-12 w-full items-start gap-3 px-4 py-2.5 text-start transition hover-fill"
 		>
 			<Plane className="mt-0.5 h-4 w-4 shrink-0 text-[var(--text-muted)]" />
 			<div className="min-w-0 flex-1">
@@ -368,7 +368,7 @@ export function ProfileDetailsContent({
 										<div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-36 bg-gradient-to-b from-black/65 to-transparent" />
 									</div>
 									{visiblePhotoHashes.length > 1 && (
-										<div className="absolute right-3 inset-y-0 z-20 flex flex-col items-center justify-center">
+										<div className="absolute end-3 inset-y-0 z-20 flex flex-col items-center justify-center">
 											<div className="flex flex-col items-center gap-1.5 rounded-full bg-black/30 px-[5px] py-[10px] backdrop-blur-sm">
 												{visiblePhotoHashes.map((hash, index) => (
 													<button
@@ -465,7 +465,7 @@ export function ProfileDetailsContent({
 						<h2 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
 							{activeProfileName}
 							{activeProfile.age && Number.isFinite(activeProfile.age) && (
-								<span className="ml-2 text-xl font-normal text-[var(--text-muted)] sm:text-2xl">
+								<span className="ms-2 text-xl font-normal text-[var(--text-muted)] sm:text-2xl">
 									{activeProfile.age}
 								</span>
 							)}
@@ -824,7 +824,7 @@ export function ProfileDetailsContent({
 							<div className="overflow-hidden rounded-2xl bg-[var(--surface-2)] [--hover-base:var(--surface-2)]">
 								{visibleTravelPlans.map((plan, index) => (
 									<div key={plan.travelPlanId}>
-										{index > 0 && <div className="ml-11 h-px bg-[var(--border)]" />}
+										{index > 0 && <div className="ms-11 h-px bg-[var(--border)]" />}
 										<TravelPlanRow plan={plan} t={t} isDesktopLike={isDesktopLike} />
 									</div>
 								))}
@@ -842,13 +842,13 @@ export function ProfileDetailsContent({
 							<div className="overflow-hidden rounded-2xl bg-[var(--surface-2)] [--hover-base:var(--surface-2)]">
 								{socialLinks.map((link, index) => (
 									<div key={link.key}>
-										{index > 0 && <div className="ml-11 h-px bg-[var(--border)]" />}
+										{index > 0 && <div className="ms-11 h-px bg-[var(--border)]" />}
 										<button
 											type="button"
 											onClick={() => {
 												openUrl(link.url).catch((error) => appLog.error("Failed to open social link", error));
 											}}
-											className="flex min-h-12 w-full items-center gap-3 px-4 text-left transition hover-fill"
+											className="flex min-h-12 w-full items-center gap-3 px-4 text-start transition hover-fill"
 										>
 											<link.icon className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
 											<span className="min-w-0 flex-1 truncate text-[15px] text-[var(--text)]">{link.handle}</span>
@@ -882,7 +882,7 @@ export function ProfileDetailsContent({
 											void openUrl(song.externalUrl);
 										}
 									}}
-									className="group min-w-0 text-left disabled:cursor-default"
+									className="group min-w-0 text-start disabled:cursor-default"
 								>
 									<span className="relative block aspect-square w-full overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface-2)] transition group-hover:border-[var(--accent)] group-enabled:group-hover:shadow-lg">
 										{song.albumImageUrl ? (
@@ -898,7 +898,7 @@ export function ProfileDetailsContent({
 											</span>
 										)}
 										{song.externalUrl && (
-											<span className="absolute bottom-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/55 opacity-0 transition group-hover:opacity-100">
+											<span className="absolute bottom-1 end-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/55 opacity-0 transition group-hover:opacity-100">
 												<ExternalLink className="h-3 w-3 text-white" />
 											</span>
 										)}
@@ -930,7 +930,7 @@ export function ProfileDetailsContent({
 								appLog.error("Failed to copy profile ID to clipboard", error);
 							}
 						}}
-						className="flex cursor-pointer items-center gap-2.5 text-left"
+						className="flex cursor-pointer items-center gap-2.5 text-start"
 					>
 						<Hash className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
 						<p className="text-sm text-[var(--text-muted)] select-text">{activeProfile.profileId}</p>

@@ -242,7 +242,7 @@ export function OtaUpdatePromptView({
 				</>
 			}
 		>
-			<div className={"native-group text-left"}>
+			<div className={"native-group text-start"}>
 				<VersionCompare
 					from={
 						installedVersion === undefined

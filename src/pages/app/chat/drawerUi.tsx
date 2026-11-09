@@ -46,7 +46,7 @@ export function DrawerActionButton({ icon, label, onClick, disabled, layout = "c
 			onClick={onClick}
 			disabled={disabled}
 			className={`flex items-center rounded-[var(--radius-sm)] ink-tint-10 text-[var(--text)] transition active:scale-95 hover:ink-tint-14 disabled:pointer-events-none disabled:opacity-40 ${
-				layout === "row" ? "w-full gap-3 px-3 py-2.5 text-left" : "flex-col gap-1.5 px-2 py-3"
+				layout === "row" ? "w-full gap-3 px-3 py-2.5 text-start" : "flex-col gap-1.5 px-2 py-3"
 			}`}
 		>
 			<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--accent-contrast)]">
@@ -764,7 +764,7 @@ export function DrawerMediaTile({
 			) : null}
 
 			{takenOnGrindr ? (
-				<img src={freegrindLogo} alt="" className="logo-shine pointer-events-none absolute bottom-1 left-1 h-4 w-4 rounded-full" />
+				<img src={freegrindLogo} alt="" className="logo-shine pointer-events-none absolute bottom-1 start-1 h-4 w-4 rounded-full" />
 			) : null}
 
 			{onDelete ? (
@@ -856,7 +856,7 @@ export function DrawerTileCornerButton({
 			// Keeps a press on the button from starting the tile's hold-to-peek.
 			onPointerDown={(event) => event.stopPropagation()}
 			disabled={disabled}
-			className={`absolute top-1.5 z-[1] inline-flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 disabled:opacity-60 ${corner === "left" ? "left-1.5" : "right-1.5"}`}
+			className={`absolute top-1.5 z-[1] inline-flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 disabled:opacity-60 ${corner === "left" ? "start-1.5" : "end-1.5"}`}
 			aria-label={label}
 			title={label}
 		>
@@ -1048,7 +1048,7 @@ export function AddToDrawerChip({
 			title={t("chat.attachments.add_to_drawer_description", {
 				defaultValue: "Also save this to your drawer so you can send it again later",
 			})}
-			className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full pl-2.5 pr-3 text-xs font-semibold transition active:scale-95 disabled:pointer-events-none disabled:opacity-40 ${
+			className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full ps-2.5 pe-3 text-xs font-semibold transition active:scale-95 disabled:pointer-events-none disabled:opacity-40 ${
 				checked
 					? "bg-[color-mix(in_srgb,var(--accent)_18%,transparent)] text-[var(--accent-readable)]"
 					: "ink-tint-8 text-[var(--text-muted)] hover:ink-tint-12 hover:text-[var(--text)]"
@@ -1253,11 +1253,11 @@ function DrawerPreviewGroupGrid({ group }: { group: DrawerPreviewGroup }) {
 							<img src={proxyMediaUrl(item.src)} alt="" className="h-full w-full object-cover" />
 						)}
 						{/* Send order, like the numbers in the collection editor. */}
-						<span className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[11px] font-bold text-[var(--accent-contrast)]">
+						<span className="absolute end-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[11px] font-bold text-[var(--accent-contrast)]">
 							{index + 1}
 						</span>
 						{item.isVideo ? (
-							<Play className="absolute bottom-1 left-1 h-3.5 w-3.5 fill-white text-white drop-shadow" />
+							<Play className="absolute bottom-1 start-1 h-3.5 w-3.5 fill-white text-white drop-shadow" />
 						) : null}
 						{hidden > 0 && index === visible.length - 1 ? (
 							<div className="absolute inset-0 flex items-center justify-center bg-black/55 text-lg font-bold text-white">

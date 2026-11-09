@@ -25,8 +25,8 @@ export function InboxAlbumsTabs({
 				onClick={onInboxClick}
 				className={
 					activeTab === "inbox"
-						? "relative inline-flex items-end text-left"
-						: "relative inline-flex items-end text-left text-[var(--text-muted)] transition hover:text-[var(--text)]"
+						? "relative inline-flex items-end text-start"
+						: "relative inline-flex items-end text-start text-[var(--text-muted)] transition hover:text-[var(--text)]"
 				}
 				aria-current={activeTab === "inbox" ? "page" : undefined}
 			>
@@ -41,7 +41,7 @@ export function InboxAlbumsTabs({
 				</span>
 				{inboxDotColor && (
 					<span
-						className="absolute -top-0.5 -right-2 h-2 w-2 rounded-full transition-colors duration-500"
+						className="absolute -top-0.5 -end-2 h-2 w-2 rounded-full transition-colors duration-500"
 						style={{ backgroundColor: inboxDotColor }}
 					/>
 				)}
@@ -51,8 +51,8 @@ export function InboxAlbumsTabs({
 				onClick={onAlbumsClick}
 				className={
 					activeTab === "albums"
-						? "inline-flex items-end text-left"
-						: "inline-flex items-end text-left text-[var(--text-muted)] transition hover:text-[var(--text)]"
+						? "inline-flex items-end text-start"
+						: "inline-flex items-end text-start text-[var(--text-muted)] transition hover:text-[var(--text)]"
 				}
 				aria-current={activeTab === "albums" ? "page" : undefined}
 			>

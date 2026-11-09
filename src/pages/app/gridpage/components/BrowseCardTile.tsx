@@ -218,7 +218,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 				onPointerLeave={cancelPress}
 				onContextMenu={handleContextMenu}
 				className={cn(
-					"no-touch-callout touch-manipulation surface-card-grid overflow-hidden text-left transition-transform w-full block relative",
+					"no-touch-callout touch-manipulation surface-card-grid overflow-hidden text-start transition-transform w-full block relative",
 					// Hovering unblurs the photo (see PRIVACY_HOVER_REVEAL_CLASS); demo cards stay blurred.
 					!isDemoCard && "group/reveal",
 					!isDemoCard && "active:scale-95",
@@ -279,7 +279,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 								title={nicknameRename.realName ? t("chat.nicknames.real_name", { name: nicknameRename.realName }) : undefined}
 							>
 								{name}
-								{age && <span className="font-semibold text-white/90 ml-1"> {age}</span>}
+								{age && <span className="font-semibold text-white/90 ms-1"> {age}</span>}
 							</p>
 						</div>
 
@@ -347,7 +347,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 					</div>
 
 					{/* Bottom-right: Interaction cluster */}
-					<div className="absolute bottom-2 right-2 z-10 flex flex-col items-end gap-1">
+					<div className="absolute bottom-2 end-2 z-10 flex flex-col items-end gap-1">
 						{/* Tap status sits above the row so it doesn't crowd favorite + chat
 							next to the distance. Outlined flame = you tapped, filled = they
 							tapped you, filled with a white outline = both (mutual). */}
@@ -397,7 +397,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 
 					{/* Bottom-left: Distance */}
 					<div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-black/70 via-black/25 to-transparent pointer-events-none" />
-					<div className="absolute bottom-2 left-2 z-10 flex h-5 items-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+					<div className="absolute bottom-2 start-2 z-10 flex h-5 items-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
 						{card.distanceMeters == null || !Number.isFinite(card.distanceMeters) ? (
 							showEstimatedDistance && card.estimatedDistanceMeters != null && Number.isFinite(card.estimatedDistanceMeters) ? (
 								<span className="inline-flex items-center gap-1 text-xs font-semibold">

@@ -1692,7 +1692,7 @@ export function GridPage() {
 			{showDebugInfo && debugLoadSource && !SHOW_DEMO_DATA && (
 				<div
 					className={cn(
-						"fixed bottom-20 left-4 z-[9999] rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4",
+						"fixed bottom-20 start-4 z-[9999] rounded-lg px-4 py-2 text-xs font-bold uppercase tracking-widest text-white shadow-2xl transition-all animate-in fade-in slide-in-from-bottom-4",
 						debugLoadSource === "cache" ? "bg-emerald-600" : "bg-blue-600",
 					)}
 					onClick={() => setDebugLoadSource(null)}
@@ -1749,7 +1749,7 @@ export function GridPage() {
 										type="button"
 										onClick={() => setIsLocationOpen(true)}
 										// Desktop pill is only 38px tall: same inset left as above/below the icon.
-										className="flex h-full min-w-0 flex-1 items-center gap-2.5 pl-2 pr-3 text-left rail:pl-[2px]"
+										className="flex h-full min-w-0 flex-1 items-center gap-2.5 ps-2 pe-3 text-start rail:ps-[2px]"
 									>
 										<div
 											className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
@@ -1811,7 +1811,7 @@ export function GridPage() {
 										onClick={(e) => { e.stopPropagation(); setIsDistanceSheetOpen(true); }}
 										title={t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
 										aria-label={t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
-										className="group flex h-full shrink-0 items-center justify-center pl-3 pr-4 transition active:scale-90"
+										className="group flex h-full shrink-0 items-center justify-center ps-3 pe-4 transition active:scale-90"
 									>
 										{distanceMode === "hidden"
 											? <EyeOffFilled
@@ -1866,7 +1866,7 @@ export function GridPage() {
 									>
 										<UserSearch
 											className={cn(
-												"pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+												"pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2",
 												exploreLocation ? "text-[var(--explore)]" : "text-[var(--accent)]",
 											)}
 										/>
@@ -1878,7 +1878,7 @@ export function GridPage() {
 											onBlur={() => { if (!nicknameFilter) setIsNameSearchOpen(false); }}
 											placeholder={t("grid.name_or_id_placeholder")}
 											enterKeyHint={profileIdQuery ? "go" : "search"}
-											className="h-full w-full bg-transparent pl-9 pr-8 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+											className="h-full w-full bg-transparent ps-9 pe-8 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
 											onKeyDown={(e) => {
 												if (e.key === "Enter" && profileIdQuery) {
 													openProfileFromSearch(profileIdQuery);
@@ -1896,7 +1896,7 @@ export function GridPage() {
 											onMouseDown={(e) => e.preventDefault()}
 											onClick={() => { setNicknameFilter(""); setIsNameSearchOpen(false); }}
 											aria-label={t("browse_filters.clear_all")}
-											className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--text-muted)] hover:text-[var(--text)]"
+											className="absolute end-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--text-muted)] hover:text-[var(--text)]"
 										>
 											<X className="h-3.5 w-3.5" />
 										</button>
@@ -1908,7 +1908,7 @@ export function GridPage() {
 											onMouseDown={(e) => e.preventDefault()}
 											onClick={() => openProfileFromSearch(profileIdQuery)}
 											className={cn(
-												"glass-pill mt-2 flex h-10 w-full items-center gap-2.5 px-3 text-left text-sm transition active:scale-[0.98]",
+												"glass-pill mt-2 flex h-10 w-full items-center gap-2.5 px-3 text-start text-sm transition active:scale-[0.98]",
 												exploreLocation ? "text-[var(--explore)]" : "text-[var(--accent)]",
 											)}
 											style={{ "--pill-color": exploreLocation ? "var(--explore)" : "var(--accent)" } as React.CSSProperties}
@@ -1927,9 +1927,9 @@ export function GridPage() {
 								ref={chipRowFade.ref}
 								onScroll={chipRowFade.onScroll}
 								// Extra bottom room (cancelled by -mb) so the scroller doesn't clip the pills' shadow.
-								className="pointer-events-none -mx-[var(--app-px)] -mb-15 overflow-x-auto pb-16 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rail:col-start-1 rail:row-start-2 rail:mr-0"
+								className="pointer-events-none -mx-[var(--app-px)] -mb-15 overflow-x-auto pb-16 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rail:col-start-1 rail:row-start-2 rail:me-0"
 							>
-								<div className="pointer-events-auto flex min-w-max items-center gap-2 px-[var(--app-px)] ml-auto rail:pr-0">
+								<div className="pointer-events-auto flex min-w-max items-center gap-2 px-[var(--app-px)] ms-auto rail:pe-0">
 									<button
 										type="button"
 										onClick={() => setIsSortSheetOpen(true)}
@@ -1980,7 +1980,7 @@ export function GridPage() {
 										{hasActiveBrowseFilters ? (
 											<span
 												className={cn(
-													"ml-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold",
+													"ms-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-bold",
 													exploreLocation ? "bg-white text-[var(--explore)]" : "bg-[var(--accent-contrast)] text-[var(--accent)]",
 												)}
 											>
@@ -2043,18 +2043,18 @@ export function GridPage() {
 										style={{ "--pill-color": "var(--accent)" } as React.CSSProperties}
 									>
 										{isFetchingNotes ? (
-											<div className="pointer-events-none absolute left-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center">
+											<div className="pointer-events-none absolute start-3 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center">
 												<div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--accent)]" />
 											</div>
 										) : (
-											<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+											<Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
 										)}
 										<input
 											type="text"
 											value={searchTerm}
 											onChange={(e) => setSearchTerm(e.target.value)}
 											placeholder={isFetchingNotes ? t("favorites.loading_notes") : t("favorites.search_placeholder")}
-											className="h-full w-full bg-transparent pl-9 pr-8 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+											className="h-full w-full bg-transparent ps-9 pe-8 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
 											onKeyDown={(e) => {
 												if (e.key === "Escape" || e.key === "Enter") {
 													e.currentTarget.blur();
@@ -2065,7 +2065,7 @@ export function GridPage() {
 											<button
 												type="button"
 												onClick={() => setSearchTerm("")}
-												className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--text-muted)] hover:text-[var(--text)]"
+												className="absolute end-3 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-[var(--text-muted)] hover:text-[var(--text)]"
 											>
 												<X className="h-3.5 w-3.5" />
 											</button>

@@ -176,7 +176,7 @@ export function VersionAnnouncement({
 							)}
 						</p>
 						{prereleaseLabel && (
-							<div className={`${fullscreenCardClass} mt-8 w-full max-w-sm overflow-hidden text-left`}>
+							<div className={`${fullscreenCardClass} mt-8 w-full max-w-sm overflow-hidden text-start`}>
 								<div className="flex items-start gap-3 px-4 py-3.5">
 									<div className="shrink-0 rounded-2xl ink-tint-8 p-2.5 text-[var(--accent)]">
 										<FlaskConical className="h-5 w-5" />

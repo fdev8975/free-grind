@@ -131,7 +131,7 @@ function ToastPill({ toast }: { toast: Toast }) {
 				isBanner
 					? // Same surface as the app's menus and popovers, not the glass pill.
 						"w-full rounded-[var(--radius-lg)] menu-surface px-3 py-2.5 md:w-[420px]"
-					: "max-w-[min(420px,100%)] rounded-[22px] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] py-2.5 pl-3 pr-4 shadow-[0_-1px_4px_rgba(0,0,0,0.12),0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-[var(--border)]/40 backdrop-blur-xl"
+					: "max-w-[min(420px,100%)] rounded-[22px] bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] py-2.5 ps-3 pe-4 shadow-[0_-1px_4px_rgba(0,0,0,0.12),0_8px_32px_rgba(0,0,0,0.3)] ring-1 ring-[var(--border)]/40 backdrop-blur-xl"
 			}`}
 			style={{
 				opacity: shown ? 1 : 0,

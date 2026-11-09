@@ -50,7 +50,7 @@ export function ToggleRow({
 			{hasIcon && (
 				<div className={`relative shrink-0 rounded-2xl p-2.5 ${iconClass ?? ""}`}>
 					{icon}
-					{iconBadge && <span className="absolute -bottom-0.5 -right-0.5 flex">{iconBadge}</span>}
+					{iconBadge && <span className="absolute -bottom-0.5 -end-0.5 flex">{iconBadge}</span>}
 				</div>
 			)}
 			<span className={hasIcon ? "min-w-0 flex-1" : ""}>
@@ -78,7 +78,7 @@ export function ToggleRow({
 					className="peer absolute inset-0 z-10 m-0 cursor-pointer opacity-0"
 				/>
 				<span className="absolute inset-0 rounded-full border border-[var(--border)] bg-[var(--surface)] transition-colors peer-checked:border-transparent peer-checked:bg-[var(--toggle-active)]" />
-				<span className="absolute left-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 peer-checked:bg-[var(--toggle-thumb-active)]" />
+				<span className="absolute start-1 h-5 w-5 rounded-full bg-[var(--text)] transition-transform peer-checked:translate-x-5 rtl:peer-checked:-translate-x-5 peer-checked:bg-[var(--toggle-thumb-active)]" />
 			</span>
 		</label>
 	);

@@ -296,7 +296,7 @@ export function OutdatedVersionPromptView({
 			}
 			footer={footer}
 		>
-			<div className={"native-group text-left"}>
+			<div className={"native-group text-start"}>
 				<VersionCompare
 					from={{
 						icon: Smartphone,

@@ -41,7 +41,7 @@ export function VersionCompare({ from, to }: { from?: VersionCompareSide; to: Ve
 			{from && (
 				<div className="relative">
 					<VersionCompareRow side={from} />
-					<div className="absolute bottom-0 left-6 z-10 flex translate-y-[calc(50%+2px)] rounded-full bg-[var(--surface-2)] p-1 text-[var(--text-muted)] shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
+					<div className="absolute bottom-0 start-6 z-10 flex translate-y-[calc(50%+2px)] rounded-full bg-[var(--surface-2)] p-1 text-[var(--text-muted)] shadow-[0_1px_4px_rgba(0,0,0,0.25)]">
 						<ArrowDown className="h-3.5 w-3.5" />
 					</div>
 				</div>

@@ -231,7 +231,7 @@ export function SheetSearchInput({
 			className="relative rounded-full bg-[color-mix(in_srgb,var(--surface)_82%,transparent)] shadow-[0_2px_6px_rgba(0,0,0,0.14),0_8px_24px_rgba(0,0,0,0.22)] ring-1 ring-[var(--border)]/50 backdrop-blur-xl transition focus-within:ring-2 focus-within:ring-[var(--chip-accent)]"
 			style={{ "--chip-accent": accentColor } as CSSProperties}
 		>
-			<Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
+			<Search className="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)]" />
 			<input
 				type="text"
 				value={value}
@@ -239,16 +239,16 @@ export function SheetSearchInput({
 				onFocus={onFocus}
 				onBlur={onBlur}
 				placeholder={placeholder}
-				className="h-12 w-full rounded-full bg-transparent pl-11 pr-11 text-[15px] text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
+				className="h-12 w-full rounded-full bg-transparent ps-11 pe-11 text-[15px] text-[var(--text)] outline-none placeholder:text-[var(--text-muted)]"
 			/>
 			{isLoading ? (
-				<Loader2 className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--text-muted)]" />
+				<Loader2 className="pointer-events-none absolute end-4 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[var(--text-muted)]" />
 			) : value ? (
 				<button
 					type="button"
 					onClick={() => onChange("")}
 					aria-label={t("common.clear", { defaultValue: "Clear" })}
-					className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-[var(--text-muted)] transition hover:text-[var(--text)]"
+					className="absolute end-2.5 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-[var(--text-muted)] transition hover:text-[var(--text)]"
 				>
 					<X className="h-3.5 w-3.5" />
 				</button>
@@ -332,12 +332,12 @@ export function SheetTextInput({
 				autoFocus={autoFocus}
 				className={cn(
 					"h-11 w-full rounded-xl border border-transparent bg-[var(--surface-2)] px-3 text-sm text-[var(--text)] outline-none transition placeholder:text-[var(--text-muted)] focus:border-[var(--chip-accent)] disabled:opacity-60",
-					trailing ? "pr-10" : undefined,
+					trailing ? "pe-10" : undefined,
 					invalid ? "border-[var(--chip-accent)]" : undefined,
 				)}
 			/>
 			{trailing && (
-				<div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center text-[var(--text-muted)]">
+				<div className="pointer-events-none absolute end-3 top-1/2 flex -translate-y-1/2 items-center text-[var(--text-muted)]">
 					{trailing}
 				</div>
 			)}

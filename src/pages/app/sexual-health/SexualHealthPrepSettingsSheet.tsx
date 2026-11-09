@@ -79,7 +79,7 @@ export function SexualHealthPrepSettingsSheet({
 										role="radio"
 										aria-checked={isSelected}
 										onClick={() => onSchemeChange(option.value)}
-										className="flex w-full items-start gap-3 px-4 py-3.5 text-left transition-colors hover:ink-tint-6 active:ink-tint-10"
+										className="flex w-full items-start gap-3 px-4 py-3.5 text-start transition-colors hover:ink-tint-6 active:ink-tint-10"
 									>
 										<span
 											className={cn(

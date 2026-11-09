@@ -245,8 +245,8 @@ export function RestoreStatusEntry({ variant, className = "" }: { variant: "bann
 					onClick={() => setOpen(true)}
 					className={
 						variant === "banner"
-							? `flex w-full min-w-0 items-center gap-3 rounded-2xl border border-[var(--accent)]/30 accent-tint-15 px-4 py-3 text-left transition hover:brightness-110 ${className}`
-							: `flex w-full min-w-0 items-center gap-3 px-4 py-3.5 text-left transition-colors hover-fill ${className}`
+							? `flex w-full min-w-0 items-center gap-3 rounded-2xl border border-[var(--accent)]/30 accent-tint-15 px-4 py-3 text-start transition hover:brightness-110 ${className}`
+							: `flex w-full min-w-0 items-center gap-3 px-4 py-3.5 text-start transition-colors hover-fill ${className}`
 					}
 				>
 					<div className={`shrink-0 rounded-2xl p-2.5 ${variant === "banner" ? "bg-[var(--accent)] text-[var(--accent-contrast)]" : "bg-sky-500/15 text-sky-400"}`}>

@@ -23,7 +23,7 @@ export function ProtectedLayout() {
 
 	return (
 		// Desktop: room for NavBar's left rail (--nav-rail-width is unset otherwise).
-		<div className="relative pl-[var(--nav-rail-width,0px)]">
+		<div className="relative ps-[var(--nav-rail-width,0px)]">
 			<Outlet />
 			{!shouldHideNavbar ? <NavBar /> : null}
 		</div>

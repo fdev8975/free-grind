@@ -36,7 +36,7 @@ export function SheetActionRow({ action }: { action: SheetAction }) {
 		<SheetClose
 			onClick={action.onSelect}
 			disabled={action.disabled}
-			className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover-fill disabled:opacity-50"
+			className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-start transition hover-fill disabled:opacity-50"
 		>
 			<div
 				className={cn(
@@ -109,7 +109,7 @@ export function SectionAddButton({
 			type="button"
 			onClick={onClick}
 			disabled={disabled}
-			className="ml-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-full accent-tint-14 px-2.5 text-xs font-semibold text-[var(--accent)] transition hover:accent-tint-22 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+			className="ms-auto inline-flex h-7 shrink-0 items-center gap-1 rounded-full accent-tint-14 px-2.5 text-xs font-semibold text-[var(--accent)] transition hover:accent-tint-22 active:scale-95 disabled:pointer-events-none disabled:opacity-40"
 		>
 			<Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
 			{label}

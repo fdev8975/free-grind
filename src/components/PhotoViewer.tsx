@@ -1267,7 +1267,7 @@ export function PhotoViewer({
 						className={`absolute left-4 top-1/2 z-[83] glass-icon-btn inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] active:scale-90 ${chromeFadeClass}`}
 						aria-label={t("profile_details.previous_photo")}
 					>
-						<ChevronLeft className="h-5 w-5" />
+						<ChevronLeft className="no-rtl-flip h-5 w-5" />
 					</button>
 					<button
 						type="button"
@@ -1277,7 +1277,7 @@ export function PhotoViewer({
 						className={`absolute right-4 top-1/2 z-[83] glass-icon-btn inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] active:scale-90 ${chromeFadeClass}`}
 						aria-label={t("profile_details.next_photo")}
 					>
-						<ChevronRight className="h-5 w-5" />
+						<ChevronRight className="no-rtl-flip h-5 w-5" />
 					</button>
 				</>
 			)}

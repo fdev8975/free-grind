@@ -102,7 +102,7 @@ export function BackupProgressView({ kind }: { kind: "export" | "import" }) {
 
 	return (
 		<>
-			<div className="px-4 pb-3 text-left">
+			<div className="px-4 pb-3 text-start">
 				<p className="text-sm font-semibold text-[var(--text)]">
 					{kind === "export"
 						? t("data_backup.progress_title_export", { defaultValue: "Exporting your data…" })
@@ -112,7 +112,7 @@ export function BackupProgressView({ kind }: { kind: "export" | "import" }) {
 					{t("data_backup.progress_keep_open", { defaultValue: "Keep the app open until this is done." })}
 				</p>
 			</div>
-			<div role="status" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 text-left" data-lenis-prevent>
+			<div role="status" aria-live="polite" className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 text-start" data-lenis-prevent>
 				<SheetCard className="flex items-center gap-3">
 					<div className="shrink-0 rounded-2xl bg-[var(--accent)] p-2.5 text-[var(--accent-contrast)]">
 						<Icon className="h-5 w-5" />

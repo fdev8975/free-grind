@@ -527,7 +527,7 @@ export function AutomationRuleEditor({
 											<button
 												type="button"
 												onClick={() => setPicker({ albumOf: index })}
-												className="mt-2 flex h-10 w-full items-center justify-between gap-2 rounded-xl bg-[var(--sheet-bg,var(--surface))] px-3 text-left text-sm text-[var(--text)] transition hover:ink-tint-6"
+												className="mt-2 flex h-10 w-full items-center justify-between gap-2 rounded-xl bg-[var(--sheet-bg,var(--surface))] px-3 text-start text-sm text-[var(--text)] transition hover:ink-tint-6"
 											>
 												<span className="truncate">{album?.albumName || album?.albumId || action.albumId}</span>
 												<ChevronDown className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />

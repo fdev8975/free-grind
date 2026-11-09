@@ -14,12 +14,12 @@ export function IconInput({
 }: { icon: ReactNode; rightSlot?: ReactNode } & InputHTMLAttributes<HTMLInputElement>) {
 	return (
 		<div className="group relative">
-			<span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors duration-150 group-focus-within:text-[var(--accent)]">
+			<span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors duration-150 group-focus-within:text-[var(--accent)]">
 				{icon}
 			</span>
-			<input {...inputProps} className={cn("input-field pl-9", rightSlot && "pr-10", className)} />
+			<input {...inputProps} className={cn("input-field ps-9", rightSlot && "pe-10", className)} />
 			{rightSlot ? (
-				<span className="absolute right-3 top-1/2 -translate-y-1/2">{rightSlot}</span>
+				<span className="absolute end-3 top-1/2 -translate-y-1/2">{rightSlot}</span>
 			) : null}
 		</div>
 	);
