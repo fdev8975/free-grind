@@ -198,22 +198,23 @@ jobs:
           APK_DIR="src-tauri/gen/android/app/build/outputs/apk"
           mkdir -p dist/android
 
-          find "$APK_DIR" -type f -name '*.apk' -print
+          ARM64_APK="$APK_DIR/arm64/release/app-arm64-release.apk"
+          ARMV7_APK="$APK_DIR/arm/release/app-arm-release.apk"
 
-          ARM64_APK=$(find "$APK_DIR" -type f \
-            -name '*arm64*release.apk' -print -quit)
+          test -f "$ARM64_APK" || {
+            echo "ERROR: ARM64 APK not found"
+            exit 1
+          }
 
-          ARMV7_APK=$(find "$APK_DIR" -type f \
-            \( -name '*armv7*release.apk' \
-               -o -name '*armeabi-v7a*release.apk' \) \
-            -print -quit)
-
-          test -n "$ARM64_APK"
-          test -n "$ARMV7_APK"
+          test -f "$ARMV7_APK" || {
+            echo "ERROR: ARMv7 APK not found"
+            exit 1
+          }
 
           cp "$ARM64_APK" dist/android/free-grind-arm64.apk
           cp "$ARMV7_APK" dist/android/free-grind-armv7.apk
 
+          echo "Successfully collected APKs:"
           ls -lh dist/android/
 
       - name: Upload Android APK
