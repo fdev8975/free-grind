@@ -137,7 +137,7 @@ jobs:
         shell: bash
         run: |
           rustup toolchain install
-          rustup target add aarch64-linux-android
+          rustup target add aarch64-linux-android armv7-linux-androideabi
 
       - name: Check Cargo.lock is up to date
         # Fails instead of letting the build silently re-resolve crate versions.
@@ -182,15 +182,45 @@ jobs:
           mkdir -p src-tauri/certs
           echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > src-tauri/certs/free-grind-dev.jks
 
-      # arm64-v8a only, like release.yml.
-      - name: Build Android APK
-        run: bunx tauri android build --apk --split-per-abi --target aarch64 -v
+      - name: Build Android APKs (ARM64 + ARMv7)
+        run: |
+          bunx tauri android build \
+            --apk \
+            --split-per-abi \
+            --target aarch64 \
+            --target armv7 \
+            -v
+
+      - name: Collect Android APKs
+        run: |
+          set -euo pipefail
+
+          APK_DIR="src-tauri/gen/android/app/build/outputs/apk"
+          mkdir -p dist/android
+
+          find "$APK_DIR" -type f -name '*.apk' -print
+
+          ARM64_APK=$(find "$APK_DIR" -type f \
+            -name '*arm64*release.apk' -print -quit)
+
+          ARMV7_APK=$(find "$APK_DIR" -type f \
+            \( -name '*armv7*release.apk' \
+               -o -name '*armeabi-v7a*release.apk' \) \
+            -print -quit)
+
+          test -n "$ARM64_APK"
+          test -n "$ARMV7_APK"
+
+          cp "$ARM64_APK" dist/android/free-grind-arm64.apk
+          cp "$ARMV7_APK" dist/android/free-grind-armv7.apk
+
+          ls -lh dist/android/
 
       - name: Upload Android APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: free-grind-android
-          path: src-tauri/gen/android/app/build/outputs/apk/arm64/release/app-arm64-release.apk
+          path: dist/android/*.apk
           retention-days: 14
           if-no-files-found: error
 
