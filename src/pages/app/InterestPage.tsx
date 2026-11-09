@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useInterestData } from "../../hooks/queries/useInterestQueries";
 import { useBlockedProfileIds } from "../../hooks/queries/useProfileQueries";
-import { getBlockStatesByProfileIds } from "../../services/chatDb";
+import { getBlockStatesByProfileIds, listProfileSnapshotIds } from "../../services/chatDb";
 import { markInterestSeen, getInterestTabLastSeen, markInterestTabSeen } from "../../services/seenStore";
 import { EmptyState, ErrorState } from "../../components/ui/states";
 import { PullToRefreshContainer } from "./components/PullToRefreshContainer";
@@ -226,6 +226,33 @@ export function InterestPage() {
 	const isProfileBlocked = useCallback(
 		(profileId: string) => blockedByMeProfileIds.has(profileId) || blockedByOtherProfileIds.has(profileId),
 		[blockedByMeProfileIds, blockedByOtherProfileIds],
+	);
+
+	// Blocked profiles with a local snapshot stay openable — the profile page
+	// falls back to that snapshot once the live profile is only a stub.
+	const [snapshotProfileIds, setSnapshotProfileIds] = useState<Set<string>>(new Set());
+	useEffect(() => {
+		const blockedIds = [...new Set([...views, ...taps, ...sentTaps].map((item) => item.profileId))].filter(
+			(id) => blockedByMeProfileIds.has(id) || blockedByOtherProfileIds.has(id),
+		);
+		if (blockedIds.length === 0) {
+			setSnapshotProfileIds(new Set());
+			return;
+		}
+		let cancelled = false;
+		void listProfileSnapshotIds(blockedIds)
+			.then((ids) => {
+				if (!cancelled) setSnapshotProfileIds(ids);
+			})
+			.catch(() => {});
+		return () => {
+			cancelled = true;
+		};
+	}, [views, taps, sentTaps, blockedByMeProfileIds, blockedByOtherProfileIds]);
+
+	const hasProfileSnapshot = useCallback(
+		(profileId: string) => snapshotProfileIds.has(profileId),
+		[snapshotProfileIds],
 	);
 
 	const [lastSeenViews, setLastSeenViews] = useState(() => getInterestTabLastSeen("views"));
@@ -531,7 +558,7 @@ export function InterestPage() {
 
 	const handleOpenProfile = useCallback(
 		(profileId: string) => {
-			if (isProfileBlocked(profileId)) {
+			if (isProfileBlocked(profileId) && !hasProfileSnapshot(profileId)) {
 				return;
 			}
 			navigate(`/profile/${profileId}`, {
@@ -543,7 +570,7 @@ export function InterestPage() {
 				},
 			});
 		},
-		[navigate, location, isDesktop, isProfileBlocked],
+		[navigate, location, isDesktop, isProfileBlocked, hasProfileSnapshot],
 	);
 
 	const handleTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
@@ -696,6 +723,7 @@ export function InterestPage() {
 											onOpenProfile={handleOpenProfile}
 											now={nowTimestamp}
 											isProfileBlocked={isProfileBlocked}
+											hasProfileSnapshot={hasProfileSnapshot}
 											scrollContainerRef={feedContainerRef}
 											mode={activeTab}
 										/>
@@ -707,6 +735,7 @@ export function InterestPage() {
 											onOpenProfile={handleOpenProfile}
 											now={nowTimestamp}
 											isBlocked={isProfileBlocked(item.profileId)}
+											canOpenWhileBlocked={hasProfileSnapshot(item.profileId)}
 										/>
 									))}
 

@@ -31,12 +31,15 @@ export const InterestRow = memo(function InterestRow({
 	onOpenProfile,
 	now,
 	isBlocked = false,
+	canOpenWhileBlocked = false,
 }: {
 	item: InterestItem;
 	mode: InterestTab;
 	onOpenProfile: (profileId: string) => void;
 	now: number;
 	isBlocked?: boolean;
+	/** Blocked, but a local profile snapshot exists — still openable. */
+	canOpenWhileBlocked?: boolean;
 }) {
 	const { t } = useTranslation();
 	const { unitsPreset } = usePreferences();
@@ -45,6 +48,7 @@ export const InterestRow = memo(function InterestRow({
 
 	const isPrivate = !item.canOpenProfile;
 	const isLocked = isPrivate || isBlocked;
+	const isUnopenable = isPrivate || (isBlocked && !canOpenWhileBlocked);
 	const isRecovered = !!item.isFromCache && !isPrivate && !item.profileId.startsWith(PREVIEW_ID_PREFIX);
 	const isOnline = typeof item.onlineUntil === "number" && item.onlineUntil > now;
 	const isEndingSoon = isOnline && isOnlineEndingSoon(item.onlineUntil, now);
@@ -67,8 +71,8 @@ export const InterestRow = memo(function InterestRow({
 			{/* Avatar */}
 			<button
 				type="button"
-				onClick={() => !isLocked && onOpenProfile(item.profileId)}
-				disabled={isLocked}
+				onClick={() => !isUnopenable && onOpenProfile(item.profileId)}
+				disabled={isUnopenable}
 				className="relative shrink-0"
 			>
 				<div className="h-15 w-15 rounded-full overflow-hidden drop-shadow-sm bg-[var(--surface-2)]">
@@ -95,8 +99,8 @@ export const InterestRow = memo(function InterestRow({
 			<div className="min-w-0 flex-1">
 				<button
 					type="button"
-					onClick={() => !isLocked && onOpenProfile(item.profileId)}
-					disabled={isLocked}
+					onClick={() => !isUnopenable && onOpenProfile(item.profileId)}
+					disabled={isUnopenable}
 					className="w-full text-start"
 				>
 					<div className="flex items-center gap-1.5">
@@ -195,6 +199,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 	onOpenProfile,
 	now,
 	isBlocked = false,
+	canOpenWhileBlocked = false,
 	isDesktop = false,
 	mode = "views",
 }: {
@@ -203,6 +208,8 @@ export const InterestViewTile = memo(function InterestViewTile({
 	onOpenProfile: (profileId: string) => void;
 	now: number;
 	isBlocked?: boolean;
+	/** Blocked, but a local profile snapshot exists — still openable. */
+	canOpenWhileBlocked?: boolean;
 	isDesktop?: boolean;
 	mode?: InterestTab;
 }) {
@@ -214,7 +221,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 	const imageSrc = item.imageHash ? getThumbImageUrl(item.imageHash, "320x320") : null;
 
 	const isPrivate = !item.canOpenProfile;
-	const isLocked = isPrivate || isBlocked;
+	const isUnopenable = isPrivate || (isBlocked && !canOpenWhileBlocked);
 	const isRecovered = !!item.isFromCache && !isPrivate && !item.profileId.startsWith(PREVIEW_ID_PREFIX);
 	const onlineUntil = item.onlineUntil ?? browseCard?.onlineUntil ?? null;
 	const isOnline = typeof onlineUntil === "number" && onlineUntil > now;
@@ -242,11 +249,11 @@ export const InterestViewTile = memo(function InterestViewTile({
 		<div ref={ref} className={cn(!isDesktop && "bg-black rounded-[6px] overflow-hidden", revealClass)}>
 			<button
 				type="button"
-				onClick={() => !isLocked && onOpenProfile(item.profileId)}
-				disabled={isLocked}
+				onClick={() => !isUnopenable && onOpenProfile(item.profileId)}
+				disabled={isUnopenable}
 				className={cn(
 					"group/reveal no-touch-callout touch-manipulation surface-card-grid relative block w-full overflow-hidden text-start transition-transform",
-					!isLocked && "active:scale-95",
+					!isUnopenable && "active:scale-95",
 					isRightNow ? "p-[2px]" : "p-0",
 					isDesktop ? "rounded-xl shadow-sm" : "rounded-[6px]",
 				)}

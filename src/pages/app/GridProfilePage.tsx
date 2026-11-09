@@ -33,7 +33,6 @@ import {
 	getProfileSnapshot,
 	insertSystemMessage,
 	listHiddenProfileIds,
-	saveProfileSnapshot,
 } from "../../services/chatDb";
 import { profileDetailItemSchema } from "../../types/grid";
 import { hideProfile as hideProfileLocally, unhideProfile as unhideProfileLocally } from "../../services/profileHide";
@@ -357,10 +356,8 @@ export function GridProfilePage() {
 					if (classifyProfileAccess(parsed) === "accessible") {
 						setActiveProfile(parsed);
 						setIsSnapshotProfile(false);
+						// The local snapshot is refreshed by getProfileDetail itself.
 						setCachedProfileDetail(profileId, parsed);
-						void saveProfileSnapshot(profileId, JSON.stringify(parsed)).catch((error) => {
-							appLog.warn("[grid-profile] failed to persist profile snapshot", error);
-						});
 						unarchiveConversationIfArchived(profileId);
 					} else {
 						// Live data is just the blocked/gone stub — prefer the last

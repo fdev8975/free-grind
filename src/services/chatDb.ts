@@ -1440,6 +1440,26 @@ export async function listProfileSnapshotIdentities(): Promise<
 	}));
 }
 
+/** Which of the given profiles already have a local snapshot. */
+export async function listProfileSnapshotIds(profileIds: string[]): Promise<Set<string>> {
+	if (profileIds.length === 0) {
+		return new Set();
+	}
+	const db = await getDb();
+	const result = new Set<string>();
+	// Chunked to stay well under SQLite's bound-parameter limit.
+	for (let i = 0; i < profileIds.length; i += 500) {
+		const chunk = profileIds.slice(i, i + 500);
+		const placeholders = chunk.map((_, j) => `$${j + 1}`).join(", ");
+		const rows = await db.select<{ profile_id: string }[]>(
+			`SELECT profile_id FROM profile_snapshots WHERE profile_id IN (${placeholders})`,
+			chunk,
+		);
+		for (const row of rows) result.add(row.profile_id);
+	}
+	return result;
+}
+
 export type StoredProfileSnapshot = {
 	profileId: string;
 	data: string;

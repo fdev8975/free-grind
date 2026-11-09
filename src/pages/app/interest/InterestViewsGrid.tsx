@@ -28,6 +28,7 @@ export function InterestViewsGrid({
 	onOpenProfile,
 	now,
 	isProfileBlocked,
+	hasProfileSnapshot,
 	scrollContainerRef,
 	mode = "views",
 }: {
@@ -36,6 +37,7 @@ export function InterestViewsGrid({
 	onOpenProfile: (profileId: string) => void;
 	now: number;
 	isProfileBlocked: (profileId: string) => boolean;
+	hasProfileSnapshot: (profileId: string) => boolean;
 	scrollContainerRef: RefObject<HTMLDivElement | null>;
 	mode?: InterestTab;
 }) {
@@ -110,6 +112,7 @@ export function InterestViewsGrid({
 								onOpenProfile={onOpenProfile}
 								now={now}
 								isBlocked={isProfileBlocked(item.profileId)}
+								canOpenWhileBlocked={hasProfileSnapshot(item.profileId)}
 								isDesktop={isDesktop}
 								mode={mode}
 							/>

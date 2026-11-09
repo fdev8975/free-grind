@@ -18,6 +18,7 @@ import {
 	type InterestItem,
 } from "../../pages/app/interest/interestUtils";
 import { getAllCachedBrowseCardsByImageHash, getAllCachedBrowseCardsById } from "../../pages/app/gridpage/cache";
+import { snapshotMissingProfiles } from "../../services/profileSnapshotPrefetch";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_STALE_TIME_MS } from "../../config/ui-constants";
 
@@ -69,7 +70,15 @@ export function useInterestData() {
 					.filter((item) => !item.profileId.startsWith(PREVIEW_ID_PREFIX))
 					.map((item) => ({ hash: item.imageHash, profileId: item.profileId, displayName: item.displayName })),
 			);
-			const cacheResolvedSentTaps = normalizeSentTaps(sentTapsResponse, getAllCachedBrowseCardsById());
+			// Snapshot every opened-up viewer/tapper in the background, so their
+			// profile stays openable even after a block (live data is a stub then).
+			void snapshotMissingProfiles(
+				[...normalizedViews, ...normalizedTaps]
+					.filter((item) => item.canOpenProfile && !item.profileId.startsWith(PREVIEW_ID_PREFIX))
+					.map((item) => item.profileId),
+				api.getProfileDetail,
+			);
+			const cacheResolvedSentTaps =normalizeSentTaps(sentTapsResponse, getAllCachedBrowseCardsById());
 			// Bulk-resolve anyone the browse-grid cache didn't recognize — the
 			// sent-taps endpoint only returns bare ids, unlike received taps/views.
 			const normalizedSentTaps = await enrichSentTapsWithProfiles(

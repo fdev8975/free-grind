@@ -28,6 +28,7 @@ import {
 	parseJsonSafe,
 } from "../apiHelpers";
 import { awaitEntitlementGrant } from "../entitlementBypass";
+import { rememberProfileSnapshot } from "../profileSnapshotPrefetch";
 import { getIncognitoMode, isRecordProfileViewsEnabled } from "../../utils/privacy";
 import { appLog } from "../../utils/logger";
 import { isRecaptchaAvailable, mintRecaptchaToken } from "../recaptcha";
@@ -312,7 +313,11 @@ export function createProfileMethods(fetchRest: RestFetcher, t: (key: string, op
 				await parseJsonSafe(response),
 			);
 
-			return parsed.profiles[0];
+			const profile = parsed.profiles[0];
+			// Every live load refreshes the local snapshot (stubs are skipped), so
+			// a profile stays viewable after a block without extra requests.
+			if (profile) rememberProfileSnapshot(profileId, profile);
+			return profile;
 		},
 
 		async getRawProfile(profileId: number | string): Promise<unknown> {
