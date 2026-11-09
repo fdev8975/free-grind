@@ -3330,6 +3330,12 @@
         "region_br": "Brazilija",
         "region_au": "Avstralija"
     },
+    "lgbtq_risk_country": {
+        "title": "Pazi nase",
+        "message": "Tvoja lokacija je v državi {{country}}. Istospolni odnosi so tam kazniva dejanja ali pa so LGBTQ+ osebe aktivno preganjane.",
+        "warning": "Znano je, da policija uporablja lažne profile in prevzete račune ljudi, ki so bili že aretirani, da dogovarja srečanja in izvaja aretacije. Bodi previden, preden se s komer koli srečaš, tudi s profili, ki so se prej zdeli zanesljivi, in ne pošiljaj ničesar, kar bi lahko razkrilo tvojo identiteto.",
+        "confirm": "Razumem"
+    },
     "entitlement_bypass": {
         "prompt_title": "Plačljiva funkcija",
         "prompt_message": "Free Grind lahko poskusi to zaobiti tako, da tvojo lokacijo za trenutek ponaredi v Honduras.",

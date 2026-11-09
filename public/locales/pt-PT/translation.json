@@ -3304,6 +3304,12 @@
         "region_br": "o Brasil",
         "region_au": "a Austrália"
     },
+    "lgbtq_risk_country": {
+        "title": "Cuida-te",
+        "message": "A tua localização está em {{country}}. Aí, as relações entre pessoas do mesmo sexo são criminalizadas ou as pessoas LGBTQ+ são ativamente perseguidas.",
+        "warning": "Sabe-se que a polícia usa perfis falsos, e contas tomadas a pessoas que já foram detidas, para marcar encontros e fazer detenções. Tem cuidado antes de te encontrares com alguém, mesmo com perfis que antes pareciam fiáveis, e não envies nada que possa revelar a tua identidade.",
+        "confirm": "Compreendo"
+    },
     "entitlement_bypass": {
         "prompt_title": "Recurso pago",
         "prompt_message": "O Free Grind pode tentar contornar isso a simular sua localização em Honduras por um instante.",

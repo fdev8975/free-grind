@@ -96,6 +96,7 @@ import { replayRestoreOffer } from "../../utils/restoreOfferStorage";
 import { showLegalAgreementsPrompt } from "../../utils/legalAgreementsDebug";
 import { showAccountWarningsPrompt } from "../../utils/accountWarningsDebug";
 import { showSharePickerDebug } from "../../utils/sharePickerDebug";
+import { showLgbtqRiskCountryWarning } from "../../utils/lgbtqRiskCountryDebug";
 import { GITHUB_ISSUES_URL, GITHUB_NEW_ISSUE_URL, openExternalUrl } from "../../utils/githubIssues";
 import { SheetClose, SheetCloseButton, SHEET_FOOTER_CLASS, sheetButtonClass } from "../../components/ui/bottom-sheet";
 
@@ -1451,6 +1452,7 @@ export function SettingsPage() {
 						{ key: "token-expired", icon: KeyRound, label: "Token Expired Screen", description: "The \"session expired\" prompt asking to sign in again.", onSelect: () => afterSheetClose(() => setPreviewTokenExpired(true)) },
 						{ key: "test-reminder", icon: HeartPulseFilled, label: "Test Reminder", description: "The HIV test check-up reminder; saving here doesn't touch your profile.", onSelect: () => afterSheetClose(() => setPreviewTestReminder(true)) },
 						{ key: "warnings", icon: TriangleAlertFilled, label: "Account Warnings", description: "The community-guidelines warnings prompt with sample warnings.", onSelect: () => afterSheetClose(showAccountWarningsPrompt) },
+						{ key: "risk-country", icon: ShieldFilled, label: "Risk Country Warning", description: "The safety warning for a location in a dangerous country (Egypt); not remembered.", onSelect: () => afterSheetClose(showLgbtqRiskCountryWarning) },
 						{ key: "share", icon: Share2, label: "Share Picker", description: "The \"Send to…\" chat picker with sample images.", onSelect: () => afterSheetClose(() => void showSharePickerDebug()) },
 						{
 							key: "announcement",

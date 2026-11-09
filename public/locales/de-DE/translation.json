@@ -3278,6 +3278,12 @@
         "region_br": "Brasilien",
         "region_au": "Australien"
     },
+    "lgbtq_risk_country": {
+        "title": "Pass auf dich auf",
+        "message": "Dein Standort liegt in {{country}}. Gleichgeschlechtliche Beziehungen sind dort strafbar, oder LGBTQ+-Personen werden aktiv verfolgt.",
+        "warning": "Die Polizei nutzt bekanntermaßen Fake-Profile und übernommene Accounts von bereits Festgenommenen, um Treffen zu vereinbaren und Menschen festzunehmen. Sei vorsichtig, bevor du dich mit jemandem triffst – auch mit Profilen, die früher echt wirkten – und schicke nichts, was deine Identität verraten könnte.",
+        "confirm": "Verstanden"
+    },
     "entitlement_bypass": {
         "prompt_title": "Kostenpflichtige Funktion",
         "prompt_message": "Free Grind kann versuchen, dies zu umgehen, indem es deinen Standort kurzzeitig nach Honduras verlegt.",

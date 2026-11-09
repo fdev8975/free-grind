@@ -3278,6 +3278,12 @@
         "region_br": "Brazilië",
         "region_au": "Australië"
     },
+    "lgbtq_risk_country": {
+        "title": "Blijf veilig",
+        "message": "Je locatie is in {{country}}. Relaties tussen mensen van hetzelfde geslacht zijn daar strafbaar, of LGBTQ+-personen worden er actief vervolgd.",
+        "warning": "Het is bekend dat de politie neppe profielen gebruikt, en accounts overgenomen van mensen die al zijn opgepakt, om afspraken te maken en mensen te arresteren. Wees voorzichtig voordat je met iemand afspreekt, ook met profielen die eerder betrouwbaar leken, en stuur niets wat je identiteit kan onthullen.",
+        "confirm": "Begrepen"
+    },
     "entitlement_bypass": {
         "prompt_title": "Betaalde functie",
         "prompt_message": "Free Grind kan proberen dit te omzeilen door je locatie even naar Honduras te verplaatsen.",

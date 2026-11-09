@@ -60,6 +60,7 @@ import { KeepScreenOnBridge } from "./components/KeepScreenOnBridge";
 import { EntitlementsBridge } from "./components/EntitlementsBridge";
 import { AssignmentsBridge } from "./components/AssignmentsBridge";
 import { HondurasRecoveryBridge } from "./components/HondurasRecoveryBridge";
+import { LgbtqRiskCountryWarning } from "./components/LgbtqRiskCountryWarning";
 import { ManagedOptionsCacheBridge } from "./components/ManagedOptionsCacheBridge";
 import { SplashReadyBridge } from "./components/SplashReadyBridge";
 import { RenderCrashReportBridge } from "./components/RenderCrashReportBridge";
@@ -243,6 +244,7 @@ export default function App() {
 					{renderPhase >= 2 && <NotificationReplyBridge />}
 					{renderPhase >= 2 && <ManagedOptionsCacheBridge />}
 					{renderPhase >= 2 && <AssignmentsBridge />}
+					{renderPhase >= 2 && <LgbtqRiskCountryWarning />}
 					{renderPhase >= 3 && <ChatRealtimeBridge />}
 					{renderPhase >= 3 && <VideoCallManager />}
 					{renderPhase >= 3 && <GridAutoRefreshBridge />}

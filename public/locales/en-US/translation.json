@@ -3276,6 +3276,12 @@
     "region_br": "Brazil",
     "region_au": "Australia"
   },
+  "lgbtq_risk_country": {
+    "title": "Stay safe",
+    "message": "Your location is in {{country}}. Same-sex relationships are criminalized there, or LGBTQ+ people are actively persecuted.",
+    "warning": "Police are known to use fake profiles, and accounts taken over from people who were already arrested, to set up meetings and make arrests. Be careful before meeting anyone, even profiles that seemed legitimate in the past, and don't send anything that could reveal your identity.",
+    "confirm": "I understand"
+  },
   "entitlement_bypass": {
     "prompt_title": "Paid feature",
     "prompt_message": "Free Grind can attempt to bypass this by momentarily spoofing your location to Honduras.",
