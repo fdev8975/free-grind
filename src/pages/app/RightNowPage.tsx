@@ -25,6 +25,9 @@ import {
 } from "lucide-react";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
 import { ClockFilled, HomeFilled, LayoutGridFilled, MapFilled } from "../../components/icons/FilledIcons";
+import { FilterPill } from "../../components/ui/FilterPill";
+import { sanitizeQuickFilters, useRightNowQuickFilterDefs } from "../../components/quick-filters/quickFilterDefs";
+import { RIGHT_NOW_QUICK_FILTER_KEYS } from "../../config/quick-filters";
 import { getRightNowEntryKey, useReceivedRightNowRequests, useRightNowFeed, useSentRightNowRequests } from "../../hooks/queries/useRightNowQueries";
 import { RightNowRequestsSheet, pendingRightNowRequests } from "./rightnow/RightNowRequestsSheet";
 import { useApiFunctions } from "../../hooks/useApiFunctions";
@@ -1137,7 +1140,8 @@ export function RightNowPage() {
 	const { data: feed, isLoading: isFeedLoading, error, refetch } = useRightNowFeed(queryParams, !isIncognito);
 	const isLoading = isFeedLoading && !isIncognito;
 	const feedItems = feed?.items ?? EMPTY_FEED;
-	const { activeRightNowId, activeRightNowExpiresAt, rightNowRemaining, setPreferences, developerMode, showDebugInfo, rightNowTestMode, geohash } = usePreferences();
+	const { activeRightNowId, activeRightNowExpiresAt, rightNowRemaining, setPreferences, developerMode, showDebugInfo, rightNowTestMode, geohash, rightNowQuickFilters } = usePreferences();
+	const rightNowQuickFilterDefs = useRightNowQuickFilterDefs();
 
 	// Test mode feeds the map simulated positions around the browse location
 	// so its UI can be checked without real posts that share a location.
@@ -1525,6 +1529,13 @@ export function RightNowPage() {
 		feedContainerRef.current?.scrollTo(0, 0);
 	}, []);
 
+	const toggleFavoritesOnly = useCallback(() => {
+		setFavoritesOnly((previous) => !previous);
+		sessionStorage.removeItem("rightnow-scroll");
+		setHasRestoredScroll(true);
+		feedContainerRef.current?.scrollTo(0, 0);
+	}, []);
+
 	const changeViewMode = useCallback((mode: RightNowViewMode) => {
 		setViewMode(mode);
 		setSelectedMapKey(null);
@@ -1668,22 +1679,19 @@ export function RightNowPage() {
 						</button>
 						)}
 
-						<button
-							type="button"
-							onClick={toggleHostingOnly}
-							className={cn(
-								"glass-pill inline-flex shrink-0 items-center gap-1.5 px-4 py-2 text-sm font-bold active:scale-95",
-								hostingOnly
-									? "bg-[var(--right-now)] border-[var(--right-now)] text-white shadow-lg shadow-[var(--right-now)]/40"
-									: "text-[var(--right-now)] hover:border-[var(--right-now)]/60 hover:bg-[var(--right-now)]/20",
-							)}
-							style={!hostingOnly ? {
-								"--pill-color": "var(--right-now)",
-							} as React.CSSProperties : undefined}
-						>
-							<HomeFilled className="h-3.5 w-3.5" />
-							{t("right_now.hosting")}
-						</button>
+						{sanitizeQuickFilters(rightNowQuickFilters, RIGHT_NOW_QUICK_FILTER_KEYS).map((key) => {
+							const def = rightNowQuickFilterDefs[key];
+							return (
+								<FilterPill
+									key={key}
+									icon={def.renderIcon("h-3.5 w-3.5")}
+									label={def.label}
+									active={key === "hostingOnly" ? hostingOnly : favoritesOnly}
+									onClick={key === "hostingOnly" ? toggleHostingOnly : toggleFavoritesOnly}
+									color="right-now"
+								/>
+							);
+						})}
 
 						{isMapView && mapItems.length > 0 && (
 						<button

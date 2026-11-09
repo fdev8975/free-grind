@@ -94,6 +94,7 @@ import { hasCompletedFullInboxSync } from "../../services/inboxSync";
 import { useInboxSyncStatus } from "../../hooks/useInboxSyncStatus";
 import { ChatInboxPanel } from "./chat/ChatInboxPanel";
 import { ChatInboxHeader } from "./chat/ChatInboxHeader";
+import type { InboxQuickFilterKey } from "../../config/quick-filters";
 import { ChatFiltersOverlay } from "./chat/ChatFiltersOverlay";
 import { ChatThreadPanel } from "./chat/ChatThreadPanel";
 import { parseSlashCommand } from "./chat/slashCommands";
@@ -643,31 +644,16 @@ export function ChatPage() {
 		setNeedsReplyOnly(false);
 	}, []);
 
-	const toggleInboxFavoritesOnly = useCallback(() => {
+	// Header quick filter pills. Needs reply is local-only and lives outside
+	// inboxFilters; the rest are server filters, dropped (not set false) when off.
+	const toggleInboxQuickFilter = useCallback((key: InboxQuickFilterKey) => {
+		if (key === "needsReplyOnly") {
+			setNeedsReplyOnly((previous) => !previous);
+			return;
+		}
 		setInboxFilters((previous) => ({
 			...previous,
-			favoritesOnly: previous.favoritesOnly ? undefined : true,
-		}));
-	}, []);
-
-	const toggleInboxUnreadOnly = useCallback(() => {
-		setInboxFilters((previous) => ({
-			...previous,
-			unreadOnly: previous.unreadOnly ? undefined : true,
-		}));
-	}, []);
-
-	const toggleInboxRightNowOnly = useCallback(() => {
-		setInboxFilters((previous) => ({
-			...previous,
-			rightNowOnly: previous.rightNowOnly ? undefined : true,
-		}));
-	}, []);
-
-	const toggleInboxOnlineNowOnly = useCallback(() => {
-		setInboxFilters((previous) => ({
-			...previous,
-			onlineNowOnly: previous.onlineNowOnly ? undefined : true,
+			[key]: previous[key] ? undefined : true,
 		}));
 	}, []);
 
@@ -7443,10 +7429,7 @@ export function ChatPage() {
 		onSetSearchQuery: setChatSearchQuery,
 		onSetIsFiltersOpen: setChatIsFiltersOpen,
 		onSetFiltersDraft: setChatFiltersDraft,
-		onToggleFavoritesOnly: toggleInboxFavoritesOnly,
-		onToggleUnreadOnly: toggleInboxUnreadOnly,
-		onToggleRightNowOnly: toggleInboxRightNowOnly,
-		onToggleOnlineNowOnly: toggleInboxOnlineNowOnly,
+		onToggleQuickFilter: toggleInboxQuickFilter,
 		onClearInboxFilters: clearInboxFilters,
 		archivedFilter,
 		hiddenFilter,

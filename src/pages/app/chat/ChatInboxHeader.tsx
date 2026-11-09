@@ -1,12 +1,14 @@
-import { Loader2, Search, Star, X } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
-import { RightNowIcon } from "../../../components/icons/RightNowIcon";
-import { ImagesFilled, MailFilled, PillFilled, VideosFilled } from "../../../components/icons/FilledIcons";
+import { ImagesFilled, PillFilled, VideosFilled } from "../../../components/icons/FilledIcons";
 import { type CSSProperties, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { PageHeaderBackground } from "../../../components/ui/PageHeaderBackground";
 import { FilterPill } from "../../../components/ui/FilterPill";
+import { sanitizeQuickFilters, useInboxQuickFilterDefs } from "../../../components/quick-filters/quickFilterDefs";
+import { INBOX_QUICK_FILTER_KEYS, type InboxQuickFilterKey } from "../../../config/quick-filters";
+import { usePreferences } from "../../../contexts/PreferencesContext";
 import { buildChatFiltersDraft, type ChatFiltersDraft } from "./chatUtils";
 import { cn } from "../../../utils/cn";
 import type { InboxFilters } from "../../../types/messages";
@@ -36,10 +38,7 @@ export type ChatInboxHeaderProps = {
 	onSetSearchQuery: (v: string) => void;
 	onSetIsFiltersOpen: (v: boolean) => void;
 	onSetFiltersDraft: (v: ChatFiltersDraft) => void;
-	onToggleFavoritesOnly: () => void;
-	onToggleUnreadOnly: () => void;
-	onToggleRightNowOnly: () => void;
-	onToggleOnlineNowOnly: () => void;
+	onToggleQuickFilter: (key: InboxQuickFilterKey) => void;
 	onClearInboxFilters: () => void;
 };
 
@@ -92,13 +91,14 @@ export function ChatInboxHeader({
 	onSetSearchQuery,
 	onSetIsFiltersOpen,
 	onSetFiltersDraft,
-	onToggleFavoritesOnly,
-	onToggleUnreadOnly,
-	onToggleRightNowOnly,
-	onToggleOnlineNowOnly,
+	onToggleQuickFilter,
 	onClearInboxFilters,
 }: ChatInboxHeaderProps) {
 	const { t } = useTranslation();
+	const { inboxQuickFilters } = usePreferences();
+	const quickFilterDefs = useInboxQuickFilterDefs();
+	const isQuickFilterActive = (key: InboxQuickFilterKey) =>
+		key === "needsReplyOnly" ? needsReplyOnly : Boolean(inboxFilters[key]);
 	const navigate = useNavigate();
 	const [showVideoGallery] = useState(isVideoGalleryEnabled);
 	const [showSexualHealth] = useState(isSexualHealthEnabled);
@@ -209,31 +209,19 @@ export function ChatInboxHeader({
 									)}
 								</button>
 
-								<FilterPill
-									icon={<MailFilled className="h-3.5 w-3.5" />}
-									label={t("chat_filters.options.unread")}
-									active={Boolean(inboxFilters.unreadOnly)}
-									onClick={onToggleUnreadOnly}
-								/>
-								<FilterPill
-									icon={<Star className="h-3.5 w-3.5 fill-current" />}
-									label={t("browse_filters.options.favorites")}
-									active={Boolean(inboxFilters.favoritesOnly)}
-									onClick={onToggleFavoritesOnly}
-								/>
-								<FilterPill
-									icon={<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-green-500 shadow-sm" />}
-									label={t("browse_filters.options.online")}
-									active={Boolean(inboxFilters.onlineNowOnly)}
-									onClick={onToggleOnlineNowOnly}
-								/>
-								<FilterPill
-									icon={<RightNowIcon className="h-3.5 w-3.5" />}
-									label={t("browse_filters.options.right_now")}
-									active={Boolean(inboxFilters.rightNowOnly)}
-									onClick={onToggleRightNowOnly}
-									color="right-now"
-								/>
+								{sanitizeQuickFilters(inboxQuickFilters, INBOX_QUICK_FILTER_KEYS).map((key) => {
+									const def = quickFilterDefs[key];
+									return (
+										<FilterPill
+											key={key}
+											icon={def.renderIcon("h-3.5 w-3.5")}
+											label={def.label}
+											active={isQuickFilterActive(key)}
+											onClick={() => onToggleQuickFilter(key)}
+											color={def.color}
+										/>
+									);
+								})}
 
 								{hasActiveInboxFilters && (
 									<button

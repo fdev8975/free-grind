@@ -1327,6 +1327,12 @@
         "show_online_time_left_desc": "Zeigt in Profilen und Chats, wie viele Minuten Profile noch online sind. Ausgeschaltet wird nur „Online“ angezeigt.",
         "show_last_online": "Zuletzt-online-Zeit anzeigen",
         "show_last_online_desc": "Zeigt auf Grid-Kacheln, wann offline Profile zuletzt online waren. Ausgeschaltet wird nur ein leerer grauer Kreis angezeigt.",
+        "quick_filters": "Schnellfilter",
+        "quick_filters_desc": "Wähle, welche Filter als Schnellfilter über der Liste erscheinen und in welcher Reihenfolge.",
+        "quick_filters_reset": "Zurücksetzen",
+        "quick_filters_edit": "Schnellfilter bearbeiten",
+        "quick_filters_explore_hint": "Beim Erkunden eines anderen Orts ausgeblendet",
+        "quick_filters_reorder": "Ziehen zum Sortieren",
         "confirm_before_open_link": "Vor dem Öffnen von Links fragen",
         "confirm_before_open_link_desc": "Zeigt eine Bestätigung, bevor ein in einer Chatnachricht angetippter Link geöffnet wird."
     },

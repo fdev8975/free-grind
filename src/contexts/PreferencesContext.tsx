@@ -18,6 +18,17 @@ import { UNIT_PRESETS, type UnitsPreset } from "../utils/units";
 import { REVEAL_STRENGTH_SUBTLE, REVEAL_STRENGTH_PRONOUNCED, type RevealStrength } from "../config/ui-constants";
 import { getSetting, setSetting } from "../services/chatDb";
 import { useAuth } from "./useAuth";
+import {
+	DEFAULT_GRID_QUICK_FILTERS,
+	DEFAULT_INBOX_QUICK_FILTERS,
+	DEFAULT_RIGHT_NOW_QUICK_FILTERS,
+	GRID_QUICK_FILTER_KEYS,
+	INBOX_QUICK_FILTER_KEYS,
+	RIGHT_NOW_QUICK_FILTER_KEYS,
+	type GridQuickFilterKey,
+	type InboxQuickFilterKey,
+	type RightNowQuickFilterKey,
+} from "../config/quick-filters";
 
 export const COLOR_SCHEMES = ["system", "light", "dark"] as const;
 export type ColorScheme = (typeof COLOR_SCHEMES)[number];
@@ -212,6 +223,19 @@ const preferencesSchema = z.object({
 	// Profile and chat status lines read "Online (12m left)"; off: just "Online".
 	showOnlineTimeLeft: z.boolean().default(true),
 	showLastOnline: z.boolean().default(true),
+	// Ordered quick filter pills shown above the grid, inbox and Right Now lists.
+	gridQuickFilters: z
+		.array(z.enum(GRID_QUICK_FILTER_KEYS))
+		.default([...DEFAULT_GRID_QUICK_FILTERS])
+		.catch([...DEFAULT_GRID_QUICK_FILTERS]),
+	inboxQuickFilters: z
+		.array(z.enum(INBOX_QUICK_FILTER_KEYS))
+		.default([...DEFAULT_INBOX_QUICK_FILTERS])
+		.catch([...DEFAULT_INBOX_QUICK_FILTERS]),
+	rightNowQuickFilters: z
+		.array(z.enum(RIGHT_NOW_QUICK_FILTER_KEYS))
+		.default([...DEFAULT_RIGHT_NOW_QUICK_FILTERS])
+		.catch([...DEFAULT_RIGHT_NOW_QUICK_FILTERS]),
 	defaultExpiringPhotos: z.boolean().default(false),
 	defaultAlbumExpirationType: z
 		.enum(["INDEFINITE", "ONCE", "TEN_MINUTES", "ONE_HOUR", "ONE_DAY"])
@@ -268,6 +292,9 @@ type PreferencesAction =
 	| { type: "SET_SHOW_ESTIMATED_DISTANCE"; payload: boolean }
 	| { type: "SET_SHOW_ONLINE_TIME_LEFT"; payload: boolean }
 	| { type: "SET_SHOW_LAST_ONLINE"; payload: boolean }
+	| { type: "SET_GRID_QUICK_FILTERS"; payload: GridQuickFilterKey[] }
+	| { type: "SET_INBOX_QUICK_FILTERS"; payload: InboxQuickFilterKey[] }
+	| { type: "SET_RIGHT_NOW_QUICK_FILTERS"; payload: RightNowQuickFilterKey[] }
 	| { type: "SET_AUTO_FOCUS_LOCATION_SEARCH"; payload: boolean }
 	| { type: "SET_AUTO_FOCUS_RIGHT_NOW_TEXT"; payload: boolean }
 	| { type: "SET_CHAT_ROW_SWIPE_ACTIONS"; payload: boolean }
@@ -373,6 +400,12 @@ function preferencesReducer(
 			return { ...state, showOnlineTimeLeft: action.payload };
 		case "SET_SHOW_LAST_ONLINE":
 			return { ...state, showLastOnline: action.payload };
+		case "SET_GRID_QUICK_FILTERS":
+			return { ...state, gridQuickFilters: action.payload };
+		case "SET_INBOX_QUICK_FILTERS":
+			return { ...state, inboxQuickFilters: action.payload };
+		case "SET_RIGHT_NOW_QUICK_FILTERS":
+			return { ...state, rightNowQuickFilters: action.payload };
 		case "SET_DEFAULT_EXPIRING_PHOTOS":
 			return { ...state, defaultExpiringPhotos: action.payload };
 		case "SET_DEFAULT_ALBUM_EXPIRATION_TYPE":
@@ -556,6 +589,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 		showEstimatedDistance: true,
 		showOnlineTimeLeft: true,
 		showLastOnline: true,
+		gridQuickFilters: [...DEFAULT_GRID_QUICK_FILTERS],
+		inboxQuickFilters: [...DEFAULT_INBOX_QUICK_FILTERS],
+		rightNowQuickFilters: [...DEFAULT_RIGHT_NOW_QUICK_FILTERS],
 		defaultExpiringPhotos: false,
 		defaultAlbumExpirationType: "INDEFINITE",
 		notifyAlbumUpdates: false,
@@ -631,6 +667,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 					dispatch({ type: "SET_SHOW_ESTIMATED_DISTANCE", payload: parsed.showEstimatedDistance });
 					dispatch({ type: "SET_SHOW_ONLINE_TIME_LEFT", payload: parsed.showOnlineTimeLeft });
 					dispatch({ type: "SET_SHOW_LAST_ONLINE", payload: parsed.showLastOnline });
+					dispatch({ type: "SET_GRID_QUICK_FILTERS", payload: parsed.gridQuickFilters });
+					dispatch({ type: "SET_INBOX_QUICK_FILTERS", payload: parsed.inboxQuickFilters });
+					dispatch({ type: "SET_RIGHT_NOW_QUICK_FILTERS", payload: parsed.rightNowQuickFilters });
 					dispatch({ type: "SET_DEFAULT_EXPIRING_PHOTOS", payload: parsed.defaultExpiringPhotos });
 					dispatch({ type: "SET_DEFAULT_ALBUM_EXPIRATION_TYPE", payload: parsed.defaultAlbumExpirationType });
 					dispatch({ type: "SET_NOTIFY_ALBUM_UPDATES", payload: parsed.notifyAlbumUpdates });
@@ -772,6 +811,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 				showEstimatedDistance: currentState.showEstimatedDistance,
 				showOnlineTimeLeft: currentState.showOnlineTimeLeft,
 				showLastOnline: currentState.showLastOnline,
+				gridQuickFilters: currentState.gridQuickFilters,
+				inboxQuickFilters: currentState.inboxQuickFilters,
+				rightNowQuickFilters: currentState.rightNowQuickFilters,
 				defaultExpiringPhotos: currentState.defaultExpiringPhotos,
 				defaultAlbumExpirationType: currentState.defaultAlbumExpirationType,
 				notifyAlbumUpdates: currentState.notifyAlbumUpdates,
@@ -916,6 +958,15 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 			if (newValues.showLastOnline !== undefined) {
 				dispatch({ type: "SET_SHOW_LAST_ONLINE", payload: newValues.showLastOnline });
 			}
+			if (newValues.gridQuickFilters !== undefined) {
+				dispatch({ type: "SET_GRID_QUICK_FILTERS", payload: newValues.gridQuickFilters });
+			}
+			if (newValues.inboxQuickFilters !== undefined) {
+				dispatch({ type: "SET_INBOX_QUICK_FILTERS", payload: newValues.inboxQuickFilters });
+			}
+			if (newValues.rightNowQuickFilters !== undefined) {
+				dispatch({ type: "SET_RIGHT_NOW_QUICK_FILTERS", payload: newValues.rightNowQuickFilters });
+			}
 			if (newValues.defaultExpiringPhotos !== undefined) {
 				dispatch({ type: "SET_DEFAULT_EXPIRING_PHOTOS", payload: newValues.defaultExpiringPhotos });
 			}
@@ -1033,6 +1084,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 					showEstimatedDistance: preferences.showEstimatedDistance,
 					showOnlineTimeLeft: preferences.showOnlineTimeLeft,
 					showLastOnline: preferences.showLastOnline,
+					gridQuickFilters: preferences.gridQuickFilters,
+					inboxQuickFilters: preferences.inboxQuickFilters,
+					rightNowQuickFilters: preferences.rightNowQuickFilters,
 					defaultExpiringPhotos: preferences.defaultExpiringPhotos,
 					defaultAlbumExpirationType: preferences.defaultAlbumExpirationType,
 					notifyAlbumUpdates: preferences.notifyAlbumUpdates,
@@ -1089,6 +1143,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 		showEstimatedDistance: state.showEstimatedDistance,
 		showOnlineTimeLeft: state.showOnlineTimeLeft,
 		showLastOnline: state.showLastOnline,
+		gridQuickFilters: state.gridQuickFilters,
+		inboxQuickFilters: state.inboxQuickFilters,
+		rightNowQuickFilters: state.rightNowQuickFilters,
 		defaultExpiringPhotos: state.defaultExpiringPhotos,
 		defaultAlbumExpirationType: state.defaultAlbumExpirationType,
 		notifyAlbumUpdates: state.notifyAlbumUpdates,

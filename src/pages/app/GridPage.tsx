@@ -1,8 +1,7 @@
 import { useAuth } from "../../contexts/useAuth";
-import { Navigation, ArrowUpDown, Star, Plane, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2 } from "lucide-react";
+import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2 } from "lucide-react";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
 import { EyeOffFilled, LocateApproximateFilled, LocateFixedFilled, MapPinFilled, UserFilled, UserSearchFilled } from "../../components/icons/FilledIcons";
-import { RightNowIcon } from "../../components/icons/RightNowIcon";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useApiFunctions } from "../../hooks/useApiFunctions";
@@ -39,6 +38,8 @@ import { PageHeaderBackground } from "../../components/ui/PageHeaderBackground";
 import { FilterPill } from "../../components/ui/FilterPill";
 import { SelectSheet, type SelectSheetOption } from "../../components/ui/select-sheet";
 import { useBrowseFilters } from "./gridpage/hooks/useBrowseFilters";
+import { sanitizeQuickFilters, useGridQuickFilterDefs } from "../../components/quick-filters/quickFilterDefs";
+import { GRID_QUICK_FILTER_KEYS } from "../../config/quick-filters";
 import { useTapProfile } from "./gridpage/hooks/useTapProfile";
 import { useGridTapStatus } from "./gridpage/hooks/useGridTapStatus";
 import { GridGesturesIntro, hasSeenGridGesturesIntro, markGridGesturesIntroSeen } from "./gridpage/components/GridGesturesIntro";
@@ -139,6 +140,7 @@ export function GridPage() {
 		isLoading: isLoadingPreferences,
 		showDebugInfo,
 		showGridTapStatus,
+		gridQuickFilters,
 	} = usePreferences();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -467,6 +469,14 @@ export function GridPage() {
 	const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 	const [isLocationOpen, setIsLocationOpen] = useState(false);
 	const [isSortSheetOpen, setIsSortSheetOpen] = useState(false);
+	const quickFilterDefs = useGridQuickFilterDefs();
+	const visibleQuickFilters = useMemo(
+		() =>
+			sanitizeQuickFilters(gridQuickFilters, GRID_QUICK_FILTER_KEYS)
+				.map((key) => quickFilterDefs[key])
+				.filter((def) => !(exploreLocation && def.hiddenWhileExploring)),
+		[gridQuickFilters, quickFilterDefs, exploreLocation],
+	);
 	// Quick access to the local displayname filter (same state as the one in
 	// the filters overlay). Stays visible while a name is set so it's obvious
 	// why the grid is narrowed down.
@@ -1979,61 +1989,21 @@ export function GridPage() {
 										) : null}
 									</button>
 
-									{!exploreLocation && (
+									{visibleQuickFilters.map((def) => (
 										<FilterPill
-											icon={<Star className="h-3.5 w-3.5 fill-current" />}
-											label={t("browse_filters.options.favorites")}
-											active={Boolean(browseFilters.favorites)}
+											key={def.key}
+											icon={def.renderIcon("h-3.5 w-3.5")}
+											label={def.label}
+											active={Boolean(browseFilters[def.key])}
 											onClick={() =>
 												setBrowseFilters((prev: typeof browseFilters) => ({
 													...prev,
-													favorites: !prev.favorites,
+													[def.key]: !prev[def.key],
 												}))
 											}
-											color="accent"
+											color={def.color === "right-now" ? "right-now" : exploreLocation ? "explore" : "accent"}
 										/>
-									)}
-
-									<FilterPill
-										icon={<span className="h-2.5 w-2.5 shrink-0 rounded-full bg-green-500 shadow-sm" />}
-										label={t("browse_filters.options.online")}
-										active={Boolean(browseFilters.onlineOnly)}
-										onClick={() =>
-											setBrowseFilters((prev: typeof browseFilters) => ({
-												...prev,
-												onlineOnly: !prev.onlineOnly,
-											}))
-										}
-										color={exploreLocation ? "explore" : "accent"}
-									/>
-
-									<FilterPill
-										icon={<Plane className="h-3.5 w-3.5 fill-current" />}
-										label={t("profile_details.visiting")}
-										active={Boolean(browseFilters.isVisiting)}
-										onClick={() =>
-											setBrowseFilters((prev: typeof browseFilters) => ({
-												...prev,
-												isVisiting: !prev.isVisiting,
-											}))
-										}
-										color={exploreLocation ? "explore" : "accent"}
-									/>
-
-									{!exploreLocation && (
-										<FilterPill
-											icon={<RightNowIcon className="h-3.5 w-3.5" />}
-											label={t("browse_filters.options.right_now")}
-											active={Boolean(browseFilters.rightNow)}
-											onClick={() =>
-												setBrowseFilters((prev: typeof browseFilters) => ({
-													...prev,
-													rightNow: !prev.rightNow,
-												}))
-											}
-											color="right-now"
-										/>
-									)}
+									))}
 
 									{hasActiveBrowseFilters ? (
 										<button

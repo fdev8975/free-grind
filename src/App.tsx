@@ -12,11 +12,9 @@ import { SignInPage } from "./pages/auth/SignInPage";
 import { SignUpPage } from "./pages/auth/SignUpPage";
 import { PasswordResetPage } from "./pages/auth/PasswordResetPage";
 import { GridPage } from "./pages/app/GridPage.tsx";
-import { BrowseLocationPage } from "./pages/app/BrowseLocationPage";
 import { RightNowPage } from "./pages/app/RightNowPage";
 import { InterestPage } from "./pages/app/InterestPage";
 import { ChatPage } from "./pages/app/ChatPage";
-import { ChatFiltersPage } from "./pages/app/ChatFiltersPage";
 import { SettingsPage } from "./pages/app/SettingsPage.tsx";
 import { OwnProfileEditRedirect } from "./pages/app/profile-editor/OwnProfileEditRedirect.tsx";
 import { GridProfilePage } from "./pages/app/GridProfilePage.tsx";
@@ -275,10 +273,8 @@ export default function App() {
 								}
 							>
 								<Route path="/" element={<GridPage />} />
-								<Route path="/browse/location" element={<BrowseLocationPage />} />
 								<Route path="/right-now" element={<RightNowPage />} />
 								<Route path="/interest" element={<InterestPage />} />
-								<Route path="/chat/filters" element={<ChatFiltersPage />} />
 								<Route path="/chat/albums" element={<SharedAlbumsPage />} />
 								<Route path="/chat/videos" element={<VideoGalleryPage />} />
 								<Route path="/chat/:conversationId?" element={<ChatPage />} />

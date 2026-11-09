@@ -2,6 +2,7 @@ import { Star } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RangeSlider } from "../../components/ui/range-slider";
+import { EditQuickFiltersButton } from "../../components/quick-filters/EditQuickFiltersButton";
 import { BottomSheet, SheetClose, SheetCloseButton, SHEET_FOOTER_CLASS, sheetButtonClass } from "../../components/ui/bottom-sheet";
 import { SheetChip, SheetSection } from "../../components/ui/sheet-section";
 import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
@@ -40,7 +41,10 @@ export function RightNowFiltersPage({ onClose, onApply, initialDraft }: RightNow
 		>
 			<div className="mb-3 flex items-center justify-between gap-3">
 				<h3 className="text-sm font-semibold text-[var(--text)]">{t("right_now.filters")}</h3>
-				<SheetCloseButton />
+				<div className="flex shrink-0 items-center gap-2">
+					<EditQuickFiltersButton scope="rightNow" accentColor="var(--right-now)" accentContrast="#ffffff" />
+					<SheetCloseButton />
+				</div>
 			</div>
 
 			<div className="-mx-4 min-h-0 flex-1 overflow-y-auto px-4" data-lenis-prevent>

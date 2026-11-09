@@ -776,10 +776,7 @@ export function ChatInboxPanel({
 	onOpenConversationById,
 	onViewProfile,
 	onClearInboxFilters,
-	onToggleFavoritesOnly,
-	onToggleUnreadOnly,
-	onToggleRightNowOnly,
-	onToggleOnlineNowOnly,
+	onToggleQuickFilter,
 	archivedFilter,
 	hiddenFilter,
 	needsReplyOnly,
@@ -1118,10 +1115,7 @@ export function ChatInboxPanel({
 					onSetSearchQuery={onSetSearchQuery}
 					onSetIsFiltersOpen={onSetIsFiltersOpen}
 					onSetFiltersDraft={onSetFiltersDraft}
-					onToggleFavoritesOnly={onToggleFavoritesOnly}
-					onToggleUnreadOnly={onToggleUnreadOnly}
-					onToggleRightNowOnly={onToggleRightNowOnly}
-					onToggleOnlineNowOnly={onToggleOnlineNowOnly}
+					onToggleQuickFilter={onToggleQuickFilter}
 					onClearInboxFilters={onClearInboxFilters}
 					archivedFilter={archivedFilter}
 					hiddenFilter={hiddenFilter}
