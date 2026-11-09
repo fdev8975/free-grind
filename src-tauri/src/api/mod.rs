@@ -7,6 +7,7 @@ pub mod locale;
 pub mod oauth;
 pub mod rest;
 pub mod runtime;
+pub mod server;
 pub mod session_recovery;
 pub mod sms_report;
 pub mod websocket;

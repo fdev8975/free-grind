@@ -87,7 +87,8 @@ fn is_cdn_host(host: &str) -> bool {
 }
 
 fn is_media_host(url: &Url) -> bool {
-	url.scheme() == "https" && url.host_str().is_some_and(is_cdn_host)
+	(url.scheme() == "https" && url.host_str().is_some_and(is_cdn_host))
+		|| crate::server::server_config().is_custom_media_url(url)
 }
 
 #[cfg(not(test))]

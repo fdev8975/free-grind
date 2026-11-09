@@ -84,6 +84,8 @@ fn create_linux_main_window(app: &tauri::App) -> tauri::Result<()> {
 /// websocket-bridge tasks it spawns run in the background from here on.
 fn init_client(app: &tauri::AppHandle) {
     api::auth::SigningKeyStorage::forget_unscoped();
+    // The backend (official or self-hosted) must be set before any request.
+    api::server::apply_persisted_server();
     let device = api::auth::DeviceStorage::load().ok().flatten();
     let session = api::auth::AuthStorage::get_session().ok().flatten();
     if let Err(e) = api::auth::adopt_client(app, device, session) {
@@ -277,6 +279,9 @@ pub fn run() {
                 api::auth::switch_account,
                 api::auth::remove_saved_account,
                 api::auth::create_transfer_code,
+                api::server::get_server_config,
+                api::server::test_server,
+                api::server::set_server_config,
                 api::auth::sign_in_with_transfer_code,
                 api::rest::request,
                 api::rest::fetch_external,
@@ -418,6 +423,9 @@ pub fn run() {
                 api::auth::switch_account,
                 api::auth::remove_saved_account,
                 api::auth::create_transfer_code,
+                api::server::get_server_config,
+                api::server::test_server,
+                api::server::set_server_config,
                 api::auth::sign_in_with_transfer_code,
                 api::rest::request,
                 api::rest::fetch_external,

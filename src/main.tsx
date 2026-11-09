@@ -1,3 +1,4 @@
+import { loadServerConfig } from "./services/serverConfig";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -60,6 +61,11 @@ void (async () => {
 		}
 
 		if (isTauri()) {
+			// Media URLs and the paywall bypass depend on the backend (official
+			// or self-hosted): know it before the first render.
+			await loadServerConfig().catch((err) => {
+				appLog.warn("[server] failed to load server config:", err);
+			});
 			void initChatContactIndex().catch((err) => {
 				appLog.warn("[chat-index] failed to initialize:", err);
 			});

@@ -1,12 +1,19 @@
 import z from "zod";
 import type { ProfileImageSize, ThumbImageSize } from "../types/media";
 import { demoProfileImageFor, isDemoProfileImagesEnabled } from "./demoProfileImages";
+import { getServerInfo } from "../services/serverConfig";
 
 export const mediaHashSchema = z
 	.string()
 	.regex(/^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$/i);
 
-const PUBLIC_MEDIA_BASE_URL = "https://cdns.grindr.com";
+const OFFICIAL_MEDIA_BASE_URL = "https://cdns.grindr.com";
+
+/** Public-media origin of the active backend (official CDN or the self-hosted server). */
+export function publicMediaBaseUrl(): string {
+	const server = getServerInfo();
+	return server.kind === "custom" ? (server.mediaBase ?? server.apiBase) : OFFICIAL_MEDIA_BASE_URL;
+}
 
 export function validateMediaHash(hash: string): boolean {
 	return mediaHashSchema.safeParse(hash.trim()).success;
@@ -31,7 +38,7 @@ export function getProfileImageUrl(
 	size: ProfileImageSize = "480x480",
 ): string {
 	if (isDemoProfileImagesEnabled()) return demoProfileImageFor(hash);
-	return `${PUBLIC_MEDIA_BASE_URL}/images/profile/${size}/${hash}`;
+	return `${publicMediaBaseUrl()}/images/profile/${size}/${hash}`;
 }
 
 export function getThumbImageUrl(
@@ -39,7 +46,7 @@ export function getThumbImageUrl(
 	size: ThumbImageSize = "320x320",
 ): string {
 	if (isDemoProfileImagesEnabled()) return demoProfileImageFor(hash);
-	return `${PUBLIC_MEDIA_BASE_URL}/images/thumb/${size}/${hash}`;
+	return `${publicMediaBaseUrl()}/images/thumb/${size}/${hash}`;
 }
 
 export interface SquareCrop {

@@ -1482,6 +1482,22 @@
             "hide_password": "Passwort verbergen",
             "error_details": "Details"
         },
+        "server": {
+            "title": "Server",
+            "change": "Server ändern",
+            "official": "Offizielle Server",
+            "official_hint": "Mit deinem Grindr-Konto anmelden.",
+            "custom": "Eigener Server",
+            "custom_hint": "Ein selbst gehosteter free-grind-server. Konten dort sind getrennt.",
+            "url_hint": "https ist Pflicht; http geht nur für lokale Adressen (z. B. 192.168.x.x).",
+            "test": "Verbindung testen",
+            "testing": "Teste…",
+            "reachable": "Erreichbar ({{ms}} ms)",
+            "unreachable": "Nicht erreichbar: {{error}}",
+            "save": "Diesen Server verwenden",
+            "saving": "Wechsle…",
+            "current": "Aktuell: {{server}}"
+        },
         "sign_in": {
             "title": "Anmelden",
             "subtitle": "Nutze deine Grindr-E-Mail und dein Passwort oder melde dich mit Google an.",

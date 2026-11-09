@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Mail, Lock, KeyRound, Eye, EyeOff, UserPlus, ChevronDown, QrCode, ScanLine } from "lucide-react";
 import { SmsVerificationRequiredError, type SignInRefusal } from "../../contexts/auth-context";
 import { SmsVerificationPanel } from "./SmsVerificationPanel";
+import { ServerFooterButton, ServerSelectSheet } from "./ServerSelectSheet";
 import { isAndroid } from "../../services/saveMedia";
 import { isTauriRuntime } from "../../services/tauriWebSocket";
 import { cancelQrScan, isQrScanSupported, QrScanError, scanQrCode } from "../../services/qrScanner";
@@ -301,6 +302,7 @@ export function SignInPage() {
 	// Signing in with a code from another device: a secondary flow, so it
 	// opens in a sheet instead of being one of the method tabs.
 	const [showTransfer, setShowTransfer] = useState(false);
+	const [showServer, setShowServer] = useState(false);
 	const isDesktop = useDesktopBreakpoint();
 
 	// Set when an email sign-in is refused until the account verifies by SMS.
@@ -460,6 +462,7 @@ export function SignInPage() {
 							<QrCode className="h-3.5 w-3.5" />
 							{t("auth.sign_in.qr_entry_title", { defaultValue: "Sign in with a QR code" })}
 						</button>
+						{addProfileMode ? null : <ServerFooterButton onClick={() => setShowServer(true)} />}
 						{addProfileMode ? null : <BugReportButton />}
 					</div>
 				}
@@ -618,6 +621,7 @@ export function SignInPage() {
 				)}
 			</AuthShell>
 			{showTransfer ? <TransferSignInSheet isDesktop={isDesktop} onClose={() => toggleTransfer(false)} /> : null}
+			{showServer ? <ServerSelectSheet isDesktop={isDesktop} onClose={() => setShowServer(false)} /> : null}
 		</>
 	);
 }

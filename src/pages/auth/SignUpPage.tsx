@@ -10,6 +10,9 @@ import { isRecaptchaAvailable } from "../../services/recaptcha";
 import { SmsVerificationRequiredError, type SignInRefusal } from "../../contexts/auth-context";
 import { AuthAltAction, AuthSubmitSection, IconInput } from "./auth-form";
 import { SmsVerificationPanel } from "./SmsVerificationPanel";
+import { ServerFooterButton, ServerSelectSheet } from "./ServerSelectSheet";
+import { useServerInfo } from "../../services/serverConfig";
+import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
 
 const MIN_AGE = 18;
 
@@ -35,7 +38,10 @@ export function SignUpPage() {
 	const { callMethod } = useApi();
 	// Accounts this app created so far; null until loaded.
 	const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
-	const isLimitReached = quota !== null && quota.used >= quota.limit;
+	const server = useServerInfo();
+	const isCustom = server.kind === "custom";
+	// The local limit only applies to accounts on the official servers.
+	const isLimitReached = !isCustom && quota !== null && quota.used >= quota.limit;
 
 	const refreshQuota = useCallback(() => {
 		void callMethod("sign_up_quota")
@@ -51,8 +57,19 @@ export function SignUpPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	// Set when the sign-in after creating the account asks for SMS verification.
 	const [verification, setVerification] = useState<{ profileId: string; signIn: SignInRefusal } | null>(null);
-	// Sign-up always sends a reCAPTCHA token, which only Android can mint.
-	const [hasRecaptcha] = useState(isRecaptchaAvailable);
+	// Sign-up on the official servers sends a reCAPTCHA token, which only
+	// Android can mint; a self-hosted server needs none.
+	const [recaptchaAvailable] = useState(isRecaptchaAvailable);
+	const hasRecaptcha = isCustom || recaptchaAvailable;
+	const [showServer, setShowServer] = useState(false);
+	const isDesktop = useDesktopBreakpoint();
+	const footer = (
+		<div className="flex flex-wrap items-center justify-center gap-1">
+			<ServerFooterButton onClick={() => setShowServer(true)} />
+			<BugReportButton />
+		</div>
+	);
+	const serverSheet = showServer ? <ServerSelectSheet isDesktop={isDesktop} onClose={() => setShowServer(false)} /> : null;
 
 	const maxBirthday = latestAllowedBirthday();
 	const birthdayMillis = birthdayToMillis(birthday);
@@ -101,8 +118,9 @@ export function SignUpPage() {
 			<AuthShell
 				title={t("auth.sign_up.title")}
 				subtitle={t("auth.sign_up.subtitle", { defaultValue: "Create a new Grindr account with your email and password." })}
-				footer={<BugReportButton />}
+				footer={footer}
 			>
+				{serverSheet}
 				<div className="animate-fade-in flex items-start gap-3 native-card rounded-2xl px-3 py-3">
 					<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-contrast)]">
 						<Smartphone className="h-4 w-4" />
@@ -127,8 +145,9 @@ export function SignUpPage() {
 		<AuthShell
 			title={t("auth.sign_up.title")}
 			subtitle={t("auth.sign_up.subtitle", { defaultValue: "Create a new Grindr account with your email and password." })}
-			footer={<BugReportButton />}
+			footer={footer}
 		>
+			{serverSheet}
 			{isLimitReached ? (
 				<div className="animate-fade-in flex items-start gap-2.5 rounded-2xl bg-red-500/12 px-3 py-3 text-sm text-[var(--text)]">
 					<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[#f87171]" />

@@ -18,6 +18,7 @@ import { ApiFunctionError } from "./apiHelpers";
 import { coarsenGeohash, encodeGeohash } from "../utils/geohash";
 import { appLog } from "../utils/logger";
 import i18n from "../i18n";
+import { isCustomServer } from "./serverConfig";
 
 const PAYWALL_URNS = new Set(["urn:gr:err:entitlement_limit", "urn:gr:err:tiered_feature"]);
 
@@ -116,6 +117,9 @@ function syncPromptToQueue(): void {
 export function withEntitlementBypass<T>(reason: string, action: () => Promise<T>): Promise<T> {
 	return action().catch((error: unknown) => {
 		if (!isPaywallError(error)) throw error;
+		// A self-hosted server's limits are its own policy: no Honduras handover
+		// there, the 402 surfaces as a plain limit error.
+		if (isCustomServer()) throw error;
 		return new Promise<T>((resolve, reject) => {
 			blocked.push({
 				reason,

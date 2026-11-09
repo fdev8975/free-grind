@@ -43,6 +43,7 @@ import { runRestoredFavorites } from "../services/restoredFavorites";
 import { runTapsAutomationSync } from "../services/tapsSync";
 import { syncSavedPhrasesFromServer } from "../services/savedPhrases";
 import { mintRecaptchaToken, RecaptchaError, type RecaptchaFailure } from "../services/recaptcha";
+import { isCustomServer } from "../services/serverConfig";
 import { restoreStrandedLocation } from "../services/entitlementBypass";
 import i18n from "../i18n";
 
@@ -541,8 +542,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			dispatch({ type: "SET_LOADING", payload: true });
 			dispatch({ type: "SET_ERROR", payload: null });
 
-			// Sign-up is Android-only: rejects with a RecaptchaError elsewhere.
-			const captchaToken = await mintRecaptchaToken("sign_up");
+			// Official servers: sign-up is Android-only (rejects with a RecaptchaError
+			// elsewhere). A self-hosted server needs no reCAPTCHA token.
+			const captchaToken = isCustomServer() ? "" : await mintRecaptchaToken("sign_up");
 			const profileId = await callMethod("create_account", {
 				email,
 				password,

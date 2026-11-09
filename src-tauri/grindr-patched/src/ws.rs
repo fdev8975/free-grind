@@ -15,7 +15,7 @@ use crate::rest::InnerClient;
 
 #[cfg(not(test))]
 fn ws_url() -> String {
-	"wss://grindr.mobi/v1/ws".to_owned()
+	crate::server::server_config().ws_url()
 }
 
 #[cfg(test)]

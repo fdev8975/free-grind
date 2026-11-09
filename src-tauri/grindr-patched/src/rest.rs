@@ -14,14 +14,15 @@ use crate::error::{BanInfo, BanKind, BlockKind, GrindrError};
 use crate::request::{Access, Body, Request};
 use crate::signing::{DeviceKey, DeviceSigningKey};
 
+/// The active backend's API origin (official by default, see [`crate::server`]).
 #[cfg(not(test))]
-pub(crate) fn base_url() -> &'static str {
-	"https://grindr.mobi"
+pub(crate) fn base_url() -> String {
+	crate::server::server_config().api_base().to_owned()
 }
 
 #[cfg(test)]
-pub(crate) fn base_url() -> &'static str {
-	crate::testserver::base_url()
+pub(crate) fn base_url() -> String {
+	crate::testserver::base_url().to_owned()
 }
 
 /// Guards against a `path` that would change the effective host once

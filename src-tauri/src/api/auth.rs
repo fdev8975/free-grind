@@ -369,22 +369,22 @@ fn slot_path(slot: &str) -> Result<PathBuf, AppError> {
 }
 
 #[cfg(any(target_os = "windows", all(target_os = "macos", debug_assertions)))]
-fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
+pub(crate) fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
     read_file(&slot_path(slot)?)
 }
 
 #[cfg(any(target_os = "windows", all(target_os = "macos", debug_assertions)))]
-fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
+pub(crate) fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
     write_file(&slot_path(slot)?, bytes)
 }
 
 #[cfg(any(target_os = "windows", all(target_os = "macos", debug_assertions)))]
-fn clear_slot(slot: &str) -> Result<(), AppError> {
+pub(crate) fn clear_slot(slot: &str) -> Result<(), AppError> {
     remove_file(&slot_path(slot)?)
 }
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
-fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
+pub(crate) fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
     let entry = Entry::new(SERVICE, slot).map_err(|e| AppError::Auth(e.to_string()))?;
     match entry.get_secret() {
         Ok(bytes) => Ok(Some(bytes)),
@@ -394,7 +394,7 @@ fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
 }
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
-fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
+pub(crate) fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
     let entry = Entry::new(SERVICE, slot).map_err(|e| AppError::Auth(e.to_string()))?;
     entry
         .set_secret(bytes)
@@ -402,7 +402,7 @@ fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
 }
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
-fn clear_slot(slot: &str) -> Result<(), AppError> {
+pub(crate) fn clear_slot(slot: &str) -> Result<(), AppError> {
     let entry = Entry::new(SERVICE, slot).map_err(|e| AppError::Auth(e.to_string()))?;
     match entry.delete_credential() {
         Ok(()) | Err(keyring_core::Error::NoEntry) => Ok(()),
@@ -724,6 +724,7 @@ impl AuthStorage {
     pub fn remove_saved_account(profile_id: &str) -> Result<(), AppError> {
         clear_slot(&account_slot(profile_id))?;
         SigningKeyStorage::delete(profile_id);
+        super::server::ServerStorage::forget_account(profile_id);
         let mut index = Self::read_account_index()?;
         index.retain(|account| account.profile_id != profile_id);
         Self::write_account_index(&index)
@@ -739,6 +740,13 @@ fn persist(session: &grindr::Session, device: &grindr::DeviceInfo) {
     }
     if let Err(e) = AuthStorage::save_account(session, device) {
         eprintln!("[auth] failed to register account in switcher: {e}");
+    }
+    // Remember which backend this account lives on, so switching to it later
+    // talks to the right server.
+    if let Some(profile_id) = session.credentials.profile_id.as_deref() {
+        if let Err(e) = super::server::ServerStorage::save_for_account(profile_id, &grindr::server_config()) {
+            eprintln!("[auth] failed to remember the account's server: {e}");
+        }
     }
 }
 
@@ -999,15 +1007,20 @@ pub async fn create_account(
     captcha_token: String,
     push_token: Option<String>,
 ) -> Result<String, AppError> {
+    // The local sign-up limit and the reCAPTCHA requirement protect accounts on
+    // the official servers. A self-hosted server uses neither (it rate-limits
+    // and gates registration itself).
+    let official = grindr::server_config().is_official();
+
     // Enforced here, not just in the UI. An unreadable count refuses too.
-    if SignUpCounter::count()? >= SIGN_UP_LIMIT {
+    if official && SignUpCounter::count()? >= SIGN_UP_LIMIT {
         return Err(AppError::SignUpLimitReached);
     }
 
     let client = state.client()?;
 
     let captcha = captcha_token.trim();
-    if captcha.is_empty() {
+    if official && captcha.is_empty() {
         return Err(AppError::Api {
             code: 400,
             message: "A reCAPTCHA token is required to create an account".to_owned(),
@@ -1034,6 +1047,9 @@ pub async fn create_account(
         .map_err(|e| AppError::from_client_error(e, &client))?;
 
     // The account exists either way; a failed write only loses the count.
+    if !official {
+        return Ok(profile_id);
+    }
     if let Err(e) = SignUpCounter::record() {
         eprintln!("[auth] failed to record sign-up: {e}");
     }
@@ -1297,10 +1313,12 @@ pub async fn switch_account(app: tauri::AppHandle, profile_id: String) -> Result
         .ok_or_else(|| AppError::Auth("No saved session for this account".to_owned()))?;
 
     let result = LoginResult {
-        profile_id: session.credentials.profile_id.clone().unwrap_or(profile_id),
+        profile_id: session.credentials.profile_id.clone().unwrap_or_else(|| profile_id.clone()),
         restriction: frontend_restriction(Some(&session)),
     };
 
+    // The account's own backend must be active before its session is used.
+    super::server::activate(super::server::ServerStorage::load_for_account(&profile_id))?;
     AuthStorage::set_session(&session)?;
     let _ = DeviceStorage::save(&device);
     adopt_client(&app, Some(device), Some(session))?;
