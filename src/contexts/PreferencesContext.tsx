@@ -211,6 +211,7 @@ const preferencesSchema = z.object({
 	showEstimatedDistance: z.boolean().default(true),
 	// Profile and chat status lines read "Online (12m left)"; off: just "Online".
 	showOnlineTimeLeft: z.boolean().default(true),
+	showLastOnline: z.boolean().default(true),
 	defaultExpiringPhotos: z.boolean().default(false),
 	defaultAlbumExpirationType: z
 		.enum(["INDEFINITE", "ONCE", "TEN_MINUTES", "ONE_HOUR", "ONE_DAY"])
@@ -266,6 +267,7 @@ type PreferencesAction =
 	| { type: "SET_SHOW_GRID_TAP_STATUS"; payload: boolean }
 	| { type: "SET_SHOW_ESTIMATED_DISTANCE"; payload: boolean }
 	| { type: "SET_SHOW_ONLINE_TIME_LEFT"; payload: boolean }
+	| { type: "SET_SHOW_LAST_ONLINE"; payload: boolean }
 	| { type: "SET_AUTO_FOCUS_LOCATION_SEARCH"; payload: boolean }
 	| { type: "SET_AUTO_FOCUS_RIGHT_NOW_TEXT"; payload: boolean }
 	| { type: "SET_CHAT_ROW_SWIPE_ACTIONS"; payload: boolean }
@@ -369,6 +371,8 @@ function preferencesReducer(
 			return { ...state, showEstimatedDistance: action.payload };
 		case "SET_SHOW_ONLINE_TIME_LEFT":
 			return { ...state, showOnlineTimeLeft: action.payload };
+		case "SET_SHOW_LAST_ONLINE":
+			return { ...state, showLastOnline: action.payload };
 		case "SET_DEFAULT_EXPIRING_PHOTOS":
 			return { ...state, defaultExpiringPhotos: action.payload };
 		case "SET_DEFAULT_ALBUM_EXPIRATION_TYPE":
@@ -551,6 +555,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 		showGridTapStatus: true,
 		showEstimatedDistance: true,
 		showOnlineTimeLeft: true,
+		showLastOnline: true,
 		defaultExpiringPhotos: false,
 		defaultAlbumExpirationType: "INDEFINITE",
 		notifyAlbumUpdates: false,
@@ -625,6 +630,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 					dispatch({ type: "SET_SHOW_GRID_TAP_STATUS", payload: parsed.showGridTapStatus });
 					dispatch({ type: "SET_SHOW_ESTIMATED_DISTANCE", payload: parsed.showEstimatedDistance });
 					dispatch({ type: "SET_SHOW_ONLINE_TIME_LEFT", payload: parsed.showOnlineTimeLeft });
+					dispatch({ type: "SET_SHOW_LAST_ONLINE", payload: parsed.showLastOnline });
 					dispatch({ type: "SET_DEFAULT_EXPIRING_PHOTOS", payload: parsed.defaultExpiringPhotos });
 					dispatch({ type: "SET_DEFAULT_ALBUM_EXPIRATION_TYPE", payload: parsed.defaultAlbumExpirationType });
 					dispatch({ type: "SET_NOTIFY_ALBUM_UPDATES", payload: parsed.notifyAlbumUpdates });
@@ -765,6 +771,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 				showGridTapStatus: currentState.showGridTapStatus,
 				showEstimatedDistance: currentState.showEstimatedDistance,
 				showOnlineTimeLeft: currentState.showOnlineTimeLeft,
+				showLastOnline: currentState.showLastOnline,
 				defaultExpiringPhotos: currentState.defaultExpiringPhotos,
 				defaultAlbumExpirationType: currentState.defaultAlbumExpirationType,
 				notifyAlbumUpdates: currentState.notifyAlbumUpdates,
@@ -906,6 +913,9 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 			if (newValues.showOnlineTimeLeft !== undefined) {
 				dispatch({ type: "SET_SHOW_ONLINE_TIME_LEFT", payload: newValues.showOnlineTimeLeft });
 			}
+			if (newValues.showLastOnline !== undefined) {
+				dispatch({ type: "SET_SHOW_LAST_ONLINE", payload: newValues.showLastOnline });
+			}
 			if (newValues.defaultExpiringPhotos !== undefined) {
 				dispatch({ type: "SET_DEFAULT_EXPIRING_PHOTOS", payload: newValues.defaultExpiringPhotos });
 			}
@@ -1022,6 +1032,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 					showGridTapStatus: preferences.showGridTapStatus,
 					showEstimatedDistance: preferences.showEstimatedDistance,
 					showOnlineTimeLeft: preferences.showOnlineTimeLeft,
+					showLastOnline: preferences.showLastOnline,
 					defaultExpiringPhotos: preferences.defaultExpiringPhotos,
 					defaultAlbumExpirationType: preferences.defaultAlbumExpirationType,
 					notifyAlbumUpdates: preferences.notifyAlbumUpdates,
@@ -1077,6 +1088,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
 		showGridTapStatus: state.showGridTapStatus,
 		showEstimatedDistance: state.showEstimatedDistance,
 		showOnlineTimeLeft: state.showOnlineTimeLeft,
+		showLastOnline: state.showLastOnline,
 		defaultExpiringPhotos: state.defaultExpiringPhotos,
 		defaultAlbumExpirationType: state.defaultAlbumExpirationType,
 		notifyAlbumUpdates: state.notifyAlbumUpdates,

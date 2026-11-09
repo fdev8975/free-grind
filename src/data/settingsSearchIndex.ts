@@ -210,6 +210,18 @@ export function useSettingsSearchIndex(): SettingsSearchEntry[] {
 			iconClass: "bg-green-500/15 text-green-400",
 		},
 		{
+			id: "cust-last-online",
+			route: "/settings/customizability",
+			anchor: "cust-last-online",
+			label: t("customizability.show_last_online", { defaultValue: "Show Last Online Time" }),
+			description: t("customizability.show_last_online_desc", {
+				defaultValue: "Show when offline profiles were last online on grid tiles. When off, only an empty gray circle is shown.",
+			}),
+			section: t("settings.search_sections.look_feel"),
+			icon: History,
+			iconClass: "bg-slate-500/15 text-slate-400",
+		},
+		{
 			id: "cust-drawer-layout",
 			route: "/settings/customizability",
 			anchor: "cust-drawer-layout",

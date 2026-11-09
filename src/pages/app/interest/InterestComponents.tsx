@@ -6,7 +6,8 @@ import { getThumbImageUrl } from "../../../utils/media";
 import { ProfileImage } from "../../../components/ui/profile-image";
 import { type InterestItem, type InterestTab, formatTimestamp, getTapEmoji, PREVIEW_ID_PREFIX } from "./interestUtils";
 import { cn } from "../../../utils/cn";
-import { formatDistance, isOnlineEndingSoon } from "../gridpage/utils";
+import { formatDistance, getOnlineStatusMeta, isOnlineEndingSoon } from "../gridpage/utils";
+import { OfflineDot } from "../gridpage/components/OfflineDot";
 import { useRevealOnScroll } from "../../../hooks/useRevealOnScroll";
 import { RightNowIcon } from "../../../components/icons/RightNowIcon";
 import { usePreferences } from "../../../contexts/PreferencesContext";
@@ -206,7 +207,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 	mode?: InterestTab;
 }) {
 	const { t } = useTranslation();
-	const { unitsPreset } = usePreferences();
+	const { unitsPreset, showLastOnline } = usePreferences();
 	const tapColor = emojiColorMap[item.tapType ?? -1] || "255, 200, 0";
 	const photoPrivacy = useProfilePhotoPrivacy("grid");
 	const { ref, revealClass } = useRevealOnScroll();
@@ -218,6 +219,12 @@ export const InterestViewTile = memo(function InterestViewTile({
 	const onlineUntil = item.onlineUntil ?? browseCard?.onlineUntil ?? null;
 	const isOnline = typeof onlineUntil === "number" && onlineUntil > now;
 	const isEndingSoon = isOnline && isOnlineEndingSoon(onlineUntil, now);
+	// Last online for offline profiles: the browse grid's lastOnline, else the
+	// end of their last session. Locked previews carry neither.
+	const offlineStatus = !isOnline && !isPrivate
+		? getOnlineStatusMeta(browseCard?.lastOnline, onlineUntil, now)
+		: null;
+	const hasLastOnline = offlineStatus != null && offlineStatus.labelKey !== "browse_page.status_offline";
 	const rightNow = item.rightNow ?? browseCard?.rightNow ?? null;
 	const isRightNow = rightNow === "HOSTING" || rightNow === "NOT_HOSTING";
 	const age = !isPrivate && typeof browseCard?.age === "number" && browseCard.age > 0 ? browseCard.age : null;
@@ -313,6 +320,15 @@ export const InterestViewTile = memo(function InterestViewTile({
 							)}
 							{isOnline && (
 								<span className={cn("block h-3 w-3 rounded-full shadow-lg ring-2 ring-black/30", isEndingSoon ? "bg-amber-500" : "bg-green-500")} />
+							)}
+							{offlineStatus && (
+								showLastOnline && hasLastOnline ? (
+									<span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm sm:text-[11px]">
+										{t(offlineStatus.labelKey, { count: offlineStatus.count })}
+									</span>
+								) : (
+									<OfflineDot title={t(offlineStatus.labelKey, { count: offlineStatus.count })} />
+								)
 							)}
 						</div>
 

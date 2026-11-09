@@ -1323,6 +1323,8 @@
         "show_estimated_distance_desc": "Zeigt die geschätzte Distanz auf Grid-Kacheln von Profilen, die ihre Distanz verbergen. Ausgeschaltet wird nur das Icon angezeigt.",
         "show_online_time_left": "Verbleibende Online-Zeit anzeigen",
         "show_online_time_left_desc": "Zeigt in Profilen und Chats, wie viele Minuten Profile noch online sind. Ausgeschaltet wird nur „Online“ angezeigt.",
+        "show_last_online": "Zuletzt-online-Zeit anzeigen",
+        "show_last_online_desc": "Zeigt auf Grid-Kacheln, wann offline Profile zuletzt online waren. Ausgeschaltet wird nur ein leerer grauer Kreis angezeigt.",
         "confirm_before_open_link": "Vor dem Öffnen von Links fragen",
         "confirm_before_open_link_desc": "Zeigt eine Bestätigung, bevor ein in einer Chatnachricht angetippter Link geöffnet wird."
     },

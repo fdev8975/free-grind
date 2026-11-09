@@ -1,6 +1,6 @@
 import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
 import { useMemo, useState } from "react";
-import { Columns2, Columns3, Columns4, Languages, LayoutGrid, List, PanelBottom, Ruler, Type, Vibrate } from "lucide-react";
+import { Columns2, Columns3, Columns4, History, Languages, LayoutGrid, List, PanelBottom, Ruler, Type, Vibrate } from "lucide-react";
 import { ClockFilled, FlameFilled, ImagesFilled, MapPinOffFilled, MessageCircleFilled, LayoutGridFilled, MonitorFilled, MoonFilled, PaletteFilled, SparklesFilled, SunFilled } from "../../components/icons/FilledIcons";
 import toast from "react-hot-toast";
 import { usePreferences, ACCENT_PRESETS, type ColorScheme } from "../../contexts/PreferencesContext";
@@ -87,6 +87,7 @@ export function CustomizabilityPage() {
 		showGridTapStatus,
 		showEstimatedDistance,
 		showOnlineTimeLeft,
+		showLastOnline,
 		splitDrawerCategories,
 		compactComposer,
 		setPreferences,
@@ -339,6 +340,18 @@ export function CustomizabilityPage() {
 							})}
 							checked={showOnlineTimeLeft}
 							onChange={(checked) => void setPreferences({ showOnlineTimeLeft: checked })}
+						/>
+						<ToggleRow
+							id="cust-last-online"
+							highlighted={highlightId === "cust-last-online"}
+							icon={<History className="h-5 w-5" strokeWidth={2.5} />}
+							iconClass="bg-slate-500/15 text-slate-400"
+							label={t("customizability.show_last_online", { defaultValue: "Show Last Online Time" })}
+							description={t("customizability.show_last_online_desc", {
+								defaultValue: "Show when offline profiles were last online on grid tiles. When off, only an empty gray circle is shown.",
+							})}
+							checked={showLastOnline}
+							onChange={(checked) => void setPreferences({ showLastOnline: checked })}
 						/>
 					</div>
 				</div>

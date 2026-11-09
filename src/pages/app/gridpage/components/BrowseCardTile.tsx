@@ -18,6 +18,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { haptic } from "../../../../utils/haptics";
 import { TILE_HOVER_ZOOM_CLASS } from "../../../../hooks/useProfilePhotoPrivacy";
 import { TileFlameBurst } from "./TileFlameBurst";
+import { OfflineDot } from "./OfflineDot";
 import type { GridTapStatus } from "../hooks/useGridTapStatus";
 import { getUnreadBeyondLocalRead } from "../../../../utils/privacy";
 
@@ -73,7 +74,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 	hidePopular = false,
 }: BrowseCardTileProps) {
 	const { t } = useTranslation();
-	const { unitsPreset, showDebugInfo, doubleTapTapType, doubleTapAction, showEstimatedDistance } = usePreferences();
+	const { unitsPreset, showDebugInfo, doubleTapTapType, doubleTapAction, showEstimatedDistance, showLastOnline } = usePreferences();
 	const { ref, revealClass } = useRevealOnScroll();
 	const name = localNickname?.trim() || getDisplayName(card);
 	const nicknameRename = getNicknameRename(localNickname, card.displayName, seenDisplayName);
@@ -334,9 +335,13 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 								)
 							) : null}
 							{!onlineStatus.isOnline && (
-								<span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm sm:text-[11px]">
-									{t(onlineStatus.labelKey, { count: onlineStatus.count })}
-								</span>
+								showLastOnline ? (
+									<span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm sm:text-[11px]">
+										{t(onlineStatus.labelKey, { count: onlineStatus.count })}
+									</span>
+								) : (
+									<OfflineDot title={t(onlineStatus.labelKey, { count: onlineStatus.count })} />
+								)
 							)}
 						</div>
 					</div>

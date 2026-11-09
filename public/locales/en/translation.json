@@ -1323,6 +1323,8 @@
     "show_estimated_distance_desc": "Show the estimated distance on grid tiles of profiles that hide their distance. When off, only the icon is shown.",
     "show_online_time_left": "Show Online Time Left",
     "show_online_time_left_desc": "Show how many minutes online profiles have left on profiles and in chats. When off, they just show as online.",
+    "show_last_online": "Show Last Online Time",
+    "show_last_online_desc": "Show when offline profiles were last online on grid tiles. When off, only an empty gray circle is shown.",
     "confirm_before_open_link": "Ask before opening links",
     "confirm_before_open_link_desc": "Show a confirmation before opening a link tapped inside a chat message."
   },
