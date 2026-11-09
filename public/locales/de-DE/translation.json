@@ -11,7 +11,8 @@
         "profile_editor": "Profil-Editor",
         "profile_editor_desc": "Bearbeite Profildetails, Identität und Einstellungen.",
         "customizability": "Erscheinungsbild",
-        "customizability_desc": "Farbschema und Akzentfarbe ändern.",
+        "customizability_desc": "Design, Farben und das Layout von Raster, Navigation und Chat.",
+        "regional_desc": "Sprache, Einheiten und Zeitformat.",
         "behavior": "Verhalten",
         "behavior_desc": "Bestätigungsabfragen zum Blockieren und Löschen von Chats.",
         "notifications": "Benachrichtigungen",
@@ -1202,8 +1203,9 @@
         "blur_right_now_media_desc": "Macht Fotos in Right-Now-Posts unscharf, im Feed und auf der Karte. Einmal antippen zum Anzeigen (am Desktop Hover)."
     },
     "customizability": {
-        "subtitle": "Personalisiere das Aussehen der App.",
+        "subtitle": "Personalisiere das Aussehen der App und den Aufbau ihrer Seiten.",
         "appearance": "Erscheinungsbild",
+        "colors": "Farben",
         "layout": "Layout",
         "regional": "Region",
         "navigation_tabs": "Navigation",

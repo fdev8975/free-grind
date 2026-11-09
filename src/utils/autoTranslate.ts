@@ -156,18 +156,10 @@ export function toggleAutoTranslate(conversationId: string): boolean {
 }
 
 // --- TARGET LANGUAGE ---
-// The app's locale codes don't all exist as translation targets — map the
-// ones that don't onto the closest supported language.
-const GOOGLE_TARGET_OVERRIDES: Record<string, string> = {
-	"es-419": "es",
-	"pt-BR": "pt",
-	arz: "ar",
-	dum: "ar",
-};
-
+// The app's locales are language-region tags ("de-DE", "es-419"); the
+// translation target is their language.
 export function resolveTranslateTargetLanguage(appLanguage: string | undefined): string {
-	const language = appLanguage || "en";
-	return GOOGLE_TARGET_OVERRIDES[language] ?? language.split("-")[0];
+	return (appLanguage || "en").split("-")[0];
 }
 
 // --- TRANSLATION ---

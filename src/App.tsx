@@ -33,6 +33,7 @@ import { WebSocketExplorerPage } from "./pages/app/WebSocketExplorerPage.tsx";
 import { CustomizabilityPage } from "./pages/app/CustomizabilityPage.tsx";
 import { BehaviorPage } from "./pages/app/BehaviorPage.tsx";
 import { OptionalFeaturesPage } from "./pages/app/OptionalFeaturesPage.tsx";
+import { RegionalPage } from "./pages/app/RegionalPage.tsx";
 import { NotificationsPage } from "./pages/app/NotificationsPage.tsx";
 import { SettingsAutomationPage } from "./pages/app/SettingsAutomationPage.tsx";
 import { SettingsTranslationPage } from "./pages/app/SettingsTranslationPage.tsx";
@@ -333,6 +334,10 @@ export default function App() {
 								<Route
 									path="/settings/customizability"
 									element={<CustomizabilityPage />}
+								/>
+								<Route
+									path="/settings/regional"
+									element={<RegionalPage />}
 								/>
 								<Route
 									path="/settings/optional-features"

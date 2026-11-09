@@ -38,9 +38,9 @@ abstract class BundleWebExtension : DefaultTask() {
 
 /**
  * Generates res/xml/locales_config.xml (the manifest's android:localeConfig)
- * from the frontend's public/locales/<tag>/ folders, so Android 13+'s
- * "App languages" settings page offers exactly the languages the app ships
- * (see AppLocale.kt).
+ * from the frontend's public/locales/<tag>/ folders (BCP 47 tags such as
+ * de-DE, pt-BR), so Android 13+'s "App languages" settings page offers the
+ * languages the app ships (see AppLocale.kt).
  */
 abstract class GenerateLocaleConfig : DefaultTask() {
     @get:InputDirectory

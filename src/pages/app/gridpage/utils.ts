@@ -266,7 +266,7 @@ export function getOnlineStatusMeta(
 
 /**
  * Online label key/count for a status meta: "Online (12m left)" when the
- * remaining time should be shown (Look & Feel setting), plain "Online" otherwise.
+ * remaining time should be shown (Appearance setting), plain "Online" otherwise.
  * Offline labels are returned unchanged.
  */
 export function getOnlineStatusLabelArgs(

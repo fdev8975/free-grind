@@ -1,5 +1,5 @@
 /** Empty gray circle shown on grid tiles in place of the "last online" badge
- * when that's turned off in Look & Feel — same size as the online dot. */
+ * when that's turned off in Appearance — same size as the online dot. */
 export function OfflineDot({ title }: { title?: string }) {
 	return (
 		<span

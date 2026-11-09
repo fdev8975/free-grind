@@ -1,21 +1,25 @@
 /**
- * Android 13+ per-app language. There the language is picked in the system's
- * "App languages" settings (offered from res/xml/locales_config.xml, see
- * AppLocale.kt) and i18next just follows it: once at boot, and on every
- * `fg:app-locale` event MainActivity sends after a configuration change or
- * on resume. Below Android 13 and off Android the bridge is missing, this is
- * a no-op, and Customizability keeps its own language sheet.
+ * Android 13+ per-app language, kept in sync both ways with the in-app
+ * language sheet:
+ * - picking a language in the sheet writes it to Android
+ *   (setNativeAppLocale), so the system's "App languages" page shows it;
+ * - a language picked on that page (offered from res/xml/locales_config.xml,
+ *   see AppLocale.kt) reaches i18next at boot and through the `fg:app-locale`
+ *   event MainActivity sends after a configuration change or on resume.
+ * The sheet stays the main picker because that page only offers languages,
+ * never regions (it sets e.g. "pt-DE" from the system region), and leaves out
+ * languages the ROM itself lacks (Bosnian, Serbian on some devices).
+ * Below Android 13 and off Android the bridge is missing and this is a no-op.
  */
 import type { i18n as I18n } from "i18next";
 import { I18NEXT_STORAGE_KEY } from "../i18n";
-import { resolveSupportedLocale } from "../utils/locales";
+import { DEFAULT_LOCALE, resolveSupportedLocale } from "../utils/locales";
 
 type AppLocaleState = { app: string; system: string };
 
 type AppLocaleBridge = {
 	getAppLocaleState?: () => string | null;
 	setAppLocale?: (languageTags: string) => boolean;
-	openAppLocaleSettings?: () => boolean;
 };
 
 const APP_LOCALE_EVENT = "fg:app-locale";
@@ -36,17 +40,12 @@ function readState(): AppLocaleState | null {
 	}
 }
 
-/** True where the language is chosen in Android's per-app language settings. */
-export function hasNativeAppLocale(): boolean {
-	return Boolean(getBridge()?.openAppLocaleSettings) && readState() !== null;
-}
-
-/** Opens Android's "App languages" page for this app; false if it couldn't. */
-export function openNativeAppLocaleSettings(): boolean {
+/** Mirrors a language picked in the app into Android's per-app language (13+). */
+export function setNativeAppLocale(locale: string): void {
 	try {
-		return getBridge()?.openAppLocaleSettings?.() ?? false;
+		getBridge()?.setAppLocale?.(locale);
 	} catch {
-		return false;
+		// Below Android 13 / off Android: nothing to sync.
 	}
 }
 
@@ -65,9 +64,9 @@ function applyState(i18n: I18n, state: AppLocaleState): void {
 }
 
 /**
- * One-time carry-over of a language picked in the old in-app sheet: without
- * it, updating to a build with per-app languages would silently switch those
- * users back to the system language. i18next caches detected languages under
+ * One-time carry-over of a language picked in the in-app sheet before it was
+ * synced to Android: without it, the first start of this build would switch
+ * those users to the system language. i18next caches detected languages under
  * the same key, so a stored value matching the system language is treated as
  * "follow the system" rather than pinned.
  */
@@ -84,7 +83,7 @@ function migrateInAppChoice(
 		const stored = window.localStorage.getItem(I18NEXT_STORAGE_KEY);
 		if (!stored) return state;
 		const chosen = resolveSupportedLocale(stored);
-		const system = resolveSupportedLocale(firstTag(state.system) || "en");
+		const system = resolveSupportedLocale(firstTag(state.system) || DEFAULT_LOCALE);
 		if (chosen === system) return state;
 		return bridge.setAppLocale?.(chosen) ? { ...state, app: chosen } : state;
 	} catch {

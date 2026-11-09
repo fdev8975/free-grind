@@ -34,7 +34,7 @@ import {
 	KeyRound,
 } from "lucide-react";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
-import { ArchiveRestoreFilled, BellFilled, BotFilled, BugFilled, ClipboardListFilled, EyeFilled, EyeOffFilled, FileUpFilled, FlaskConicalFilled, GhostFilled, HeartPulseFilled, ImagesFilled, InfoFilled, MegaphoneFilled, PaletteFilled, PuzzleFilled, ShieldFilled, TriangleAlertFilled, UserPlusFilled, UserXFilled, ZapFilled } from "../../components/icons/FilledIcons";
+import { ArchiveRestoreFilled, BellFilled, BotFilled, BugFilled, ClipboardListFilled, EyeFilled, EyeOffFilled, FileUpFilled, FlaskConicalFilled, GhostFilled, HeartPulseFilled, ImagesFilled, InfoFilled, MegaphoneFilled, GlobeFilled, PaletteFilled, PuzzleFilled, ShieldFilled, TriangleAlertFilled, UserPlusFilled, UserXFilled, ZapFilled } from "../../components/icons/FilledIcons";
 import { useState, useEffect, useMemo, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -1099,11 +1099,11 @@ export function SettingsPage() {
 									t("settings.customizability_desc"),
 								)}
 								{navRow(
-									() => navigate("/settings/behavior"),
-									<PhosphorSlidersHorizontal weight="fill" className="h-5 w-5" />,
-									"bg-slate-500/15 text-slate-400",
-									t("settings.behavior"),
-									t("settings.behavior_desc"),
+									() => navigate("/settings/regional"),
+									<GlobeFilled className="h-5 w-5" />,
+									"bg-teal-500/15 text-teal-400",
+									t("customizability.regional"),
+									t("settings.regional_desc", { defaultValue: "Language, units and time format." }),
 								)}
 								{navRow(
 									() => navigate("/settings/optional-features"),
@@ -1113,6 +1113,13 @@ export function SettingsPage() {
 									t("customizability.optional_features_desc", {
 										defaultValue: "Turn extra features on or off to keep the app as simple as you like.",
 									}),
+								)}
+								{navRow(
+									() => navigate("/settings/behavior"),
+									<PhosphorSlidersHorizontal weight="fill" className="h-5 w-5" />,
+									"bg-slate-500/15 text-slate-400",
+									t("settings.behavior"),
+									t("settings.behavior_desc"),
 								)}
 								{navRow(
 									() => navigate("/settings/notifications"),

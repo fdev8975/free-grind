@@ -3,6 +3,7 @@ pub mod client;
 pub mod entitlements;
 pub mod facebook_oauth;
 pub mod google_oauth;
+pub mod locale;
 pub mod oauth;
 pub mod rest;
 pub mod runtime;

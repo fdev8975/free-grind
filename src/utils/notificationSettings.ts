@@ -1,4 +1,5 @@
 import type { i18n as I18n } from "i18next";
+import { DEFAULT_LOCALE } from "./locales";
 
 // Shared by NotificationsPage (the settings toggles) and ChatRealtimeBridge
 // (which gates the instant foreground notifications it fires from the chat
@@ -62,7 +63,7 @@ export function syncNotificationStringsToNative(i18n: I18n): void {
 	if (!bridge?.setNotificationStrings) return;
 
 	const language = i18n.resolvedLanguage ?? i18n.language;
-	const english = i18n.getResource("en", "translation", "push_notifications") as
+	const english = i18n.getResource(DEFAULT_LOCALE, "translation", "push_notifications") as
 		| Record<string, string>
 		| undefined;
 	const strings: Record<string, string> = {};

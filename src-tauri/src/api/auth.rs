@@ -894,8 +894,25 @@ pub fn adopt_client(
     device: Option<grindr::DeviceInfo>,
     session: Option<grindr::Session>,
 ) -> Result<grindr::GrindrClient, AppError> {
-    let client = super::client::build_client(device, session)?;
     let state = app.state::<AppState>();
+    // The app language goes into the device before the client exists, so its
+    // first requests already ask for it (see api::locale).
+    let api_locale = state.api_locale.read().unwrap().clone();
+    let device = device.map(|mut device| {
+        if let Some((locale, accept_language)) = &api_locale {
+            device.locale = locale.clone();
+            device.accept_language = accept_language.clone();
+        }
+        device
+    });
+    let client = super::client::build_client(device, session)?;
+    if let Some((locale, accept_language)) = api_locale {
+        // Also for a generated device, and so rotate_device keeps it.
+        let client = client.clone();
+        tauri::async_runtime::spawn(async move {
+            let _ = client.set_locale(&locale, &accept_language).await;
+        });
+    }
     client.set_active(state.app_active.load(std::sync::atomic::Ordering::SeqCst));
     if let Some(old_client) = state.set_client(client.clone()) {
         // Media the previous account loaded (cache, in-flight fetches, open

@@ -611,9 +611,6 @@ class MainActivity : TauriActivity() {
     fun setAppLocale(languageTags: String): Boolean = AppLocale.set(this@MainActivity, languageTags)
 
     @JavascriptInterface
-    fun openAppLocaleSettings(): Boolean = AppLocale.openSettings(this@MainActivity)
-
-    @JavascriptInterface
     fun getAppDisguise(): String {
       return AppDisguise.currentDisguise(this@MainActivity).id
     }

@@ -1336,7 +1336,7 @@ export function getParticipantOnlineMeta(
 	onlineUntil: number | null | undefined,
 	nowTimestamp: number,
 	t: TranslateFn,
-	/** Look & Feel "show online time left": false labels online profiles as plain "Online". */
+	/** Appearance "show online time left": false labels online profiles as plain "Online". */
 	showTimeLeft = true,
 ): { isOnline: boolean; isEndingSoon?: boolean; label: string } {
 	// lastOnline/onlineUntil of 0 is the server's "unknown/hidden" sentinel,

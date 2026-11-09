@@ -12,7 +12,7 @@
 import type { i18n as I18n } from "i18next";
 import { isTauri } from "@tauri-apps/api/core";
 import { locale as osLocale } from "@tauri-apps/plugin-os";
-import { matchSupportedLocale, resolveSupportedLocale } from "../utils/locales";
+import { DEFAULT_LOCALE, matchSupportedLocale, resolveSupportedLocale } from "../utils/locales";
 
 async function systemLocaleCandidates(): Promise<string[]> {
 	const candidates: string[] = [];
@@ -32,7 +32,7 @@ export async function applySystemLanguage(i18n: I18n): Promise<void> {
 	const candidates = await systemLocaleCandidates();
 	const next =
 		candidates.map(matchSupportedLocale).find((match): match is string => Boolean(match)) ??
-		resolveSupportedLocale("en");
+		resolveSupportedLocale(DEFAULT_LOCALE);
 	document.documentElement.lang = next;
 	if (i18n.language !== next) {
 		await i18n.changeLanguage(next);

@@ -1,26 +1,18 @@
 import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
 import { useMemo, useState } from "react";
-import { Columns2, Columns3, Columns4, History, Languages, LayoutGrid, List, PanelBottom, Ruler, Type, Vibrate } from "lucide-react";
+import { Columns2, Columns3, Columns4, History, LayoutGrid, List, PanelBottom, Type, Vibrate } from "lucide-react";
 import { ClockFilled, FlameFilled, ImagesFilled, MapPinOffFilled, MessageCircleFilled, LayoutGridFilled, MonitorFilled, MoonFilled, PaletteFilled, SparklesFilled, SunFilled } from "../../components/icons/FilledIcons";
-import toast from "react-hot-toast";
 import { usePreferences, ACCENT_PRESETS, type ColorScheme } from "../../contexts/PreferencesContext";
 import { PageHeader } from "../../components/PageHeader";
 import { SchemePreview } from "../../components/SchemePreview";
 import { RightNowIcon } from "../../components/icons/RightNowIcon";
 import { HAPTICS_ENABLED_KEY, isHapticsEnabled } from "../../utils/haptics";
-import { getTimeFormat, TIME_FORMAT_KEY, type TimeFormat } from "../../utils/timeFormat";
 import { NAV_FLOATING_KEY, NAV_SHOW_LABELS_KEY, NAV_STYLE_EVENT, readNavBarStyle, type NavBarStyle } from "../../components/NavBar";
 import { isAndroid, isIos } from "../../services/saveMedia";
 import { ToggleRow } from "../../components/ui/toggle-row";
 import { SelectRow } from "../../components/ui/select-row";
 import { useTranslation } from "react-i18next";
 import { useSettingsHighlight } from "../../hooks/useSettingsHighlight";
-import {
-	SUPPORTED_LOCALE_OPTIONS,
-	resolveSupportedLocale,
-} from "../../utils/locales";
-import { type UnitsPreset } from "../../utils/units";
-import { hasNativeAppLocale, openNativeAppLocaleSettings } from "../../services/appLocaleBridge";
 
 function normalizeHex(value: string): string {
 	const cleaned = value.trim().replace(/^#/, "");
@@ -73,7 +65,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function CustomizabilityPage() {
-	const { i18n, t } = useTranslation();
+	const { t } = useTranslation();
 	const highlightId = useSettingsHighlight();
 	const isDesktop = useDesktopBreakpoint();
 	const {
@@ -82,7 +74,6 @@ export function CustomizabilityPage() {
 		accentColor,
 		mobileGridColumns,
 		mobileViewsGridColumns,
-		unitsPreset,
 		revealEffectEnabled,
 		revealEffectStrength,
 		showGridTapStatus,
@@ -100,7 +91,6 @@ export function CustomizabilityPage() {
 	const [isTablet] = useState(() => Math.min(window.screen.width, window.screen.height) >= 600);
 	const [showNavLabels, setShowNavLabels] = useState(() => window.localStorage.getItem(NAV_SHOW_LABELS_KEY) === "true");
 	const [hapticsEnabled, setHapticsEnabled] = useState(isHapticsEnabled);
-	const [timeFormat, setTimeFormat] = useState<TimeFormat>(getTimeFormat);
 	const [navBarStyle, setNavBarStyle] = useState<NavBarStyle>(readNavBarStyle);
 	const [showInterest, setShowInterest] = useState(() => window.localStorage.getItem("fg-show-interest") !== "false");
 	const [defaultInterestTab, setDefaultInterestTab] = useState(() => window.localStorage.getItem("fg-interest-default-tab") || "taps");
@@ -125,9 +115,6 @@ export function CustomizabilityPage() {
 	const isSchemeOptionActive = (option: { value: ColorScheme; amoled: boolean }) =>
 		colorScheme === option.value && (option.value !== "dark" || amoledMode === option.amoled);
 	const activeSchemeOption = schemeOptions.find(isSchemeOptionActive) ?? schemeOptions[0];
-	const selectedLocale = resolveSupportedLocale(i18n.language);
-	// Android 13+: the language lives in the system's per-app language settings.
-	const [nativeAppLocale] = useState(hasNativeAppLocale);
 
 	const handleSchemeChange = (scheme: ColorScheme, amoled: boolean) => {
 		void setPreferences({ colorScheme: scheme, amoledMode: amoled });
@@ -149,24 +136,6 @@ export function CustomizabilityPage() {
 		});
 	};
 
-	const handleLocaleChange = async (locale: string) => {
-		try {
-			const nextLocale = resolveSupportedLocale(locale);
-			await i18n.changeLanguage(nextLocale);
-			document.documentElement.lang = nextLocale;
-		} catch (error) {
-			const message =
-				error instanceof Error && error.message
-					? error.message
-					: "Failed to change language.";
-			toast.error(message);
-		}
-	};
-
-	const handleUnitsPresetChange = (preset: UnitsPreset) => {
-		void setPreferences({ unitsPreset: preset });
-	};
-
 	return (
 		<section className="app-screen">
 			<PageHeader
@@ -177,9 +146,9 @@ export function CustomizabilityPage() {
 
 			<div className="grid gap-6">
 
-				{/* APPEARANCE */}
+				{/* COLORS */}
 				<div>
-					<SectionLabel>{t("customizability.appearance")}</SectionLabel>
+					<SectionLabel>{t("customizability.colors", { defaultValue: "Colors" })}</SectionLabel>
 					{/* One group: color scheme and accent color, each a tile with a row
 					    header and its picker. */}
 					<div className="native-group">
@@ -582,56 +551,6 @@ export function CustomizabilityPage() {
 						</div>
 					</div>
 				)}
-
-				{/* REGIONAL */}
-				<div>
-					<SectionLabel>{t("customizability.regional")}</SectionLabel>
-					<div className="native-group">
-						<SelectRow
-							id="cust-language"
-							highlighted={highlightId === "cust-language"}
-							icon={<Languages className="h-5 w-5" />}
-							iconClass="bg-teal-500/15 text-teal-400"
-							label={t("settings.language")}
-							value={selectedLocale}
-							onChange={(val) => void handleLocaleChange(val)}
-							options={SUPPORTED_LOCALE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-							expandable
-							onOpen={nativeAppLocale ? openNativeAppLocaleSettings : undefined}
-						/>
-						<SelectRow
-							id="cust-units"
-							highlighted={highlightId === "cust-units"}
-							icon={<Ruler className="h-5 w-5" />}
-							iconClass="bg-cyan-500/15 text-cyan-400"
-							label={t("customizability.units")}
-							value={unitsPreset}
-							onChange={(val) => handleUnitsPresetChange(val as UnitsPreset)}
-							options={[
-								{ value: "world", label: t("customizability.units_world") },
-								{ value: "uk", label: t("customizability.units_uk") },
-								{ value: "american", label: t("customizability.units_american") },
-							]}
-						/>
-						<SelectRow
-							id="cust-time-format"
-							highlighted={highlightId === "cust-time-format"}
-							icon={<ClockFilled className="h-5 w-5" />}
-							iconClass="bg-indigo-500/15 text-indigo-400"
-							label={t("customizability.time_format")}
-							value={timeFormat}
-							onChange={(val) => {
-								setTimeFormat(val as TimeFormat);
-								window.localStorage.setItem(TIME_FORMAT_KEY, val);
-							}}
-							options={[
-								{ value: "system", label: t("customizability.time_format_system") },
-								{ value: "12h", label: t("customizability.time_format_12h") },
-								{ value: "24h", label: t("customizability.time_format_24h") },
-							]}
-						/>
-					</div>
-				</div>
 
 			</div>
 		</section>

@@ -30,6 +30,9 @@ pub struct AppState {
     /// Last foreground state the webview reported via `set_app_active`, so a
     /// client adopted while backgrounded starts out inactive too.
     pub app_active: AtomicBool,
+    /// `(L-Locale, Accept-Language)` the webview last set via
+    /// `set_api_locale`, applied to every client adopted afterwards.
+    pub api_locale: RwLock<Option<(String, String)>>,
 }
 
 impl Default for AppState {
@@ -38,6 +41,7 @@ impl Default for AppState {
             client: RwLock::new(None),
             tasks: RwLock::new(ClientTasks::default()),
             app_active: AtomicBool::new(true),
+            api_locale: RwLock::new(None),
         }
     }
 }

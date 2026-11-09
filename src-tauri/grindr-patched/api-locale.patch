@@ -1,0 +1,135 @@
+diff --git a/src/client.rs b/src/client.rs
+index 8669f729..3a1685e6 100644
+--- a/src/client.rs
++++ b/src/client.rs
+@@ -325,6 +325,7 @@ impl GrindrClient {
+ 			server_offset_ms: std::sync::atomic::AtomicI64::new(0),
+ 			timeouts: setup.timeouts,
+ 			media_liveness,
++			locale: std::sync::Mutex::new(None),
+ 		});
+ 
+ 		let (auth_state, session_rx) = AuthState::new(setup.session);
+@@ -719,8 +720,14 @@ impl GrindrClient {
+ 	/// so nothing from the old device carries over to later requests.
+ 	pub async fn rotate_device(
+ 		&self,
+-		device: DeviceInfo,
++		mut device: DeviceInfo,
+ 	) -> Result<DeviceInfo, GrindrError> {
++		if let Some((locale, accept_language)) =
++			self.inner.locale.lock().unwrap().clone()
++		{
++			device.locale = locale;
++			device.accept_language = accept_language;
++		}
+ 		let new_fp = build_fingerprint(
+ 			device,
+ 			self.inner.timeouts,
+@@ -747,6 +754,43 @@ impl GrindrClient {
+ 		self.rotate_device(device).await
+ 	}
+ 
++	/// Sets the language the API answers in: `locale` for `L-Locale`
++	/// (`"de_DE"`) and `accept_language` for `Accept-Language` (`"de-DE"`).
++	/// Applies to the next request (the websocket on its next connect), is
++	/// kept across [`rotate_device`](Self::rotate_device), and shows up in
++	/// [`current_device`](Self::current_device) for persisting. The transport
++	/// stays as it is.
++	pub async fn set_locale(
++		&self,
++		locale: &str,
++		accept_language: &str,
++	) -> Result<(), GrindrError> {
++		for value in [locale, accept_language] {
++			wreq::header::HeaderValue::from_str(value).map_err(|e| {
++				GrindrError::InvalidRequest(format!("invalid locale header: {e}"))
++			})?;
++		}
++		*self.inner.locale.lock().unwrap() =
++			Some((locale.to_owned(), accept_language.to_owned()));
++		let mut guard = self.inner.fingerprint.write().await;
++		if guard.device.locale == locale
++			&& guard.device.accept_language == accept_language
++		{
++			return Ok(());
++		}
++		let mut device = guard.device.clone();
++		device.locale = locale.to_owned();
++		device.accept_language = accept_language.to_owned();
++		*guard = Arc::new(Fingerprint {
++			http: guard.http.clone(),
++			ws_http: guard.ws_http.clone(),
++			media_http: guard.media_http.clone(),
++			device,
++			user_agent: guard.user_agent.clone(),
++		});
++		Ok(())
++	}
++
+ 	/// The device identity currently in use.
+ 	pub async fn current_device(&self) -> DeviceInfo {
+ 		self.inner.fingerprint().await.device.clone()
+@@ -1618,6 +1662,26 @@ mod tests {
+ 		assert_ne!(client.current_device().await.device_id, old.device_id);
+ 	}
+ 
++	#[tokio::test]
++	async fn set_locale_changes_the_headers_and_survives_rotation() {
++		let client = GrindrClient::new(DeviceInfo::generate(), None).unwrap();
++		client.set_locale("de_DE", "de-DE").await.unwrap();
++
++		let device = client.current_device().await;
++		assert_eq!((device.locale.as_str(), device.accept_language.as_str()), ("de_DE", "de-DE"));
++		let headers =
++			crate::headers::GrindrHeaders::build(&device, "ua", None, None).unwrap();
++		let value = |name: &str| {
++			headers.items.iter().find(|(n, _)| n == name).map(|(_, v)| v.to_str().unwrap().to_owned())
++		};
++		assert_eq!(value("l-locale").as_deref(), Some("de_DE"));
++		assert_eq!(value("accept-language").as_deref(), Some("de-DE"));
++
++		client.rotate_device(DeviceInfo::generate()).await.unwrap();
++		assert_eq!(client.current_device().await.locale, "de_DE");
++		assert!(client.set_locale("de\nDE", "de-DE").await.is_err());
++	}
++
+ 	#[tokio::test]
+ 	async fn sign_out_rotating_clears_session_and_rotates_device() {
+ 		let old = DeviceInfo::generate();
+diff --git a/src/headers.rs b/src/headers.rs
+index 9c8b2e8e..dd770606 100644
+--- a/src/headers.rs
++++ b/src/headers.rs
+@@ -117,13 +117,15 @@ impl GrindrHeaders {
+ 			HeaderName::from_static("user-agent"),
+ 			HeaderValue::from_str(user_agent).map_err(invalid_header)?,
+ 		));
++		// The API answers in this language (see GrindrClient::set_locale).
+ 		items.push((
+ 			HeaderName::from_static("l-locale"),
+-			HeaderValue::from_static("en_US"),
++			HeaderValue::from_str(&device.locale).map_err(invalid_header)?,
+ 		));
+ 		items.push((
+ 			HeaderName::from_static("accept-language"),
+-			HeaderValue::from_static("en-US"),
++			HeaderValue::from_str(&device.accept_language)
++				.map_err(invalid_header)?,
+ 		));
+ 		items.push((
+ 			HeaderName::from_static("accept-encoding"),
+diff --git a/src/rest.rs b/src/rest.rs
+index 3f71a810..39d6028d 100644
+--- a/src/rest.rs
++++ b/src/rest.rs
+@@ -129,6 +129,9 @@ pub(crate) struct InnerClient {
+ 	pub server_offset_ms: AtomicI64,
+ 	pub timeouts: Timeouts,
+ 	pub media_liveness: Arc<crate::media::MediaLiveness>,
++	/// `(L-Locale, Accept-Language)` from [`GrindrClient::set_locale`],
++	/// carried over to devices swapped in by `rotate_device`.
++	pub locale: std::sync::Mutex<Option<(String, String)>>,
+ }
+ 
+ fn local_now_ms() -> i64 {

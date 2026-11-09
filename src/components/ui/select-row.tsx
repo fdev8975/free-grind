@@ -19,7 +19,6 @@ export function SelectRow<T extends string>({
 	expandable,
 	accentColor,
 	accentContrast,
-	onOpen,
 }: {
 	icon: ReactNode;
 	iconClass: string;
@@ -35,9 +34,6 @@ export function SelectRow<T extends string>({
 	/** Selection color in the sheet, see SelectSheet's accentColor. */
 	accentColor?: string;
 	accentContrast?: string;
-	/** Handles the tap itself (e.g. opens a system settings page) instead of
-	 * the sheet; returning false falls back to the sheet. */
-	onOpen?: () => boolean;
 }) {
 	const isDesktop = useDesktopBreakpoint();
 	const [isOpen, setIsOpen] = useState(false);
@@ -48,9 +44,7 @@ export function SelectRow<T extends string>({
 			<button
 				id={id}
 				type="button"
-				onClick={() => {
-					if (!onOpen?.()) setIsOpen(true);
-				}}
+				onClick={() => setIsOpen(true)}
 				className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover-fill ${highlighted ? "animate-settings-highlight" : ""}`}
 			>
 				<div className={`rounded-2xl p-2.5 shrink-0 ${iconClass}`}>{icon}</div>

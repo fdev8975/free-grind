@@ -117,13 +117,15 @@ impl GrindrHeaders {
 			HeaderName::from_static("user-agent"),
 			HeaderValue::from_str(user_agent).map_err(invalid_header)?,
 		));
+		// The API answers in this language (see GrindrClient::set_locale).
 		items.push((
 			HeaderName::from_static("l-locale"),
-			HeaderValue::from_static("en_US"),
+			HeaderValue::from_str(&device.locale).map_err(invalid_header)?,
 		));
 		items.push((
 			HeaderName::from_static("accept-language"),
-			HeaderValue::from_static("en-US"),
+			HeaderValue::from_str(&device.accept_language)
+				.map_err(invalid_header)?,
 		));
 		items.push((
 			HeaderName::from_static("accept-encoding"),

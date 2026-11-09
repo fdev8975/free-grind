@@ -129,6 +129,9 @@ pub(crate) struct InnerClient {
 	pub server_offset_ms: AtomicI64,
 	pub timeouts: Timeouts,
 	pub media_liveness: Arc<crate::media::MediaLiveness>,
+	/// `(L-Locale, Accept-Language)` from [`GrindrClient::set_locale`],
+	/// carried over to devices swapped in by `rotate_device`.
+	pub locale: std::sync::Mutex<Option<(String, String)>>,
 }
 
 fn local_now_ms() -> i64 {
