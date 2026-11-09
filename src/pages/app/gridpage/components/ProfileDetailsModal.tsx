@@ -736,13 +736,16 @@ export function ProfileDetailsModal({
 	const splitWheelGestureRef = useRef<WheelGestureState>(createWheelGestureState());
 	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 	const pageWrapRef = useRef<HTMLDivElement | null>(null);
-	const profileSwipeRef = useRef({ startX: 0, startY: 0, decided: false, horizontal: false, dragging: false, lastDelta: 0, pastThreshold: false });
+	const pageScreenRef = useRef<HTMLDivElement | null>(null);
+	const profileSwipeRef = useRef({ startX: 0, startY: 0, decided: false, horizontal: false, dragging: false, lastDelta: 0, pastThreshold: false, canDismiss: false, dismissing: false, dismissStartTime: 0 });
 	// Gestures write straight to the DOM (header fade, profile swipe) instead
 	// of state, so a frame of finger movement doesn't re-render the whole modal.
 	const headerBgRef = useRef<HTMLDivElement | null>(null);
 	const [inlineScrolled, setInlineScrolled] = useState(false);
 	const [isActionsMenuOpen, setIsActionsMenuOpen] = useState(false);
 	const actionsMenuPresence = usePresence(isActionsMenuOpen);
+	const isActionsMenuOpenRef = useRef(isActionsMenuOpen);
+	isActionsMenuOpenRef.current = isActionsMenuOpen;
 	const [banBioPrompt, setBanBioPrompt] = useState<{ text: string } | null>(null);
 	const [banNamePrompt, setBanNamePrompt] = useState<{ text: string } | null>(null);
 	const [quickMessageDraft, setQuickMessageDraft] = useState("");
@@ -1119,6 +1122,8 @@ export function ProfileDetailsModal({
 	onPrevProfileRef.current = onPrevProfile;
 	const onNextProfileRef = useRef(onNextProfile);
 	onNextProfileRef.current = onNextProfile;
+	const onCloseRef = useRef(onClose);
+	onCloseRef.current = onClose;
 	const hasProfileNeighbors = Boolean(onPrevProfile || onNextProfile);
 	// Set once a swipe has slid the neighbour's preview fully in. The preview
 	// stays on screen as the loading state; the offset is only reset once the
@@ -1167,21 +1172,56 @@ export function ProfileDetailsModal({
 			!isOpen ||
 			selectedPhotoIndex !== null ||
 			variant !== "page" ||
-			!hasProfileNeighbors ||
-			// Editing your own profile: horizontal drags belong to the form
-			// (sliders, photo reordering), and leaving would drop the draft.
+			// Editing your own profile: drags belong to the form (sliders,
+			// photo reordering), and leaving would drop the draft.
 			isEditingOwnProfile
 		) {
 			return;
 		}
 
 		const SWIPE_THRESHOLD = 80;
+		// Pull-down-to-close, like the photo viewer: past this distance (or a
+		// quick flick) releasing closes the profile.
+		const DISMISS_THRESHOLD = 120;
+		const DISMISS_FLICK_MIN = 40;
+		const DISMISS_FLICK_VELOCITY = 0.5; // px/ms
 		const s = profileSwipeRef.current;
+		let dismissResetTimer: ReturnType<typeof setTimeout> | null = null;
 
 		const setOffset = (dx: number, animate: boolean) => {
 			el.style.transition = animate ? "transform 250ms ease-out" : "none";
 			el.style.transform = dx === 0 ? "" : `translateX(${dx}px)`;
 		};
+
+		const clearDismissStyles = () => {
+			el.style.transition = "";
+			el.style.transform = "";
+			el.style.opacity = "";
+			el.style.borderRadius = "";
+			el.style.overflow = "";
+			el.style.background = "";
+			const screen = pageScreenRef.current;
+			if (screen) screen.style.background = "";
+		};
+
+		const setDismissOffset = (dy: number, animate: boolean) => {
+			const height = el.offsetHeight || window.innerHeight;
+			const progress = Math.min(Math.max(dy, 0) / height, 1);
+			const screen = pageScreenRef.current;
+			if (screen) screen.style.background = "#000";
+			el.style.background = "var(--bg)";
+			el.style.overflow = "hidden";
+			el.style.borderRadius = dy > 0 ? `${Math.min(dy / 4, 24)}px` : "";
+			el.style.transition = animate
+				? "transform 250ms ease-out, opacity 250ms ease-out, border-radius 250ms ease-out"
+				: "none";
+			el.style.transform = `translateY(${dy}px) scale(${1 - progress * 0.12})`;
+			el.style.opacity = String(1 - progress * 0.5);
+		};
+
+		const isFormField = (target: EventTarget | null) =>
+			target instanceof HTMLElement &&
+			Boolean(target.closest("input, textarea, select, [contenteditable=\"true\"]"));
 
 		const onStart = (e: TouchEvent) => {
 			if (controlsBarRef.current?.contains(e.target as Node)) return;
@@ -1191,20 +1231,50 @@ export function ProfileDetailsModal({
 			s.decided = false;
 			s.horizontal = false;
 			s.dragging = false;
+			s.dismissing = false;
 			s.lastDelta = 0;
 			s.pastThreshold = false;
+			const scroller = scrollContainerRef.current;
+			// Only from the scrolled-to-top content itself — not the header,
+			// menus or overlays layered inside the page.
+			s.canDismiss =
+				e.touches.length === 1 &&
+				!isActionsMenuOpenRef.current &&
+				Boolean(scroller?.contains(e.target as Node)) &&
+				(scroller?.scrollTop ?? 1) <= 0 &&
+				!isFormField(e.target);
 		};
 
 		const onMove = (e: TouchEvent) => {
 			if (pendingSwipeResetRef.current) return;
+			if (e.touches.length !== 1) return;
 			const dx = e.touches[0].clientX - s.startX;
 			const dy = e.touches[0].clientY - s.startY;
 			if (!s.decided) {
 				if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
 				s.decided = true;
 				s.horizontal = Math.abs(dx) >= Math.abs(dy);
+				// The photo carousel handles vertical swipes itself (except on
+				// its first photo) and claims them via preventDefault.
+				if (!s.horizontal && dy > 0 && s.canDismiss && !e.defaultPrevented) {
+					s.dismissing = true;
+					s.dismissStartTime = performance.now();
+				}
 			}
-			if (!s.horizontal) return;
+			if (s.dismissing) {
+				e.preventDefault();
+				// Dragging back above the start point just sticks at 0.
+				const offset = Math.max(dy, 0);
+				s.lastDelta = offset;
+				const past = offset > DISMISS_THRESHOLD;
+				if (past !== s.pastThreshold) {
+					s.pastThreshold = past;
+					if (past) haptic(8);
+				}
+				setDismissOffset(offset, false);
+				return;
+			}
+			if (!s.horizontal || !hasProfileNeighbors) return;
 			e.preventDefault();
 			s.dragging = true;
 			const target = dx < 0 ? onNextProfileRef.current : onPrevProfileRef.current;
@@ -1219,7 +1289,34 @@ export function ProfileDetailsModal({
 			setOffset(offset, false);
 		};
 
+		const onDismissEnd = () => {
+			s.dismissing = false;
+			const dy = s.lastDelta;
+			s.lastDelta = 0;
+			s.pastThreshold = false;
+			const elapsed = Math.max(1, performance.now() - s.dismissStartTime);
+			const flick = dy > DISMISS_FLICK_MIN && dy / elapsed > DISMISS_FLICK_VELOCITY;
+			if (dy > DISMISS_THRESHOLD || flick) {
+				const height = el.offsetHeight || window.innerHeight;
+				el.style.transition = "transform 200ms ease-in, opacity 200ms ease-in";
+				el.style.transform = `translateY(${height}px) scale(0.88)`;
+				el.style.opacity = "0";
+				dismissResetTimer = setTimeout(() => {
+					onCloseRef.current();
+					// Still mounted (the close didn't navigate away)? Come back.
+					dismissResetTimer = setTimeout(clearDismissStyles, 300);
+				}, 200);
+				return;
+			}
+			setDismissOffset(0, true);
+			dismissResetTimer = setTimeout(clearDismissStyles, 260);
+		};
+
 		const onEnd = () => {
+			if (s.dismissing) {
+				onDismissEnd();
+				return;
+			}
 			if (!s.dragging) return;
 			s.dragging = false;
 			s.horizontal = false;
@@ -1257,6 +1354,14 @@ export function ProfileDetailsModal({
 			el.removeEventListener("touchmove", onMove);
 			el.removeEventListener("touchend", onEnd);
 			el.removeEventListener("touchcancel", onEnd);
+			if (dismissResetTimer) {
+				clearTimeout(dismissResetTimer);
+				clearDismissStyles();
+			}
+			if (s.dismissing) {
+				s.dismissing = false;
+				clearDismissStyles();
+			}
 		};
 	}, [
 		isOpen,
@@ -2858,7 +2963,7 @@ export function ProfileDetailsModal({
 
 	if (variant === "page") {
 		return (
-			<div className="app-screen relative flex h-dvh flex-col w-full !px-0 !pb-0 !pt-0 overflow-x-hidden bg-[var(--bg)]">
+			<div ref={pageScreenRef} className="app-screen relative flex h-dvh flex-col w-full !px-0 !pb-0 !pt-0 overflow-x-hidden bg-[var(--bg)]">
 				<div
 					ref={pageWrapRef}
 					// translateX is driven by the profile swipe handler.
