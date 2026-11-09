@@ -224,12 +224,15 @@ export function LocateProfileHost() {
         // Probe points are offsets around the target profile, so locating
         // someone in e.g. the UK would park the account there — which locks
         // it behind Grindr's age verification (see utils/ageVerificationRegions.ts).
-        // Only the region the account is already in is safe to probe.
-        const originRegion = getAgeVerificationRegion(originalLat, originalLon);
+        // An account that already sits in any of these regions has passed
+        // verification, so then every region is safe to probe.
+        const alreadyVerified = getAgeVerificationRegion(originalLat, originalLon) !== null;
+
+        const isSafeLocation = (lat: number, lon: number) =>
+            alreadyVerified || getAgeVerificationRegion(lat, lon) === null;
 
         const putServerLocation = async (lat: number, lon: number, targetGeohash: string) => {
-            const region = getAgeVerificationRegion(lat, lon);
-            if (region && region !== originRegion) {
+            if (!isSafeLocation(lat, lon)) {
                 throw new Error(t("profile_details.location_finder_error_age_verification_region", {
                     defaultValue: "Stopped: this profile is in or near a region where Grindr requires age verification. Moving your location there would lock your account.",
                 }));
@@ -280,6 +283,42 @@ export function LocateProfileHost() {
         const offsetPoint = (lat: number, lon: number, meters: number, bearingDeg: number) =>
             destinationPoint(lat, lon, meters, bearingDeg * DEG);
 
+        // Two probe points around the anchor, ~120° apart, that stay out of
+        // age-verification regions: rotates the pair first (keeps the geometry),
+        // then shrinks the offset. null if every candidate lands in a region.
+        const pickProbePoints = (center: { lat: number, lon: number }, offsetMeters: number) => {
+            for (const scale of [1, 0.6, 0.35, 0.2]) {
+                for (let rotation = 0; rotation < 360; rotation += 20) {
+                    for (const spread of [120, 90, 150]) {
+                        const a = offsetPoint(center.lat, center.lon, offsetMeters * scale, rotation);
+                        const b = offsetPoint(center.lat, center.lon, offsetMeters * scale, rotation + spread);
+                        if (isSafeLocation(a.lat, a.lon) && isSafeLocation(b.lat, b.lon)) {
+                            return { points: [a, b], offsetMeters: offsetMeters * scale };
+                        }
+                    }
+                }
+            }
+            return null;
+        };
+
+        // If `target` lies in a blocked region, the closest point on the way
+        // back to the (safe) anchor that doesn't; null if none is found.
+        const pullOutOfRegion = (from: { lat: number, lon: number }, target: { lat: number, lon: number }) => {
+            if (isSafeLocation(target.lat, target.lon)) return target;
+            const { x, y } = projectFrom(from, target);
+            for (let f = 0.95; f > 0.05; f -= 0.05) {
+                const p = unprojectFrom(from, x * f, y * f);
+                if (isSafeLocation(p.lat, p.lon)) return p;
+            }
+            return null;
+        };
+
+        const notifyRegionLimit = () => {
+            toast(t("profile_details.location_finder_error_age_verification_region", {
+                defaultValue: "Stopped: this profile is in or near a region where Grindr requires age verification. Moving your location there would lock your account.",
+            }));
+        };
+
         try {
             const initialDist = await getDistanceFromProfile();
             throwIfCancelled();
@@ -306,6 +345,21 @@ export function LocateProfileHost() {
                 updateProgress({ round: i, step: 0 });
 
                 if (hasUnverifiedEstimate) {
+                    // The estimate may sit in a blocked region (the profile
+                    // might be there): measure the nearest safe point instead.
+                    const safe = pullOutOfRegion(anchor, { lat: currentLat, lon: currentLon });
+                    if (!safe) {
+                        notifyRegionLimit();
+                        break;
+                    }
+                    if (safe.lat !== currentLat || safe.lon !== currentLon) {
+                        currentLat = safe.lat;
+                        currentLon = safe.lon;
+                        const last = roundResults[roundResults.length - 1];
+                        last.lat = currentLat;
+                        last.lon = currentLon;
+                        updateProgress({ lat: currentLat, lon: currentLon, rounds: [...roundResults] });
+                    }
                     const d = await measureAt(currentLat, currentLon);
                     updateProgress({ step: 1 });
                     if (d === null) {
@@ -330,14 +384,15 @@ export function LocateProfileHost() {
                     updateProgress({ step: 1 });
                 }
 
-                const offsetMeters = Math.min(
-                    Math.max(anchor.dist * 1.5, targetPrecision * 2),
-                    MAX_PROBE_OFFSET_M,
+                const probes = pickProbePoints(
+                    anchor,
+                    Math.min(Math.max(anchor.dist * 1.5, targetPrecision * 2), MAX_PROBE_OFFSET_M),
                 );
-                const points = [
-                    offsetPoint(anchor.lat, anchor.lon, offsetMeters, 0),
-                    offsetPoint(anchor.lat, anchor.lon, offsetMeters, 120),
-                ];
+                if (!probes) {
+                    notifyRegionLimit();
+                    break;
+                }
+                const { points, offsetMeters } = probes;
 
                 const results: { lat: number, lon: number, dist: number }[] = [anchor];
 
