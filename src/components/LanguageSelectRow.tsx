@@ -2,13 +2,14 @@ import { Languages } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { SelectRow } from "./ui/select-row";
-import { SUPPORTED_LOCALE_OPTIONS, resolveSupportedLocale } from "../utils/locales";
+import { SUPPORTED_LOCALES, getLocaleLabel, resolveSupportedLocale } from "../utils/locales";
 import { setNativeAppLocale } from "../services/appLocaleBridge";
 
 /** Settings row for the app language. On Android 13+ the choice is also
  * written to the system's per-app language (see appLocaleBridge.ts). */
 export function LanguageSelectRow({ id, highlighted }: { id?: string; highlighted?: boolean }) {
-	const { t, i18n } = useTranslation();
+	// Also re-render once the other languages' files (and their names) load.
+	const { t, i18n } = useTranslation(undefined, { bindI18n: "languageChanged loaded" });
 	const selectedLocale = resolveSupportedLocale(i18n.language);
 
 	const handleLocaleChange = async (locale: string) => {
@@ -35,7 +36,7 @@ export function LanguageSelectRow({ id, highlighted }: { id?: string; highlighte
 			label={t("settings.language")}
 			value={selectedLocale}
 			onChange={(val) => void handleLocaleChange(val)}
-			options={SUPPORTED_LOCALE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
+			options={SUPPORTED_LOCALES.map((code) => ({ value: code, label: getLocaleLabel(i18n, code) }))}
 			expandable
 		/>
 	);

@@ -1,3 +1,5 @@
+import type { i18n as I18n } from "i18next";
+
 // Locales are BCP 47 language-region tags (public/locales/<tag>/), the same
 // form Android and the other OSes report, e.g. "de-DE", "pt-BR", "es-419".
 const localeModules = import.meta.glob("../../public/locales/*/translation.json");
@@ -20,17 +22,6 @@ const PREFERRED_VARIANTS: Record<string, string> = {
 	pt: "pt-PT",
 };
 
-function getDisplayName(localeCode: string): string {
-	try {
-		const displayNames = new Intl.DisplayNames(["en"], { type: "language" });
-		// The region is part of the name ("Portuguese (Brazil)"), so the tag
-		// itself isn't shown.
-		return displayNames.of(localeCode) || localeCode;
-	} catch {
-		return localeCode;
-	}
-}
-
 const detectedLocales = Object.keys(localeModules)
 	.map((path) => {
 		const match = path.match(localeCodeRegex);
@@ -42,10 +33,16 @@ const detectedLocales = Object.keys(localeModules)
 export const SUPPORTED_LOCALES =
 	detectedLocales.length > 0 ? detectedLocales : DEFAULT_LOCALES;
 
-export const SUPPORTED_LOCALE_OPTIONS = SUPPORTED_LOCALES.map((localeCode) => ({
-	value: localeCode,
-	label: getDisplayName(localeCode),
-}));
+/**
+ * A locale's name in its own language, from its translation file's
+ * `language_name` ("Deutsch (Deutschland)"). The files ship with the app and
+ * i18n.ts preloads all of them, so this doesn't depend on the WebView's ICU
+ * data; until a file has loaded it falls back to the tag.
+ */
+export function getLocaleLabel(i18n: I18n, localeCode: string): string {
+	const name = i18n.getResource(localeCode, "translation", "language_name");
+	return typeof name === "string" && name.trim() ? name : localeCode;
+}
 
 function findSupported(tag: string): string | undefined {
 	const lower = tag.toLowerCase();
