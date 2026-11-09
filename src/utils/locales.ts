@@ -32,14 +32,25 @@ export const SUPPORTED_LOCALE_OPTIONS = SUPPORTED_LOCALES.map((localeCode) => ({
 	label: getDisplayName(localeCode),
 }));
 
-export function resolveSupportedLocale(locale: string): string {
-	if (SUPPORTED_LOCALES.includes(locale)) {
-		return locale;
+/** The supported locale for an OS/browser tag, or null if none fits. */
+export function matchSupportedLocale(locale: string): string | null {
+	// Drop subtags from the end until one matches, so e.g. Android's
+	// "sr-Cyrl-RS" or "de-DE-u-mu-celsius" still find "sr-Cyrl" / "de".
+	const subtags = locale.trim().replace(/_/g, "-").split("-");
+	for (let length = subtags.length; length > 0; length--) {
+		const candidate = subtags.slice(0, length).join("-").toLowerCase();
+		const match = SUPPORTED_LOCALES.find((supported) => supported.toLowerCase() === candidate);
+		if (match) {
+			return match;
+		}
 	}
+	return null;
+}
 
-	const languageOnly = locale.split("-")[0];
-	if (SUPPORTED_LOCALES.includes(languageOnly)) {
-		return languageOnly;
+export function resolveSupportedLocale(locale: string): string {
+	const match = matchSupportedLocale(locale);
+	if (match) {
+		return match;
 	}
 
 	if (SUPPORTED_LOCALES.includes("en")) {

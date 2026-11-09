@@ -352,6 +352,23 @@ class MainActivity : TauriActivity() {
     }
     dispatchPendingPushNotifications()
     handleNotificationIntent(intent)
+    // Back from Settings > App languages: the change may have arrived while
+    // the WebView was paused.
+    dispatchAppLocaleEvent()
+  }
+
+  // App/system language changes land here instead of recreating the
+  // activity (configChanges includes locale|layoutDirection in the manifest).
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+    dispatchAppLocaleEvent()
+  }
+
+  private fun dispatchAppLocaleEvent() {
+    val state = AppLocale.stateJson(this) ?: return
+    val script =
+      "window.dispatchEvent(new CustomEvent('fg:app-locale', { detail: $state }));"
+    runOnUiThread { webViewRef?.evaluateJavascript(script, null) }
   }
 
   override fun onPause() {
@@ -585,6 +602,16 @@ class MainActivity : TauriActivity() {
     fun publishShareShortcuts(chatsJson: String) {
       localNotifExecutor.execute { ShareTarget.publishShortcuts(this@MainActivity, chatsJson) }
     }
+
+    /** Android 13+ per-app language, see AppLocale.kt. null below Android 13. */
+    @JavascriptInterface
+    fun getAppLocaleState(): String? = AppLocale.stateJson(this@MainActivity)
+
+    @JavascriptInterface
+    fun setAppLocale(languageTags: String): Boolean = AppLocale.set(this@MainActivity, languageTags)
+
+    @JavascriptInterface
+    fun openAppLocaleSettings(): Boolean = AppLocale.openSettings(this@MainActivity)
 
     @JavascriptInterface
     fun getAppDisguise(): String {

@@ -20,6 +20,7 @@ import {
 	resolveSupportedLocale,
 } from "../../utils/locales";
 import { type UnitsPreset } from "../../utils/units";
+import { hasNativeAppLocale, openNativeAppLocaleSettings } from "../../services/appLocaleBridge";
 
 function normalizeHex(value: string): string {
 	const cleaned = value.trim().replace(/^#/, "");
@@ -125,6 +126,8 @@ export function CustomizabilityPage() {
 		colorScheme === option.value && (option.value !== "dark" || amoledMode === option.amoled);
 	const activeSchemeOption = schemeOptions.find(isSchemeOptionActive) ?? schemeOptions[0];
 	const selectedLocale = resolveSupportedLocale(i18n.language);
+	// Android 13+: the language lives in the system's per-app language settings.
+	const [nativeAppLocale] = useState(hasNativeAppLocale);
 
 	const handleSchemeChange = (scheme: ColorScheme, amoled: boolean) => {
 		void setPreferences({ colorScheme: scheme, amoledMode: amoled });
@@ -594,6 +597,7 @@ export function CustomizabilityPage() {
 							onChange={(val) => void handleLocaleChange(val)}
 							options={SUPPORTED_LOCALE_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
 							expandable
+							onOpen={nativeAppLocale ? openNativeAppLocaleSettings : undefined}
 						/>
 						<SelectRow
 							id="cust-units"

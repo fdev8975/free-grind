@@ -36,6 +36,40 @@ abstract class BundleWebExtension : DefaultTask() {
     }
 }
 
+/**
+ * Generates res/xml/locales_config.xml (the manifest's android:localeConfig)
+ * from the frontend's public/locales/<tag>/ folders, so Android 13+'s
+ * "App languages" settings page offers exactly the languages the app ships
+ * (see AppLocale.kt).
+ */
+abstract class GenerateLocaleConfig : DefaultTask() {
+    @get:InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val localesDir: DirectoryProperty
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun generate() {
+        val tags = localesDir.get().asFile
+            .listFiles { f -> f.isDirectory && f.resolve("translation.json").isFile }
+            .orEmpty()
+            .map { it.name }
+            .sorted()
+        val xml = buildString {
+            append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")
+            append("<locale-config xmlns:android=\"http://schemas.android.com/apk/res/android\">\n")
+            tags.forEach { append("    <locale android:name=\"").append(it).append("\" />\n") }
+            append("</locale-config>\n")
+        }
+        val out = outputDir.get().dir("xml").file("locales_config.xml").asFile
+        outputDir.get().asFile.deleteRecursively()
+        out.parentFile.mkdirs()
+        out.writeText(xml)
+    }
+}
+
 val tauriProperties = Properties().apply {
     val propFile = file("tauri.properties")
     if (propFile.exists()) {
@@ -136,6 +170,13 @@ androidComponents {
             source.set(file("../../../vendor/freegrind-google-oauth-webextension"))
         }
         variant.sources.assets?.addGeneratedSourceDirectory(bundleTask, BundleWebExtension::outputDir)
+
+        val localeConfigTask = tasks.register<GenerateLocaleConfig>(
+            "generate${variant.name.replaceFirstChar { it.uppercase() }}LocaleConfig"
+        ) {
+            localesDir.set(file("../../../../public/locales"))
+        }
+        variant.sources.res?.addGeneratedSourceDirectory(localeConfigTask, GenerateLocaleConfig::outputDir)
     }
 }
 

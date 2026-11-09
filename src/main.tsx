@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@fontsource-variable/inter/index.css";
 import App from "./App";
 import ManagerApp from "./ManagerApp";
-import "./i18n";
+import i18n, { isFirstLanguageStart } from "./i18n";
 import { markHotswapStartupReady, startupCheckForUpdate } from "./services/hotswap";
 import { initChatContactIndex } from "./services/chatContactIndex";
 import { isTauri } from "@tauri-apps/api/core";
@@ -18,10 +18,17 @@ import { installTouchUiClass } from "./hooks/useDesktopBreakpoint";
 import { getRuntimeContext } from "./services/runtimeContext";
 import { startPushEventLog } from "./services/pushEventLog";
 import { installNativeSafeArea } from "./services/safeAreaBridge";
+import { installAppLocaleSync } from "./services/appLocaleBridge";
+import { applySystemLanguage } from "./services/systemLanguage";
 import "./index.css";
 
 installGlobalCrashHandlers();
 installNativeSafeArea();
+// First start follows the OS language; Android 13+ always follows its
+// per-app language setting.
+if (!installAppLocaleSync(i18n, isFirstLanguageStart) && isFirstLanguageStart) {
+	void applySystemLanguage(i18n);
+}
 installTouchUiClass();
 startPushEventLog();
 

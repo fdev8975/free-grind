@@ -10,6 +10,21 @@ const i18nBackendBaseUrl = (
 
 const preloadLanguages = SUPPORTED_LOCALES;
 
+export const I18NEXT_STORAGE_KEY = "i18nextLng";
+
+// Read before init: the detector caches whatever it picks under this key
+// right away, so afterwards a first start looks like a stored choice.
+function readStoredLanguage(): string | null {
+	try {
+		return window.localStorage.getItem(I18NEXT_STORAGE_KEY);
+	} catch {
+		return null;
+	}
+}
+
+/** No language stored yet: first start (or cleared app data). */
+export const isFirstLanguageStart = !readStoredLanguage();
+
 i18n
 	.use(Backend)
 	.use(LanguageDetector)
@@ -29,6 +44,7 @@ i18n
 		},
 		detection: {
 			order: ["localStorage", "navigator"],
+			lookupLocalStorage: I18NEXT_STORAGE_KEY,
 			caches: ["localStorage"],
 		},
 		backend: {
