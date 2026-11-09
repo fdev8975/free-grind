@@ -1,4 +1,4 @@
-import { Check, Copy, Loader2, Navigation, TriangleAlert } from "lucide-react";
+import { Copy, Navigation } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -6,6 +6,8 @@ import { BottomSheet, SheetCloseButton, sheetButtonClass } from "../../../../com
 import { NATIVE_SHEET_BG } from "../../../../components/ui/action-sheet";
 import { isIos } from "../../../../services/saveMedia";
 import { appLog } from "../../../../utils/logger";
+import { formatDistanceForUnits } from "../../../../utils/units";
+import { usePreferences } from "../../../../contexts/PreferencesContext";
 import { MapLocationPreview } from "./MapLocationPreview";
 import { MAP_SHEET_ICON_BUTTON_CLASS, MapSheetLayout, mapSheetProps } from "./MapSheetLayout";
 
@@ -60,7 +62,24 @@ export function LocateResultSheet({ progress, onClose, onCancel, isDesktop }: Pr
 
 	const percent = locatePercent(progress);
 
-	const statusText = (() => {
+	const { unitsPreset } = usePreferences();
+
+	// Short headline; the longer text (round info, error reason) goes in the
+	// detail line below, where it can wrap instead of being cut off.
+	const statusTitle = (() => {
+		switch (status) {
+			case "measuring":
+			case "running":
+				return t("profile_details.locating", { defaultValue: "Locating…" });
+			case "done":
+				return t("profile_details.location_finder_result_title", { defaultValue: "Location found" });
+			case "cancelled":
+			case "error":
+				return t("profile_details.location_finder_status_cancelled", { defaultValue: "Stopped" });
+		}
+	})();
+
+	const statusDetail = (() => {
 		switch (status) {
 			case "measuring":
 				return t("profile_details.location_finder_status_measuring", {
@@ -71,16 +90,43 @@ export function LocateResultSheet({ progress, onClose, onCancel, isDesktop }: Pr
 					round: round + 1,
 					rounds: totalRounds,
 					point: Math.min(step + 1, POINTS_PER_ROUND),
-					defaultValue: "Round {{round}}/{{rounds}} · measuring point {{point}}/3",
+					defaultValue: "Round {{round}} of {{rounds}} · point {{point}} of 3",
 				});
-			case "done":
-				return t("profile_details.location_finder_result_title", { defaultValue: "Location found" });
-			case "cancelled":
-				return t("profile_details.location_finder_status_cancelled", { defaultValue: "Stopped" });
 			case "error":
 				return progress.errorMessage ?? t("profile_details.location_finder_error_general");
+			case "done":
+				// e.g. the note that an age-verification region capped the accuracy
+				return progress.errorMessage;
+			default:
+				return null;
 		}
 	})();
+
+	const formatMeters = (meters: number) => formatDistanceForUnits(meters, unitsPreset, t);
+	const initialDistanceText =
+		progress.initialDistance !== null ? formatMeters(progress.initialDistance) : null;
+	const errorText = hasEstimate && errorMeters !== null ? formatMeters(errorMeters) : null;
+	const initialDistanceLabel = t("profile_details.location_finder_label_initial_distance", {
+		defaultValue: "Initial distance",
+	});
+	const errorLabel = t("profile_details.location_finder_label_accuracy", { defaultValue: "Accuracy" });
+	// Accuracy once there's an estimate, the starting distance before that.
+	const metric = errorText
+		? { value: `±${errorText}`, label: errorLabel }
+		: initialDistanceText
+			? { value: initialDistanceText, label: initialDistanceLabel }
+			: null;
+	const restoringText = isRestoring
+		? t("profile_details.location_finder_restoring", { defaultValue: "Restoring your location…" })
+		: null;
+	// Running: "Locating… 83%" over the round info. Otherwise the sheet's own
+	// title comes back and the outcome ("Location found", "Stopped") is the
+	// subtitle, followed by any reason or note.
+	const subtitleLines = [
+		// "Location found · Restoring your location…" on one line
+		isRunning ? null : [statusTitle, restoringText].filter(Boolean).join(" · "),
+		statusDetail,
+	].filter((line): line is string => Boolean(line));
 
 	const handleOpenMaps = () => {
 		const url = isDesktop
@@ -111,11 +157,43 @@ export function LocateResultSheet({ progress, onClose, onCancel, isDesktop }: Pr
 			bg={NATIVE_SHEET_BG}
 			{...mapSheetProps(isDesktop)}
 		>
-			<div className="mb-3 flex shrink-0 items-center justify-between">
-				<h3 className="text-sm font-semibold text-[var(--text)]">
-					{t("profile_details.location_finder", { defaultValue: "Location finder" })}
-				</h3>
-				<SheetCloseButton />
+			{/* Status lives in the header (the map stays clear); the number that
+			    matters goes in the pin pill on the map. */}
+			<div className="mb-3 shrink-0">
+				<div className="flex items-start justify-between gap-3">
+					<div className="min-w-0 flex-1">
+						{/* Plain subtitle lines like the other map sheets' headers. */}
+						<h3 className="flex items-baseline gap-2 text-sm font-semibold text-[var(--text)]">
+							<span className="truncate">
+								{isRunning
+									? statusTitle
+									: t("profile_details.location_finder", { defaultValue: "Location finder" })}
+							</span>
+							{isRunning ? (
+								<span className="shrink-0 text-xs font-medium tabular-nums text-[var(--text-muted)]">{percent}%</span>
+							) : null}
+						</h3>
+						{subtitleLines.map((line, index) => (
+							<p
+								key={index}
+								className={`mt-0.5 text-xs leading-relaxed ${
+									status === "error" && line === statusDetail ? "text-red-400" : "text-[var(--text-muted)]"
+								}`}
+							>
+								{line}
+							</p>
+						))}
+					</div>
+					<SheetCloseButton />
+				</div>
+				{isRunning ? (
+					<div className="mt-2.5 h-1 overflow-hidden rounded-full bg-[var(--text)]/10">
+						<div
+							className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-500"
+							style={{ width: `${percent}%` }}
+						/>
+					</div>
+				) : null}
 			</div>
 
 			<MapSheetLayout
@@ -133,85 +211,46 @@ export function LocateResultSheet({ progress, onClose, onCancel, isDesktop }: Pr
 						className="h-full w-full"
 					/>
 				}
-				pinLabel={hasEstimate ? <span className="font-mono">{coords}</span> : undefined}
-				picks={
-					// Status card in the same frosted black as the pin pill, so it reads on the fade.
-					<div className="px-4">
-						<div className="rounded-2xl bg-black/55 px-3.5 py-3 text-white shadow-lg ring-1 ring-white/10 backdrop-blur-md">
-							<div className="flex items-center gap-2 text-sm font-medium">
-								{isRunning ? (
-									<Loader2 className="h-4 w-4 shrink-0 animate-spin text-[var(--accent)]" />
-								) : status === "done" ? (
-									<Check className="h-4 w-4 shrink-0 text-[var(--accent)]" />
-								) : (
-									<TriangleAlert className="h-4 w-4 shrink-0 text-white/70" />
-								)}
-								<span className="min-w-0 flex-1 truncate">{statusText}</span>
-								<span className="shrink-0 tabular-nums text-xs text-white/70">{percent}%</span>
-							</div>
-							<div className="mt-2.5 h-1 overflow-hidden rounded-full bg-white/15">
-								<div
-									className="h-full rounded-full bg-[var(--accent)] transition-[width] duration-500"
-									style={{ width: `${percent}%` }}
-								/>
-							</div>
-							{progress.initialDistance !== null || (hasEstimate && errorMeters !== null) || isRestoring ? (
-								<div className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-white/70">
-									{progress.initialDistance !== null ? (
-										<span>
-											{t("profile_details.location_finder_initial_distance", {
-												distance: Math.round(progress.initialDistance),
-												defaultValue: "Initial distance: {{distance}} m",
-											})}
-										</span>
-									) : null}
-									{hasEstimate && errorMeters !== null ? (
-										<span>
-											{t("profile_details.location_finder_result_error", {
-												error: errorMeters,
-												defaultValue: "Estimated error: ~{{error}} m",
-											})}
-										</span>
-									) : null}
-									{isRestoring ? (
-										<span>
-											{t("profile_details.location_finder_restoring", {
-												defaultValue: "Restoring your location…",
-											})}
-										</span>
-									) : null}
-								</div>
-							) : null}
-						</div>
-					</div>
+				pinLabel={
+					metric ? (
+						<span className="inline-flex items-center gap-2">
+							<span className="font-semibold tabular-nums">{metric.value}</span>
+							<span className="h-3 w-px shrink-0 bg-white/30" />
+							<span className={hasEstimate ? "font-mono text-[11px] text-white/75" : "text-white/75"}>
+								{hasEstimate ? coords : metric.label}
+							</span>
+						</span>
+					) : undefined
 				}
 				footer={
-					<>
-						{hasEstimate ? (
+					// While running there's only Stop; copy and Maps come once it's over.
+					isRunning ? (
+						<button type="button" onClick={onCancel} className={sheetButtonClass("secondary")}>
+							<span className="truncate">{t("profile_details.location_finder_stop", { defaultValue: "Stop" })}</span>
+						</button>
+					) : (
+						<>
+							{hasEstimate ? (
+								<button
+									type="button"
+									onClick={() => void handleCopy()}
+									className={MAP_SHEET_ICON_BUTTON_CLASS}
+									aria-label={t("profile_details.location_finder_copy", { defaultValue: "Copy coordinates" })}
+								>
+									<Copy className="h-4 w-4" />
+								</button>
+							) : null}
 							<button
 								type="button"
-								onClick={() => void handleCopy()}
-								className={MAP_SHEET_ICON_BUTTON_CLASS}
-								aria-label={t("profile_details.location_finder_copy", { defaultValue: "Copy coordinates" })}
+								onClick={handleOpenMaps}
+								disabled={!hasEstimate}
+								className={sheetButtonClass()}
 							>
-								<Copy className="h-4 w-4" />
+								<Navigation className="h-4 w-4" />
+								<span className="truncate">{t("profile_details.location_finder_open_maps", { defaultValue: "Open in Maps" })}</span>
 							</button>
-						) : null}
-						{isRunning ? (
-							<button type="button" onClick={onCancel} className={sheetButtonClass("secondary")}>
-								<span className="truncate">{t("profile_details.location_finder_stop", { defaultValue: "Stop" })}</span>
-							</button>
-						) : null}
-						<button
-							type="button"
-							onClick={handleOpenMaps}
-							disabled={!hasEstimate}
-							className={sheetButtonClass()}
-						>
-							<Navigation className="h-4 w-4" />
-							<span className="truncate">{t("profile_details.location_finder_open_maps", { defaultValue: "Open in Maps" })}</span>
-						</button>
-					</>
+						</>
+					)
 				}
 			/>
 		</BottomSheet>

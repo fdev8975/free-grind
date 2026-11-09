@@ -1998,6 +1998,8 @@
         "location_finder_status_cancelled": "متوقف",
         "location_finder_initial_distance": "المسافة الأولية: {{distance}} م",
         "location_finder_restoring": "جارٍ استعادة موقعك…",
+        "location_finder_label_initial_distance": "المسافة الأولية",
+        "location_finder_label_accuracy": "الدقة",
         "location_finder_stop": "إيقاف",
         "location_finder_busy": "تحديد الموقع شغّال بالفعل لبروفايل تاني.",
         "locating": "تحديد الموقع",

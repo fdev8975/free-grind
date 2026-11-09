@@ -91,6 +91,79 @@ function subscribeLocate(listener: () => void) {
 
 const getLocateState = () => locateState;
 
+// --- Dev-only UI demo ---------------------------------------------------------
+// Plays a fake run through the result sheet without touching the server:
+//   __locateDemo()          full run, ending in "done"
+//   __locateDemo("region")  ends with the age-verification accuracy note
+//   __locateDemo("error")   stops with an error mid-run
+// Call it from the DevTools console (Android: chrome://inspect).
+
+type LocateDemoOutcome = "done" | "region" | "error";
+
+async function runLocateDemo(outcome: LocateDemoOutcome = "done") {
+	if (locateState.runningProfileId) return;
+	const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+	const origin = { lat: -23.55052, lon: -46.633308 };
+	const target = { lat: -32.0346, lon: -52.0986 };
+	const initialDistance = 1_018_000;
+	const totalRounds = 4;
+	const errors = [320_000, 41_000, 2_300, 14];
+
+	locateCancelled = false;
+	setLocateState({
+		runningProfileId: "demo",
+		isSheetOpen: true,
+		progress: {
+			status: "measuring", isRestoring: false, initialDistance: null, totalRounds: 0,
+			round: 0, step: 0, lat: origin.lat, lon: origin.lon, errorMeters: null, rounds: [], errorMessage: null,
+		},
+	});
+	const update = (patch: Partial<LocateProgress>) => {
+		if (locateState.progress) setLocateState({ progress: { ...locateState.progress, ...patch } });
+	};
+	const stillRunning = () => !locateCancelled;
+
+	try {
+		await sleep(1500);
+		if (!stillRunning()) return;
+		update({ status: "running", initialDistance, totalRounds });
+
+		const rounds: LocateRoundResult[] = [];
+		for (let i = 0; i < totalRounds; i++) {
+			for (let step = 0; step < 3; step++) {
+				update({ round: i, step });
+				await sleep(900);
+				if (!stillRunning()) return;
+			}
+			if (outcome === "error" && i === 1) {
+				update({ status: "error", isRestoring: true, errorMessage: "Failed to update server location across all payload types." });
+				return;
+			}
+			const f = errors[i] / initialDistance;
+			const lat = target.lat + (origin.lat - target.lat) * f;
+			const lon = target.lon + (origin.lon - target.lon) * f;
+			rounds.push({ round: i + 1, lat, lon, errorMeters: errors[i], failed: false });
+			update({ lat, lon, errorMeters: errors[i], rounds: [...rounds] });
+			if (outcome === "region" && i === 1) {
+				update({
+					errorMessage: "Accuracy is limited: this profile is in or near a region where Grindr requires age verification, and moving closer would lock your account.",
+				});
+				break;
+			}
+		}
+		update({ status: "done", isRestoring: true });
+		setLocateState({ isSheetOpen: true });
+	} finally {
+		await sleep(3000);
+		update({ isRestoring: false });
+		setLocateState({ runningProfileId: null });
+	}
+}
+
+if (import.meta.env.DEV) {
+	(window as unknown as { __locateDemo?: typeof runLocateDemo }).__locateDemo = runLocateDemo;
+}
+
 /** For the Locate entry points: start (via the confirm dialog) and per-profile menu labels. */
 export function useLocateProfile() {
 	const { t } = useTranslation();
@@ -313,10 +386,13 @@ export function LocateProfileHost() {
             return null;
         };
 
+        // Shown as the detail line of the finished result, not as an error.
         const notifyRegionLimit = () => {
-            toast(t("profile_details.location_finder_error_age_verification_region", {
-                defaultValue: "Stopped: this profile is in or near a region where Grindr requires age verification. Moving your location there would lock your account.",
-            }));
+            updateProgress({
+                errorMessage: t("profile_details.location_finder_region_limited", {
+                    defaultValue: "Accuracy is limited: this profile is in or near a region where Grindr requires age verification, and moving closer would lock your account.",
+                }),
+            });
         };
 
         try {
