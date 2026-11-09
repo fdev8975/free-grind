@@ -15,7 +15,10 @@ import { decodeGeohash, encodeGeohash } from "../../utils/geohash";
 import { type GeocodeResult, type SelectedLocation } from "./GridPage.types";
 import { LocationChip, SavedLocationChip } from "./gridpage/components/LocationChips";
 import { MAP_SHEET_HINT_CLASS, MAP_SHEET_ICON_BUTTON_CLASS, MapSheetLayout, MapSheetQuickPicks, MapSheetSearch, mapSheetProps } from "./gridpage/components/MapSheetLayout";
-import { MapLocationPicker } from "./gridpage/components/MapLocationPicker";
+import { MapLocationPicker, type MapViewport } from "./gridpage/components/MapLocationPicker";
+import type { MapPlace } from "./gridpage/components/mapOverlays";
+import { useExploreHeatmap, useExploreLocations } from "../../hooks/queries/useExploreHeatmapQueries";
+import type { ExploreLocation as ExplorePlace } from "../../services/api/exploreHeatmapMethods";
 import { useLocationSearch } from "./gridpage/hooks/useLocationSearch";
 import {
 	getCityFromAddress,
@@ -67,6 +70,36 @@ function geohashCenter(geohash: string): { lat: number; lon: number } | null {
 
 type LocationTab = "set" | "explore";
 
+/** Zoomed out further than this, cities are shown instead of their neighbourhoods. */
+const NEIGHBOURHOOD_MIN_ZOOM = 10;
+
+/**
+ * Turns the curated explore locations into map markers: cities while zoomed
+ * out, their neighbourhoods once zoomed in. A city without any neighbourhood
+ * stays visible at every zoom, so there's always something to tap.
+ */
+function toMapPlaces(locations: ExplorePlace[]): MapPlace[] {
+	const citiesWithNeighbourhoods = new Set(
+		locations.filter((location) => location.type !== "City" && location.parentId != null).map((location) => location.parentId),
+	);
+	return locations.map((location) => {
+		const isCity = location.type === "City";
+		return {
+			id: location.id,
+			lat: location.lat,
+			lon: location.lon,
+			label: location.name,
+			icon: isCity ? location.nameDecoration ?? "📍" : "🏳️‍🌈",
+			highlight: !isCity,
+			...(isCity
+				? citiesWithNeighbourhoods.has(location.id)
+					? { maxZoom: NEIGHBOURHOOD_MIN_ZOOM }
+					: {}
+				: { minZoom: NEIGHBOURHOOD_MIN_ZOOM }),
+		};
+	});
+}
+
 export function LocationOverlay({ onClose, isDesktop, ...props }: LocationOverlayProps) {
 	// Which of the two ways to pick a location is active: "set" changes the
 	// real geohash (visible to others, persisted). "explore" browses a
@@ -117,6 +150,17 @@ function LocationSheetContent({
 	useEffect(() => {
 		void loadSavedLocations().then(setSavedLocations);
 	}, []);
+
+	// Curated cities/neighbourhoods on the map, plus — in the explore tab only —
+	// a heatmap of where people actually are, before picking a spot.
+	const [mapViewport, setMapViewport] = useState<MapViewport | null>(null);
+	const { data: exploreLocations } = useExploreLocations();
+	const { points: heatmapPoints } = useExploreHeatmap(mapViewport, isExploreTab);
+	const mapPlaces = useMemo(() => (exploreLocations ? toMapPlaces(exploreLocations) : undefined), [exploreLocations]);
+	const exploreLocationsById = useMemo(
+		() => new Map((exploreLocations ?? []).map((location) => [location.id, location])),
+		[exploreLocations],
+	);
 
 	// Home location + visiting mode are account-wide profile settings (not
 	// grid-browsing preferences like geohash above), but they're both about
@@ -277,6 +321,21 @@ function LocationSheetContent({
 
 	const pinLocation = (lat: number, lon: number, label: string) => {
 		setSelectedLocation({ lat, lon, label, city: null });
+		setIsNamingLocation(false);
+	};
+
+	// Tapping a city/neighbourhood marker pins it under its own name
+	// ("Capitol Hill, Seattle") rather than a reverse-geocoded street address.
+	const handlePlaceClick = (place: MapPlace) => {
+		const location = exploreLocationsById.get(Number(place.id));
+		const parent = location?.parentId != null ? exploreLocationsById.get(location.parentId) : undefined;
+		const city = location?.type === "City" ? location.name : parent?.name ?? null;
+		setSelectedLocation({
+			lat: place.lat,
+			lon: place.lon,
+			label: parent ? `${place.label}, ${parent.name}` : place.label,
+			city,
+		});
 		setIsNamingLocation(false);
 	};
 
@@ -452,6 +511,10 @@ function LocationSheetContent({
 							defaultZoom={11}
 							initialCenter={initialCenter}
 							accentColor={isExploreTab ? EXPLORE_COLOR : undefined}
+							heatmapPoints={isExploreTab ? heatmapPoints : undefined}
+							places={mapPlaces}
+							onPlaceClick={handlePlaceClick}
+							onViewportChange={setMapViewport}
 						/>
 					)
 				}

@@ -13,6 +13,7 @@ import { createTagMethods } from "./api/tagMethods";
 import { createVideoCallMethods } from "./api/videoCallMethods";
 import { createLegalMethods } from "./api/legalMethods";
 import { createWarningsMethods } from "./api/warningsMethods";
+import { createExploreHeatmapMethods } from "./api/exploreHeatmapMethods";
 import { createSpotifyMethods } from "./api/spotifyMethods";
 import { createPushSettingsMethods } from "./api/pushSettingsMethods";
 import type { RightNowFeedItem, RightNowDiscreetFeedItem, RightNowFeedEntry, RightNowCreatePostRequest, RightNowCreatePostMedia, RightNowUpdatePostRequest } from "../types/right-now";
@@ -39,6 +40,7 @@ export function createApiFunctions(fetchRest: RestFetcher, t: (key: string) => s
 		...createVideoCallMethods(fetchRest, t),
 		...createLegalMethods(fetchRest, t),
 		...createWarningsMethods(fetchRest, t),
+		...createExploreHeatmapMethods(fetchRest, t),
 		...createSpotifyMethods(fetchRest, t),
 		...createPushSettingsMethods(fetchRest, t),
 

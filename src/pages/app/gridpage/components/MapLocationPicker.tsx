@@ -1,10 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useEffectiveColorScheme } from "../../../../hooks/useEffectiveColorScheme";
 import type { SelectedLocation } from "../../GridPage.types";
 import { applyDarkMapTheme, createPinMarkerElement, getMapStyleUrl, relaxRoadZoomThresholds } from "./mapStyles";
+import { createPlaceMarkerElement, isPlaceVisibleAtZoom, setHeatmapAccent, syncHeatmapLayer, type MapHeatmapPoint, type MapPlace } from "./mapOverlays";
+
+export type MapViewport = { lat: number; lon: number; zoom: number };
 
 type MapLocationPickerProps = {
+	/** Drawn as a heatmap below the map's labels. */
+	heatmapPoints?: MapHeatmapPoint[];
+	/** Tappable place markers (e.g. explore neighbourhoods). */
+	places?: MapPlace[];
+	onPlaceClick?: (place: MapPlace) => void;
+	/** Fires once the map has loaded and after every pan/zoom settles. */
+	onViewportChange?: (viewport: MapViewport) => void;
 	selectedLocation: Pick<SelectedLocation, "lat" | "lon"> | null;
 	onPick: (lat: number, lon: number) => void;
 	onError: (message: string) => void;
@@ -29,6 +39,10 @@ export function MapLocationPicker({
 	// yet. Leaving it undefined when not passed keeps that distinction.
 	initialCenter,
 	accentColor,
+	heatmapPoints,
+	places,
+	onPlaceClick,
+	onViewportChange,
 }: MapLocationPickerProps) {
 	const { t } = useTranslation();
 	const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -59,6 +73,16 @@ export function MapLocationPicker({
 	initialCenterRef.current = initialCenter;
 	const accentColorRef = useRef(accentColor);
 	accentColorRef.current = accentColor;
+	const heatmapPointsRef = useRef(heatmapPoints);
+	heatmapPointsRef.current = heatmapPoints;
+	const onPlaceClickRef = useRef(onPlaceClick);
+	onPlaceClickRef.current = onPlaceClick;
+	const onViewportChangeRef = useRef(onViewportChange);
+	onViewportChangeRef.current = onViewportChange;
+	const placeMarkersRef = useRef<{ place: MapPlace; marker: any }[]>([]);
+	// Bumped once the map instance exists, so the place-marker effect (which
+	// may run before the async map construction finished) runs again.
+	const [mapReadyVersion, setMapReadyVersion] = useState(0);
 
 	useEffect(() => {
 		let mounted = true;
@@ -122,12 +146,30 @@ export function MapLocationPicker({
 				map.on("style.load", () => {
 					relaxRoadZoomThresholds(map);
 					if (schemeRef.current === "dark") applyDarkMapTheme(map, accentColorRef.current);
+					// setStyle (theme switch) drops custom layers — re-add the heatmap.
+					if (heatmapPointsRef.current?.length) syncHeatmapLayer(map, heatmapPointsRef.current, accentColorRef.current);
 				});
+				const reportViewport = () => {
+					const center = map.getCenter();
+					onViewportChangeRef.current?.({ lat: center.lat, lon: center.lng, zoom: map.getZoom() });
+				};
+				const updatePlaceVisibility = () => {
+					const zoom = map.getZoom();
+					for (const { place, marker } of placeMarkersRef.current) {
+						marker.getElement().style.display = isPlaceVisibleAtZoom(place, zoom) ? "" : "none";
+					}
+				};
+				map.on("moveend", reportViewport);
+				map.on("zoom", updatePlaceVisibility);
 				// Extra safety net beyond waitForPaint above: re-measure once the
 				// map reports itself fully loaded, in case the container's size
 				// still wasn't final at construction time.
-				map.once("load", () => map.resize());
+				map.once("load", () => {
+					map.resize();
+					reportViewport();
+				});
 				mapRef.current = map;
+				setMapReadyVersion((v) => v + 1);
 
 				if (currentSelectedLocation) {
 					markerRef.current = new maplibregl.Marker({ element: createPinMarkerElement(accentColorRef.current), anchor: "bottom" })
@@ -170,6 +212,7 @@ export function MapLocationPicker({
 				mapRef.current.remove();
 				mapRef.current = null;
 				markerRef.current = null;
+				placeMarkersRef.current = [];
 			}
 		};
 		// Map is created once; theme/location updates are applied to the live instance below.
@@ -209,6 +252,43 @@ export function MapLocationPicker({
 		map.jumpTo({ center: lngLat, zoom: Math.max(defaultZoom, map.getZoom()) });
 		map.resize();
 	}, [defaultZoom, selectedLocation, accentColor]);
+
+	// Heatmap data changes are pushed into the live source; before the style
+	// has loaded, the style.load handler above adds it from the ref instead.
+	useEffect(() => {
+		const map = mapRef.current;
+		if (!map) return;
+		syncHeatmapLayer(map, heatmapPoints ?? [], accentColorRef.current);
+	}, [heatmapPoints, mapReadyVersion]);
+
+	// The heat follows the accent too (set vs. explore tab), in light mode as well.
+	useEffect(() => {
+		const map = mapRef.current;
+		if (!map) return;
+		setHeatmapAccent(map, accentColor);
+	}, [accentColor]);
+
+	// Place markers are DOM markers, so unlike the heatmap they survive
+	// setStyle and only need rebuilding when the list itself changes.
+	useEffect(() => {
+		const map = mapRef.current;
+		const maplibregl = maplibreRef.current;
+		if (!map || !maplibregl) return;
+		const zoom = map.getZoom();
+		placeMarkersRef.current = (places ?? []).map((place) => {
+			const element = createPlaceMarkerElement(place, () => onPlaceClickRef.current?.(place));
+			element.style.display = isPlaceVisibleAtZoom(place, zoom) ? "" : "none";
+			// The element is the bubble itself, so the coordinate sits under its center.
+			const marker = new maplibregl.Marker({ element, anchor: "center" })
+				.setLngLat([place.lon, place.lat])
+				.addTo(map);
+			return { place, marker };
+		});
+		return () => {
+			for (const { marker } of placeMarkersRef.current) marker.remove();
+			placeMarkersRef.current = [];
+		};
+	}, [places, mapReadyVersion]);
 
 	return <div ref={mapContainerRef} className={className} />;
 }
