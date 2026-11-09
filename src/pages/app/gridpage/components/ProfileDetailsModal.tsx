@@ -151,6 +151,8 @@ type ProfileDetailsModalProps = {
 	genderOptions: ManagedOption[];
 	pronounOptions: ManagedOption[];
 	variant?: "modal" | "page";
+	/** Page variant shown over the page that opened it (still rendered below, see App.tsx). */
+	isOverBackground?: boolean;
 	onPrevProfile?: () => void;
 	onNextProfile?: () => void;
 	/** What's already known about the neighbouring profiles, shown beside the page while swiping. */
@@ -542,6 +544,7 @@ export function ProfileDetailsModal({
 	genderOptions,
 	pronounOptions,
 	variant = "modal",
+	isOverBackground = false,
 	onPrevProfile,
 	onNextProfile,
 	prevProfilePreview,
@@ -1201,14 +1204,27 @@ export function ProfileDetailsModal({
 			el.style.overflow = "";
 			el.style.background = "";
 			const screen = pageScreenRef.current;
-			if (screen) screen.style.background = "";
+			if (screen) {
+				screen.style.transition = "";
+				screen.style.background = "";
+			}
+		};
+
+		// Over the opening page it shows through, dimmed less the further
+		// the profile is pulled; on its own there's nothing behind it.
+		const setScreenBackdrop = (progress: number, transition: string) => {
+			const screen = pageScreenRef.current;
+			if (!screen) return;
+			screen.style.transition = transition;
+			screen.style.background = isOverBackground
+				? `rgba(0, 0, 0, ${(0.5 * (1 - progress)).toFixed(3)})`
+				: "#000";
 		};
 
 		const setDismissOffset = (dy: number, animate: boolean) => {
 			const height = el.offsetHeight || window.innerHeight;
 			const progress = Math.min(Math.max(dy, 0) / height, 1);
-			const screen = pageScreenRef.current;
-			if (screen) screen.style.background = "#000";
+			setScreenBackdrop(animate ? 0 : progress, animate ? "background 250ms ease-out" : "none");
 			el.style.background = "var(--bg)";
 			el.style.overflow = "hidden";
 			el.style.borderRadius = dy > 0 ? `${Math.min(dy / 4, 24)}px` : "";
@@ -1301,6 +1317,7 @@ export function ProfileDetailsModal({
 				el.style.transition = "transform 200ms ease-in, opacity 200ms ease-in";
 				el.style.transform = `translateY(${height}px) scale(0.88)`;
 				el.style.opacity = "0";
+				setScreenBackdrop(1, "background 200ms ease-in");
 				dismissResetTimer = setTimeout(() => {
 					onCloseRef.current();
 					// Still mounted (the close didn't navigate away)? Come back.
@@ -1369,6 +1386,7 @@ export function ProfileDetailsModal({
 		variant,
 		hasProfileNeighbors,
 		isEditingOwnProfile,
+		isOverBackground,
 		resetProfileSwipeOffset,
 	]);
 
@@ -2963,7 +2981,7 @@ export function ProfileDetailsModal({
 
 	if (variant === "page") {
 		return (
-			<div ref={pageScreenRef} className="app-screen relative flex h-dvh flex-col w-full !px-0 !pb-0 !pt-0 overflow-x-hidden bg-[var(--bg)]">
+			<div ref={pageScreenRef} className={`app-screen flex h-dvh flex-col w-full !px-0 !pb-0 !pt-0 overflow-x-hidden bg-[var(--bg)] ${isOverBackground ? "fixed inset-0 z-[60]" : "relative"}`}>
 				<div
 					ref={pageWrapRef}
 					// translateX is driven by the profile swipe handler.

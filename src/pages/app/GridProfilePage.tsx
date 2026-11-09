@@ -299,10 +299,10 @@ export function GridProfilePage() {
 	}, [prevProfileId, nextProfileId]);
 
 	const handlePrevProfile = prevProfileId
-		? () => navigate(`/profile/${prevProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds } })
+		? () => navigate(`/profile/${prevProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds, backgroundLocation: locationState.backgroundLocation } })
 		: undefined;
 	const handleNextProfile = nextProfileId
-		? () => navigate(`/profile/${nextProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds } })
+		? () => navigate(`/profile/${nextProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds, backgroundLocation: locationState.backgroundLocation } })
 		: undefined;
 
 	useEffect(() => {
@@ -601,6 +601,7 @@ export function GridProfilePage() {
 		<>
 			<ProfileDetailsModal
 				variant={isDesktopLike ? "modal" : "page"}
+				isOverBackground={isOverBackground}
 				isOpen
 				// Settings' profile row opens your own profile straight in edit mode.
 				initialEditMode={locationState.editOwnProfile === true}

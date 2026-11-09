@@ -1505,14 +1505,14 @@ export function RightNowPage() {
 			navigate(`/profile/${profileId}`, {
 				state: {
 					returnTo: location.pathname,
-					// On desktop the profile is a modal over Right Now — keep the page
-					// rendered underneath (see App.tsx) so closing it doesn't reload it,
+					// The profile sits over Right Now — keep the page rendered
+					// underneath (see App.tsx) so closing it doesn't reload it,
 					// same as the inbox.
-					...(isDesktop ? { backgroundLocation: location } : {}),
+					backgroundLocation: location,
 				},
 			});
 		},
-		[isDesktop, navigate, location],
+		[navigate, location],
 	);
 
 	const toggleSort = useCallback(() => {

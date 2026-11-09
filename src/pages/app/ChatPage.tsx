@@ -4574,17 +4574,18 @@ export function ChatPage() {
 		(profileId: number, returnTo: string, fromChat?: boolean) => {
 			const nextParams = new URLSearchParams();
 			nextParams.set("returnTo", returnTo);
-			// On desktop the profile is a modal over the chat — keep the chat
-			// rendered underneath (see App.tsx) so closing it doesn't reload the page.
+			// The profile sits over the chat (desktop modal, mobile page) — keep the
+			// chat rendered underneath (see App.tsx) so closing it doesn't reload the
+			// page, and it shows through while the profile is swiped down to close.
 			navigate(`/profile/${profileId}?${nextParams.toString()}`, {
 				state: {
 					returnTo,
 					...(fromChat ? { fromChat: true } : {}),
-					...(isDesktop ? { backgroundLocation: location } : {}),
+					backgroundLocation: location,
 				},
 			});
 		},
-		[isDesktop, location, navigate],
+		[location, navigate],
 	);
 
 	useEffect(() => {

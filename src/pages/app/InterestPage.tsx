@@ -564,13 +564,13 @@ export function InterestPage() {
 			navigate(`/profile/${profileId}`, {
 				state: {
 					returnTo: `${location.pathname}${location.search}`,
-					// Desktop: profile modal over the page (see App.tsx), so closing it
-					// doesn't reload Interest — same as inbox and Right Now.
-					...(isDesktop ? { backgroundLocation: location } : {}),
+					// Profile over the page (see App.tsx), so closing it doesn't
+					// reload Interest — same as inbox and Right Now.
+					backgroundLocation: location,
 				},
 			});
 		},
-		[navigate, location, isDesktop, isProfileBlocked, hasProfileSnapshot],
+		[navigate, location, isProfileBlocked, hasProfileSnapshot],
 	);
 
 	const handleTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
