@@ -17,6 +17,7 @@
         "profile_editor_desc": "عدّل تفاصيل البروفايل والهوية والتفضيلات.",
         "customizability": "المظهر",
         "customizability_desc": "غيّر نظام الألوان واللون الأساسي.",
+        "regional_desc": "اللغة والوحدات وشكل الوقت.",
         "behavior": "السلوك",
         "behavior_desc": "تأكيدات قبل ما تعمل بلوك أو تمسح الشات.",
         "notifications": "الإشعارات",
@@ -1233,6 +1234,7 @@
     "customizability": {
         "subtitle": "خصّص مظهر التطبيق وتجربة استخدامه.",
         "appearance": "المظهر",
+        "colors": "الألوان",
         "layout": "التخطيط",
         "regional": "إقليمي",
         "navigation_tabs": "علامات تبويب التنقل",

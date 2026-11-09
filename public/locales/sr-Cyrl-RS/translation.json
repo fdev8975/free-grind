@@ -14,6 +14,7 @@
         "profile_editor_desc": "Уредите податке профила, идентитет и подешавања.",
         "customizability": "Изглед",
         "customizability_desc": "Промените шему боја и боју акцента.",
+        "regional_desc": "Језик, јединице и формат времена.",
         "behavior": "Понашање",
         "behavior_desc": "Потврде пре блокирања и брисања четова.",
         "notifications": "Обавештења",
@@ -1216,6 +1217,7 @@
     "customizability": {
         "subtitle": "Прилагодите изглед и осећај апликације.",
         "appearance": "Изглед",
+        "colors": "Боје",
         "layout": "Распоред",
         "regional": "Регионално",
         "navigation_tabs": "Картице навигације",

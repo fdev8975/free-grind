@@ -13,6 +13,7 @@
         "profile_editor_desc": "Modifiez les détails de votre profil, votre identité et vos préférences.",
         "customizability": "Apparence",
         "customizability_desc": "Modifiez le thème et la couleur d'accentuation.",
+        "regional_desc": "Langue, unités et format de l'heure.",
         "behavior": "Comportement",
         "behavior_desc": "Invites de confirmation pour bloquer et supprimer des discussions.",
         "notifications": "Notifications",
@@ -1214,6 +1215,7 @@
     "customizability": {
         "subtitle": "Personnalisez l'apparence de l'application.",
         "appearance": "Apparence",
+        "colors": "Couleurs",
         "layout": "Mise en page",
         "regional": "Régional",
         "navigation_tabs": "Onglets de navigation",

@@ -13,6 +13,7 @@
         "profile_editor_desc": "Editar detalhes do perfil, identidade e preferências.",
         "customizability": "Customização",
         "customizability_desc": "Alterar o esquema de cores e a cor de destaque.",
+        "regional_desc": "Idioma, unidades e formato da hora.",
         "behavior": "Comportamento",
         "behavior_desc": "Avisos de confirmação para bloquear e eliminar conversas.",
         "notifications": "Notificações",
@@ -1214,6 +1215,7 @@
     "customizability": {
         "subtitle": "Personalize a aparência e a experiência do utilizador do aplicação.",
         "appearance": "Aparência",
+        "colors": "Cores",
         "layout": "Organização",
         "regional": "Regional",
         "navigation_tabs": "Abas de navegação",
