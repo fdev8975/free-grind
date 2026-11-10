@@ -2501,7 +2501,7 @@
             "button": "Entendido"
         },
         "unknown_profile": "Perfil desconocido",
-        "locked_profile": "Bloqueado",
+        "locked_profile": "Locked",
         "blocked_profile": "Bloqueado",
         "unknown_time": "Tiempo desconocido",
         "tap_labels": {
