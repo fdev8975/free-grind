@@ -1,13 +1,13 @@
 import { RefreshCw } from "lucide-react";
 import { EyeFilled, FlameFilled, SendFilled } from "../../components/icons/FilledIcons";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition, type ComponentType, type TouchEvent } from "react";
+import { createElement, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition, type ComponentType, type TouchEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useInterestData } from "../../hooks/queries/useInterestQueries";
 import { useBlockedProfileIds } from "../../hooks/queries/useProfileQueries";
 import { getBlockStatesByProfileIds, listProfileSnapshotIds } from "../../services/chatDb";
 import { markInterestSeen, getInterestTabLastSeen, markInterestTabSeen } from "../../services/seenStore";
-import { EmptyState, ErrorState } from "../../components/ui/states";
+import { FeedEmptyState, FeedErrorState } from "../../components/ui/states";
 import { PullToRefreshContainer } from "./components/PullToRefreshContainer";
 import {
 	type InterestTab,
@@ -696,22 +696,20 @@ export function InterestPage() {
 					) : (
 						<div className="flex flex-col">
 							{(queryError || (!isLoading && activeItems.length === 0)) && (
-								<div className="px-[var(--app-px)] py-4 space-y-4">
-									{queryError ? (
-										<ErrorState
-											title={t("interest_page.error_load", { tab: t(`interest_page.tabs.${activeTab}`) })}
-											description={queryError instanceof Error ? queryError.message : String(queryError)}
-											onRetry={handleRefresh}
-										/>
-									) : null}
-
-									{!isLoading && !queryError && activeItems.length === 0 ? (
-										<EmptyState
-											title={t(`interest_page.empty_${activeTab}`)}
-											description={t(`interest_page.empty_${activeTab}_desc`)}
-										/>
-									) : null}
-								</div>
+								queryError ? (
+									<FeedErrorState
+										title={t("interest_page.error_load", { tab: t(`interest_page.tabs.${activeTab}`) })}
+										description={queryError instanceof Error ? queryError.message : String(queryError)}
+										onRetry={() => void handleRefresh()}
+										retryLabel={t("right_now.try_again")}
+									/>
+								) : (
+									<FeedEmptyState
+										icon={createElement(TAB_ICONS[activeTab])}
+										title={t(`interest_page.empty_${activeTab}`)}
+										description={t(`interest_page.empty_${activeTab}_desc`)}
+									/>
+								)
 							)}
 
 							{activeItems.length > 0 && (

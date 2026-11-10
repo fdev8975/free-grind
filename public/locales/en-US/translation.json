@@ -462,6 +462,7 @@
     "filter_summary": "Position: {{position}} · Age: {{age}}",
     "try_again": "Try again",
     "empty": "No active sessions nearby.",
+    "empty_desc": "People who post Right Now near you will show up here.",
     "error_load": "Failed to load Right Now feed",
     "message_aria": "Message {{name}}",
     "any_position": "Any",
@@ -1176,8 +1177,8 @@
     "map": "Map",
     "grid_visibility": "Grid Visibility",
     "incognito_mode": "Incognito Mode",
-    "incognito_mode_desc": "Stop the Grid from loading or refreshing, hide your read receipts, and stop reporting profile views — so you can browse without showing up as online or leaving a trace.",
-    "incognito_mode_note": "While this is on: the Grid (including its background refresh) won't load, read receipts are never sent, and visiting someone's profile won't register as a view. Turning incognito mode off restores all of these immediately.",
+    "incognito_mode_desc": "Show as offline everywhere, stop the Grid from loading or refreshing, hide your read receipts, and stop reporting profile views — so you can browse without showing up as online or leaving a trace.",
+    "incognito_mode_note": "While this is on: your account shows as offline to everyone (if your account has incognito on the server), the Grid (including its background refresh) won't load, read receipts are never sent, and visiting someone's profile won't register as a view. Turning incognito mode off restores all of these immediately.",
     "app_disguise": "App Disguise",
     "app_disguise_desc": "Swap the app's home screen icon and name for a decoy, so it doesn't announce itself when someone else looks at your phone.",
     "app_disguise_off": "Off",
@@ -1212,7 +1213,8 @@
     "blur_album_media": "Blur Album Previews",
     "blur_album_media_desc": "Blur the photos and videos in the album preview sheet. Tap once to reveal (hover on desktop).",
     "blur_right_now_media": "Blur Right Now Media",
-    "blur_right_now_media_desc": "Blur photos attached to Right Now posts, in the feed and on the map. Tap once to reveal (hover on desktop)."
+    "blur_right_now_media_desc": "Blur photos attached to Right Now posts, in the feed and on the map. Tap once to reveal (hover on desktop).",
+    "incognito_server_unavailable": "Your account can't hide its online status on the server; the Grid, read receipts and profile views stay hidden on this device."
   },
   "customizability": {
     "subtitle": "Personalize how the app looks and how its pages are laid out.",

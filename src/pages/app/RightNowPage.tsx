@@ -5,6 +5,8 @@ import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getIncognitoMode } from "../../utils/privacy";
 import { Button } from "../../components/ui/button";
+import { FeedEmptyState, FeedErrorState } from "../../components/ui/states";
+import { RightNowIcon } from "../../components/icons/RightNowIcon";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import {
@@ -1725,7 +1727,8 @@ export function RightNowPage() {
 				</div>
 			</header>
 
-			{isMapView && !error && !isIncognito ? (
+			{/* A failed load keeps the map up; it then just shows nobody nearby. */}
+			{isMapView && !isIncognito ? (
 				<div
 					// Full bleed, running up behind the header and, on desktop, on under
 					// the (unfilled) nav rail instead of being cut off at its edge.
@@ -1759,7 +1762,7 @@ export function RightNowPage() {
 					{!isLoading && mapItems.length === 0 && (
 						<div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-8">
 							<p className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/90 px-4 py-3 text-center text-sm text-[var(--text-muted)] shadow-lg backdrop-blur">
-								{items.length === 0
+								{items.length === 0 || error
 									? t("right_now.empty")
 									: t("right_now.map_no_positions", {
 										defaultValue: "Nobody nearby is sharing their location on the map right now.",
@@ -1824,21 +1827,21 @@ export function RightNowPage() {
 						))}
 					</div>
 				) : error ? (
-					<div className="px-[var(--app-px)] py-8 text-center">
-						<p className="mb-3 text-sm text-[var(--text-muted)]">{error instanceof Error ? error.message : String(error)}</p>
-						<button
-							type="button"
-							onClick={() => void refetch()}
-							className="rounded-full border border-[var(--right-now)]/30 px-4 py-2 text-sm font-bold text-[var(--right-now)]/70 transition-all hover:border-[var(--right-now)]/50 hover:text-[var(--right-now)] active:scale-95"
-							style={{ backgroundColor: "color-mix(in srgb, var(--right-now), transparent 95%)" }}
-						>
-							{t("right_now.try_again")}
-						</button>
-					</div>
+					<FeedErrorState
+						title={t("right_now.error_load")}
+						description={error instanceof Error ? error.message : String(error)}
+						onRetry={() => void refetch()}
+						retryLabel={t("right_now.try_again")}
+						color="var(--right-now)"
+					/>
 				) : items.length === 0 ? (
-					<div className="px-[var(--app-px)] py-16 text-center">
-						<p className="text-sm text-[var(--text-muted)]">{t("right_now.empty")}</p>
-					</div>
+					<FeedEmptyState
+						icon={<RightNowIcon />}
+						title={t("right_now.empty")}
+						description={t("right_now.empty_desc", { defaultValue: "People who post Right Now near you will show up here." })}
+						color="var(--right-now)"
+						contrastColor="white"
+					/>
 				) : isDesktop ? (
 					<div className="grid grid-cols-[repeat(auto-fill,minmax(max(300px,calc((100%-4*0.75rem)/5)),1fr))] gap-3 px-[var(--app-px)] pb-[calc(var(--safe-area-bottom)+120px)] rail:pb-[calc(var(--page-bottom)+4rem)]">
 						{items.map((item) =>

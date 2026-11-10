@@ -29,6 +29,32 @@ fn configured(value: Option<&'static str>) -> Option<&'static str> {
 	value.map(trimmed).filter(|v| !v.is_empty())
 }
 
+/// Extra root CA from `FG_CA_CERT` at build time (PEM, empty when unset): lets
+/// a test build reach a local server behind Caddy's `tls internal`. Release
+/// builds leave it unset and keep the plain WebPKI roots.
+const EXTRA_CA_PEM: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/fg_ca.pem"));
+
+static EXTRA_CA_STORE: LazyLock<Option<wreq::tls::CertStore>> = LazyLock::new(|| {
+	if EXTRA_CA_PEM.is_empty() {
+		return None;
+	}
+	// Setting a store replaces the default roots, so they're added back first.
+	let store = wreq::tls::CertStore::builder()
+		.add_der_certs(webpki_root_certs::TLS_SERVER_ROOT_CERTS.iter().map(|c| c.as_ref()))
+		.add_stack_pem_certs(EXTRA_CA_PEM)
+		.build();
+	match store {
+		Ok(store) => Some(store),
+		Err(e) => panic!("FG_CA_CERT: invalid certificate: {e}"),
+	}
+});
+
+/// The certificate store for every client of this crate: `None` (wreq's
+/// default WebPKI roots) unless the build added `FG_CA_CERT`.
+pub fn extra_cert_store() -> Option<&'static wreq::tls::CertStore> {
+	EXTRA_CA_STORE.as_ref()
+}
+
 /// Whether this build has a Free Grind server (both addresses were set).
 pub fn free_grind_available() -> bool {
 	configured(FREE_GRIND_API_BASE).is_some() && configured(FREE_GRIND_MEDIA_BASE).is_some()
@@ -159,6 +185,28 @@ mod tests {
 			assert!(!ServerConfig::FreeGrind.is_custom_media_url(&Url::parse(&bad).unwrap()), "{bad}");
 		}
 		assert!(!ServerConfig::Official.is_custom_media_url(&ok));
+	}
+
+	#[test]
+	fn extra_ca_only_with_fg_ca_cert() {
+		// Forces the store; an invalid FG_CA_CERT would panic here.
+		assert_eq!(extra_cert_store().is_some(), !EXTRA_CA_PEM.is_empty());
+	}
+
+	/// Run with FG_API_URL pointing at a local server behind Caddy's
+	/// `tls internal` and FG_CA_CERT at its root: `cargo test -- --ignored`.
+	#[tokio::test]
+	#[ignore]
+	async fn reaches_free_grind_over_extra_ca() {
+		let mut builder = wreq::Client::builder().cert_store(extra_cert_store());
+		// FG_TEST_RESOLVE=<ip>: skip DNS when this machine doesn't use the local resolver.
+		if let Ok(ip) = std::env::var("FG_TEST_RESOLVE") {
+			let host = Url::parse(ServerConfig::FreeGrind.api_base()).unwrap().host_str().unwrap().to_owned();
+			builder = builder.resolve(&host, format!("{ip}:443").parse().unwrap());
+		}
+		let client = builder.build().unwrap();
+		let res = client.get(format!("{}/healthz", ServerConfig::FreeGrind.api_base())).send().await.unwrap();
+		assert!(res.status().is_success(), "HTTP {}", res.status());
 	}
 
 	#[test]

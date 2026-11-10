@@ -476,6 +476,7 @@ export function createProfileMethods(fetchRest: RestFetcher, t: (key: string, op
 				viewRightNowNsfw: payload?.viewRightNowNsfw === true,
 				showOnMap: payload?.showOnMap === true,
 				mapLocationFuzzRadius: typeof payload?.mapLocationFuzzRadius === "number" ? payload.mapLocationFuzzRadius : null,
+				incognito: payload?.incognito === true,
 			};
 		},
 

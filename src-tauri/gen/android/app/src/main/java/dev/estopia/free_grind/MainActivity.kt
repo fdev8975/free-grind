@@ -434,8 +434,8 @@ class MainActivity : TauriActivity() {
     }
 
     /**
-     * Self-hosted server: register with its Firebase project (config from the
-     * public `push_fcm_config` assignment). The token arrives as the
+     * Free Grind server: register with its Firebase project (config compiled
+     * into the app from the FG_FCM_* build variables). The token arrives as the
      * `fg:fcm-token-selfhosted` event, separate from Grindr's `fg:fcm-token`.
      */
     @JavascriptInterface

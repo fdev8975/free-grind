@@ -7,12 +7,9 @@ import { cn } from "../../../../utils/cn";
 import { useEffect, useLayoutEffect, useMemo, useRef, type RefObject } from "react";
 import { useDesktopBreakpoint } from "../../../../hooks/useDesktopBreakpoint";
 import { useTranslation } from "react-i18next";
-import { Ghost, MapPin } from "lucide-react";
+import { Ghost, MapPin, UsersRound } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-	EmptyState,
-	ErrorState,
-} from "../../../../components/ui/states";
+import { FeedEmptyState, FeedErrorState } from "../../../../components/ui/states";
 import { Button } from "../../../../components/ui/button";
 import { getAsyncState } from "../../../../hooks/useAsyncViewState";
 import type { ChatContactIndexRecord } from "../../../../types/chat-contact-index";
@@ -72,6 +69,8 @@ type BrowseGridProps = {
 	isIncognitoActive?: boolean;
 	onOpenLocation?: () => void;
 	onManagePrivacy?: () => void;
+	/** Reloads the feed from the error state. */
+	onRetry?: () => void;
 	cards: BrowseCard[];
 	chatContactIndexByProfileId?: Record<string, ChatContactIndexRecord>;
 	localNicknamesByProfileId?: Record<string, string>;
@@ -106,6 +105,7 @@ export function BrowseGrid({
 	isIncognitoActive,
 	onOpenLocation,
 	onManagePrivacy,
+	onRetry,
 	cards,
 	chatContactIndexByProfileId,
 	localNicknamesByProfileId,
@@ -284,25 +284,22 @@ export function BrowseGrid({
 
 	if (viewState === "error") {
 		return (
-			/* Padding applied to maintain header alignment for non-grid states */
-			<div className="w-full px-[var(--app-px)]">
-				<ErrorState
-					title={t("browse_page.error_load_feed")}
-					description={cardsError ?? undefined}
-				/>
-			</div>
+			<FeedErrorState
+				title={t("browse_page.error_load_feed")}
+				description={cardsError ?? undefined}
+				onRetry={onRetry}
+				retryLabel={t("right_now.try_again")}
+			/>
 		);
 	}
 
 	if (viewState === "empty") {
 		return (
-			/* Padding applied to maintain header alignment for non-grid states */
-			<div className="w-full px-[var(--app-px)]">
-				<EmptyState
-					title={t("browse_page.empty_title")}
-					description={t("browse_page.empty_desc")}
-				/>
-			</div>
+			<FeedEmptyState
+				icon={<UsersRound />}
+				title={t("browse_page.empty_title")}
+				description={t("browse_page.empty_desc")}
+			/>
 		);
 	}
 

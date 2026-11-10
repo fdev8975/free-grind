@@ -16,11 +16,15 @@ export type ServerInfo = {
 	mediaBase: string | null;
 	/** Whether this build has a Free Grind server at all. */
 	freeGrindAvailable: boolean;
+	/** Firebase client config of the Free Grind server (build-time FG_FCM_*), while it's active. */
+	fcm: FcmClientConfig | null;
 };
+
+export type FcmClientConfig = { projectId: string; applicationId: string; apiKey: string; senderId: string };
 
 export type ServerProbe = { ok: boolean; latencyMs: number; error: string | null };
 
-const OFFICIAL: ServerInfo = { kind: "official", apiBase: "https://grindr.mobi", mediaBase: null, freeGrindAvailable: false };
+const OFFICIAL: ServerInfo = { kind: "official", apiBase: "https://grindr.mobi", mediaBase: null, freeGrindAvailable: false, fcm: null };
 
 let current: ServerInfo = OFFICIAL;
 let loaded = false;

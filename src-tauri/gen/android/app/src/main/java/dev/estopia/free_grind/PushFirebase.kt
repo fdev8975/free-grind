@@ -43,8 +43,8 @@ object PushFirebase {
     private const val SELF_HOSTED_APP = "selfhosted"
 
     /**
-     * Registers with a self-hosted server's Firebase project (public config
-     * from its `push_fcm_config` assignment) next to Grindr's default app,
+     * Registers with the Free Grind server's Firebase project (public config
+     * from the FG_FCM_* build variables) next to Grindr's default app,
      * and hands back that project's token. Messages from both projects land
      * in FreeGrindFirebaseMessagingService. Uses the real package context:
      * the self-hosted project registers this app's own package name.

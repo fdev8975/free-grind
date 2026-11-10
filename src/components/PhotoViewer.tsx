@@ -260,6 +260,10 @@ export function PhotoViewer({
 	// while the backdrop fades; past the threshold it closes, otherwise snaps back.
 	const [dismissY, setDismissY] = useState(0);
 	const [isDismissDragging, setIsDismissDragging] = useState(false);
+	// A cancelled dismiss drag still animates the track back to full size for a moment.
+	const [isDismissSettling, setIsDismissSettling] = useState(false);
+	const dismissSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	useEffect(() => () => { if (dismissSettleTimerRef.current) clearTimeout(dismissSettleTimerRef.current); }, []);
 	const dismissArmedRef = useRef(false);
 	const dismissStartTimeRef = useRef(0);
 	// Fade-out before handing control back to the parent, for every close path.
@@ -864,6 +868,12 @@ export function PhotoViewer({
 					closeAnimated();
 				} else {
 					setDismissY(0);
+					setIsDismissSettling(true);
+					if (dismissSettleTimerRef.current) clearTimeout(dismissSettleTimerRef.current);
+					dismissSettleTimerRef.current = setTimeout(() => {
+						dismissSettleTimerRef.current = null;
+						setIsDismissSettling(false);
+					}, 240);
 				}
 			} else if (N >= 2 && decidedAxisRef.current === "h" && zoomScaleRef.current === 1 && isDraggingRef.current) {
 				const threshold = Math.min(70, window.innerWidth * 0.22);
@@ -1091,6 +1101,12 @@ export function PhotoViewer({
 	const chromeVisible = showChrome && dismissY === 0 && !isClosing && !isHeroBeforeFlight;
 	const hideCursor = isDesktop && !showChrome;
 	const chromeFadeClass = `transition-opacity duration-300 ${chromeVisible ? "opacity-100" : "pointer-events-none opacity-0"}`;
+	// While the track is scaled or clipped (hero flight, open/close zoom, dismiss
+	// drag) the prev/next slides sit right at its edges. Some (older) Android
+	// WebViews don't clip a composited child reliably there, so slivers of the
+	// neighbouring photos flickered in at the sides — they're only needed for a
+	// horizontal swipe, which can't happen during any of these.
+	const hideNeighborSlides = isHeroActive || !isEntered || isClosing || dismissY !== 0 || isDismissDragging || isDismissSettling;
 
 	return createPortal(
 		<div
@@ -1383,7 +1399,8 @@ export function PhotoViewer({
 
 			<div
 				ref={trackContainerRef}
-				className="h-full w-full overflow-hidden"
+				// contain: paint makes the clip to this box hold for composited children too.
+				className="h-full w-full overflow-hidden [contain:paint]"
 				style={
 					heroPhase === "measure"
 						? { visibility: "hidden" }
@@ -1459,6 +1476,7 @@ export function PhotoViewer({
 								// overflow-hidden lives here so the clip boundary for a
 								// zoomed image/video is the full slide, not some smaller box.
 								className="flex h-full w-screen flex-shrink-0 items-center justify-center overflow-hidden"
+								style={!isCurrent && hideNeighborSlides ? { visibility: "hidden" } : undefined}
 								onClick={closeAnimated}
 							>
 								<div

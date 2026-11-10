@@ -29,6 +29,9 @@ fi
 #   FG_API_URL   REST/WebSocket   (Rust, grindr-patched/src/server.rs)
 #   FG_MEDIA_URL media host       (Rust + HTTP scope below)
 #   FG_RTC_URL   LiveKit host     (CSP below)
+#   FG_FCM_PROJECT_ID / FG_FCM_APP_ID / FG_FCM_API_KEY / FG_FCM_SENDER_ID
+#                Firebase client config for Free Grind push (Rust, api/server.rs)
+#   FG_CA_CERT   extra root CA, test builds only (server/LOCAL-TLS.md)
 TAURI_CONFIG="$(bun scripts/free-grind-config.mjs)"
 export TAURI_CONFIG
 

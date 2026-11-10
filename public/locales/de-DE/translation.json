@@ -462,6 +462,7 @@
         "filter_summary": "Position: {{position}} · Alter: {{age}}",
         "try_again": "Erneut versuchen",
         "empty": "Keine aktiven Sessions in der Nähe.",
+        "empty_desc": "Leute in deiner Nähe, die Right Now posten, erscheinen hier.",
         "error_load": "Feed konnte nicht geladen werden",
         "message_aria": "{{name}} Nachricht senden",
         "any_position": "Alle",
@@ -1176,8 +1177,8 @@
         "map": "Karte",
         "grid_visibility": "Grid-Sichtbarkeit",
         "incognito_mode": "Inkognito-Modus",
-        "incognito_mode_desc": "Verhindert, dass das Grid lädt oder sich aktualisiert, verbirgt deine Lesebestätigungen und meldet keine Profilaufrufe — so kannst du stöbern, ohne online zu erscheinen oder Spuren zu hinterlassen.",
-        "incognito_mode_note": "Solange dies aktiv ist: Das Grid (inklusive Hintergrundaktualisierung) lädt nicht, Lesebestätigungen werden nie gesendet und Profilbesuche werden nicht als Aufruf erfasst. Wenn du den Inkognito-Modus ausschaltest, wird all das sofort wiederhergestellt.",
+        "incognito_mode_desc": "Überall als offline anzeigen, das Grid nicht laden oder aktualisieren, deine Lesebestätigungen verbergen und keine Profilaufrufe melden — so kannst du stöbern, ohne online zu erscheinen oder Spuren zu hinterlassen.",
+        "incognito_mode_note": "Solange dies aktiv ist: Dein Konto wird allen als offline angezeigt (sofern dein Konto Inkognito auf dem Server hat), das Grid (inklusive Hintergrundaktualisierung) lädt nicht, Lesebestätigungen werden nie gesendet und Profilbesuche werden nicht als Aufruf erfasst. Wenn du den Inkognito-Modus ausschaltest, wird all das sofort wiederhergestellt.",
         "app_disguise": "App-Tarnung",
         "app_disguise_desc": "Ersetze Symbol und Namen der App auf dem Homescreen durch eine Tarnung, damit sie sich nicht verrät, wenn jemand anderes auf dein Handy schaut.",
         "app_disguise_off": "Aus",
@@ -1212,7 +1213,8 @@
         "blur_album_media": "Album-Vorschau unscharf",
         "blur_album_media_desc": "Macht Fotos und Videos in der Album-Vorschau unscharf. Einmal antippen zum Anzeigen (am Desktop Hover).",
         "blur_right_now_media": "Right-Now-Medien unscharf",
-        "blur_right_now_media_desc": "Macht Fotos in Right-Now-Posts unscharf, im Feed und auf der Karte. Einmal antippen zum Anzeigen (am Desktop Hover)."
+        "blur_right_now_media_desc": "Macht Fotos in Right-Now-Posts unscharf, im Feed und auf der Karte. Einmal antippen zum Anzeigen (am Desktop Hover).",
+        "incognito_server_unavailable": "Dein Konto kann seinen Online-Status auf dem Server nicht verbergen; Grid, Lesebestätigungen und Profilaufrufe bleiben auf diesem Gerät trotzdem verborgen."
     },
     "customizability": {
         "subtitle": "Personalisiere das Aussehen der App und den Aufbau ihrer Seiten.",

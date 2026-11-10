@@ -1016,6 +1016,36 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 		return map;
 	}, [shareableAlbums]);
 
+	// The server's word on which of our albums are shared with this chat's
+	// profile, fetched whenever the drawer opens. The thread only holds the
+	// pages loaded so far, so a share message further up would otherwise be
+	// missed until scrolled to. Albums the server couldn't answer for fall
+	// back to what the loaded messages say.
+	const [serverAlbumShared, setServerAlbumShared] = useState<Map<number, boolean>>(() => new Map());
+	const shareableAlbumIdsKey = shareableAlbums.map((album) => album.albumId).join(",");
+	useEffect(() => {
+		setServerAlbumShared(new Map());
+		if (!isDrawerOpen || headerProfileId == null || !shareableAlbumIdsKey) return;
+		let cancelled = false;
+		const albumIds = shareableAlbumIdsKey.split(",").map(Number);
+		void Promise.all(
+			albumIds.map(async (albumId) => {
+				try {
+					const profileIds = await apiFunctions.getAlbumShares({ albumId: String(albumId) });
+					return [albumId, profileIds.includes(headerProfileId)] as const;
+				} catch {
+					return null;
+				}
+			}),
+		).then((results) => {
+			if (cancelled) return;
+			const map = new Map<number, boolean>();
+			for (const result of results) if (result) map.set(result[0], result[1]);
+			setServerAlbumShared(map);
+		});
+		return () => { cancelled = true; };
+	}, [isDrawerOpen, headerProfileId, shareableAlbumIdsKey, apiFunctions]);
+
 	const sharedAlbumIds = useMemo(() => {
 		const ids = new Set<number>();
 		for (const msg of threadMessages) {
@@ -1023,8 +1053,12 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 			const body = msg.body as any;
 			if (aid && body?.isViewable) ids.add(aid);
 		}
+		for (const [albumId, shared] of serverAlbumShared) {
+			if (shared) ids.add(albumId);
+			else ids.delete(albumId);
+		}
 		return ids;
-	}, [threadMessages]);
+	}, [threadMessages, serverAlbumShared]);
 
     const [showReadReceiptToggle] = useState(() => getShowReadReceiptToggle());
     // Derived from the privacy cache so a toggle from the chat list's context menu shows up here too.

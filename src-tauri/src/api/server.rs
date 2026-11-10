@@ -73,6 +73,36 @@ pub fn activate(config: grindr::ServerConfig) -> Result<(), AppError> {
     Ok(())
 }
 
+/// Firebase client config of the Free Grind server's own project (push on
+/// Android), compiled in like the server addresses: FG_FCM_PROJECT_ID,
+/// FG_FCM_APP_ID, FG_FCM_API_KEY, FG_FCM_SENDER_ID. All public values from
+/// google-services.json; the server keeps the service account to send.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FcmClientConfig {
+    pub project_id: String,
+    pub application_id: String,
+    pub api_key: String,
+    pub sender_id: String,
+}
+
+fn build_env(value: Option<&'static str>) -> Option<String> {
+    value.map(str::trim).filter(|v| !v.is_empty()).map(str::to_owned)
+}
+
+/// `None` unless the build set all four FG_FCM_* variables and has a Free Grind server.
+pub fn free_grind_fcm() -> Option<FcmClientConfig> {
+    if !grindr::free_grind_available() {
+        return None;
+    }
+    Some(FcmClientConfig {
+        project_id: build_env(option_env!("FG_FCM_PROJECT_ID"))?,
+        application_id: build_env(option_env!("FG_FCM_APP_ID"))?,
+        api_key: build_env(option_env!("FG_FCM_API_KEY"))?,
+        sender_id: build_env(option_env!("FG_FCM_SENDER_ID"))?,
+    })
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerInfo {
@@ -81,6 +111,8 @@ pub struct ServerInfo {
     pub media_base: Option<String>,
     /// Whether this build has a Free Grind server at all.
     pub free_grind_available: bool,
+    /// Push config for the Free Grind server (only while it's the active one).
+    pub fcm: Option<FcmClientConfig>,
 }
 
 fn info(config: &grindr::ServerConfig) -> ServerInfo {
@@ -89,6 +121,7 @@ fn info(config: &grindr::ServerConfig) -> ServerInfo {
         api_base: config.api_base().to_owned(),
         media_base: config.media_base().map(str::to_owned),
         free_grind_available: grindr::free_grind_available(),
+        fcm: if config.is_official() { None } else { free_grind_fcm() },
     }
 }
 
@@ -131,6 +164,8 @@ pub async fn test_server(selection: ServerSelection) -> Result<ServerProbe, AppE
     }
     let client = wreq::Client::builder()
         .timeout(Duration::from_secs(8))
+        // Same trust as the API client (plus FG_CA_CERT in test builds).
+        .cert_store(grindr::extra_cert_store())
         .build()
         .map_err(|e| AppError::Http(e.to_string()))?;
     let started = std::time::Instant::now();

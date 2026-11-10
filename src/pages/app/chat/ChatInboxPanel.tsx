@@ -7,6 +7,7 @@ import { ScrollToTopButton } from "../../../components/ui/ScrollToTopButton";
 import { measureElement, useVirtualizer } from "@tanstack/react-virtual";
 import { ChatSearchPanel } from "./ChatSearchPanel";
 import { DrawerEmptyState } from "./drawerUi";
+import { FeedErrorState } from "../../../components/ui/states";
 import { ChatInboxHeader, type ChatInboxHeaderProps } from "./ChatInboxHeader";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -1163,16 +1164,12 @@ export function ChatInboxPanel({
 									))}
 								</div>
 							) : inboxError ? (
-								<div className="flex flex-col items-center justify-center gap-3 p-6 text-center">
-									<p className="text-sm text-[var(--text-muted)]">{inboxError}</p>
-									<button
-										type="button"
-										onClick={onRefreshInbox}
-										className="btn-accent px-4 py-2 text-sm"
-									>
-										{t("chat.retry")}
-									</button>
-								</div>
+								<FeedErrorState
+									title={t("chat.errors.load_inbox")}
+									description={inboxError !== t("chat.errors.load_inbox") ? inboxError : undefined}
+									onRetry={() => void onRefreshInbox()}
+									retryLabel={t("chat.retry")}
+								/>
 							) : filteredConversations.length === 0 ? (
 								hasActiveInboxFilters ? (
 									<DrawerEmptyState

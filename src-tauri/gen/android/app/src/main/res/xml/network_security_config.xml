@@ -4,4 +4,12 @@
         <domain includeSubdomains="true">10.10.0.78</domain>
         <domain includeSubdomains="true">localhost</domain>
     </domain-config>
+    <!-- Debug builds only: trust user-installed CAs, e.g. Caddy's `tls internal`
+         root for a local Free Grind test server. Release builds ignore this. -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
 </network-security-config>

@@ -14,7 +14,7 @@ edition = "2021"
 rust-version = "1.88"
 name = "grindr"
 version = "0.34.0+26.24.0.195444"
-build = false
+build = "build.rs"
 exclude = [
     ".forgejo",
     ".gitignore",

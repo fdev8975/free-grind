@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
+import { useApiFunctions } from "../../hooks/useApiFunctions";
 import {
 	CheckCheck,
 	ImageOff,
@@ -62,6 +64,36 @@ export function SettingsPrivacyPage() {
 	const [showReadReceiptToggle, setShowReadReceiptToggle] = useState(() => getShowReadReceiptToggle());
 	const [recordProfileViews, setRecordProfileViews] = useState(() => isRecordProfileViewsEnabled());
 	const [incognitoMode, setIncognitoModeState] = useState(() => getIncognitoMode());
+	const apiFunctions = useApiFunctions();
+
+	// Incognito also switches the account's server-side setting (shown as
+	// offline everywhere). The local mode is the source of truth: if the server
+	// disagrees (other device, entitlement ran out), it's sent again, silently.
+	useEffect(() => {
+		let cancelled = false;
+		void apiFunctions
+			.getMySettings()
+			.then((settings) => {
+				const local = getIncognitoMode();
+				if (!cancelled && settings.incognito !== local) return apiFunctions.updateMySettings({ incognito: local });
+			})
+			.catch(() => undefined);
+		return () => {
+			cancelled = true;
+		};
+	}, [apiFunctions]);
+
+	const changeIncognito = (checked: boolean) => {
+		setIncognitoModeState(checked);
+		void setIncognitoMode(checked);
+		void apiFunctions.updateMySettings({ incognito: checked }).catch(() => {
+			// Not available for this account (paid upstream, per role on Free Grind):
+			// the local part still applies.
+			if (checked) {
+				toast(t("privacy.incognito_server_unavailable", { defaultValue: "Your account can't hide its online status on the server; the Grid, read receipts and profile views stay hidden on this device." }));
+			}
+		});
+	};
 	const [disguiseSupported] = useState(() => isAppDisguiseSupported());
 	const [disguise, setDisguiseState] = useState<AppDisguiseId>(() => getCurrentAppDisguise());
 
@@ -105,10 +137,7 @@ export function SettingsPrivacyPage() {
 							label={t("privacy.incognito_mode")}
 							description={t("privacy.incognito_mode_desc")}
 							checked={incognitoMode}
-							onChange={(checked) => {
-								setIncognitoModeState(checked);
-								void setIncognitoMode(checked);
-							}}
+							onChange={changeIncognito}
 						/>
 						<ToggleRow
 							id="privacy-send-read-receipts"

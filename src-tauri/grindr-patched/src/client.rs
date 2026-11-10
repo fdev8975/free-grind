@@ -192,6 +192,7 @@ fn grindr_client_builder() -> wreq::ClientBuilder {
 		.pool_idle_timeout(OKHTTP_POOL_IDLE)
 		.pool_max_idle_per_host(OKHTTP_MAX_IDLE_CONNECTIONS)
 		.tcp_keepalive(None)
+		.cert_store(crate::server::extra_cert_store())
 }
 
 fn build_http_client(read_timeout: Duration) -> Result<Client, GrindrError> {

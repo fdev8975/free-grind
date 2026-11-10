@@ -1,10 +1,11 @@
 import { useAuth } from "../../contexts/useAuth";
-import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2 } from "lucide-react";
 import { useFeatureFlag } from "../../services/assignmentsStore";
 import { GridMap, hasCardPosition, type MapCard } from "./gridpage/components/GridMap";
 import { readGridViewMode, writeGridViewMode, type GridViewMode } from "./gridpage/gridViewMode";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
-import { EyeOffFilled, LocateApproximateFilled, LocateFixedFilled, MapPinFilled, UserFilled, UserSearchFilled } from "../../components/icons/FilledIcons";
+import { EyeOffFilled, LayoutGridFilled, LocateApproximateFilled, LocateFixedFilled, MapFilled, MapPinFilled, UserFilled, UserSearchFilled } from "../../components/icons/FilledIcons";
+import { IconTabs, type IconTabConfig } from "../../components/ui/icon-tabs";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useApiFunctions } from "../../hooks/useApiFunctions";
@@ -731,13 +732,19 @@ export function GridPage() {
 		},
 		[userId],
 	);
+	const gridViewModeTabs: IconTabConfig<GridViewMode>[] = useMemo(
+		() => [
+			{ key: "list", label: t("browse_page.view_list", { defaultValue: "Grid" }), icon: LayoutGridFilled },
+			{ key: "map", label: t("browse_page.view_map", { defaultValue: "Map" }), icon: MapFilled },
+		],
+		[t],
+	);
 	const [mapCards, setMapCards] = useState<MapCard[]>([]);
 	// Explore mode on the map: a pin the user drops anywhere by tapping the
 	// map. Starts at the explore place, but moving it doesn't change that place
 	// (the location picker's choice stays as it is). Outside explore mode the
 	// map shows the cascade around the user's own location.
 	const [explorePin, setExplorePin] = useState<{ lat: number; lon: number } | null>(null);
-	const [mapError, setMapError] = useState<string | null>(null);
 	useEffect(() => {
 		if (!exploreLocation) {
 			setExplorePin(null);
@@ -766,15 +773,15 @@ export function GridPage() {
 				});
 				if (cancelled) return;
 				setMapCards(parsed.cards.filter(hasCardPosition));
-				setMapError(null);
 			} catch {
-				if (!cancelled) setMapError(t("api.errors.load_browse_profiles"));
+				// The map stays up; a failed load just reads as nobody nearby.
+				if (!cancelled) setMapCards([]);
 			}
 		})();
 		return () => {
 			cancelled = true;
 		};
-	}, [showGridMap, geohash, explorePinGeohash, exploreLocation, browseRequestFilters, getBrowseCardsWithTimeout, t]);
+	}, [showGridMap, geohash, explorePinGeohash, exploreLocation, browseRequestFilters, getBrowseCardsWithTimeout]);
 
 	const refreshLocation = useCallback(async () => {
 		if (!useAutoLocation || !("geolocation" in navigator)) {
@@ -1935,19 +1942,14 @@ export function GridPage() {
 									</button>
 								</div>
 								{isMapFlagOn ? (
-									<button
-										type="button"
-										onClick={() => changeGridViewMode(showGridMap ? "list" : "map")}
-										title={showGridMap ? t("browse_page.view_list", { defaultValue: "Grid" }) : t("browse_page.view_map", { defaultValue: "Map" })}
-										aria-label={showGridMap ? t("browse_page.view_list", { defaultValue: "Grid" }) : t("browse_page.view_map", { defaultValue: "Map" })}
-										aria-pressed={showGridMap}
-										className={cn(
-											"inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-all active:scale-95 rail:h-[38px] rail:w-[38px]",
-											showGridMap ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-lg" : "glass-pill text-[var(--text-muted)] hover:text-[var(--text)]",
-										)}
-									>
-										{showGridMap ? <LayoutGrid className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
-									</button>
+									// Same segmented control as Right Now's list/map toggle.
+									<div className="shrink-0">
+										<IconTabs
+											activeTab={showGridMap ? "map" : "list"}
+											tabs={gridViewModeTabs}
+											onTabClick={changeGridViewMode}
+										/>
+									</div>
 								) : null}
 								<button
 									type="button"
@@ -2227,10 +2229,10 @@ export function GridPage() {
 							className="pointer-events-none absolute inset-y-0 start-0 z-10 hidden w-[calc(var(--nav-rail-width)+4rem)] rail:block"
 							style={{ background: "linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.75) 55%, transparent 100%)" }}
 						/>
-						{mapError || mapCards.length === 0 ? (
+						{mapCards.length === 0 ? (
 							<div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-8">
 								<p className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/90 px-4 py-3 text-center text-sm text-[var(--text-muted)] shadow-lg backdrop-blur">
-									{mapError ?? t("browse_page.map_empty", { defaultValue: "Nobody nearby shares their location on the map." })}
+									{t("browse_page.map_empty", { defaultValue: "Nobody nearby shares their location on the map." })}
 								</p>
 							</div>
 						) : null}
@@ -2252,6 +2254,7 @@ export function GridPage() {
 							isIncognitoActive={isIncognitoActive}
 							onOpenLocation={() => setIsLocationOpen(true)}
 							onManagePrivacy={() => navigate("/settings/privacy")}
+							onRetry={() => void loadBrowseCards({ preferCache: false, showLoadingState: true })}
 							cards={sortedCards}
 							chatContactIndexByProfileId={
 								(SHOW_DEMO_DATA && showDebugInfo)
