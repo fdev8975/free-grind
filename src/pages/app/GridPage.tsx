@@ -719,7 +719,7 @@ export function GridPage() {
 	);
 
 	// Grid map view (flag "browse-maps-v1_5")
-	const isMapFlagOn = useFeatureFlag("browse-maps-v1_5");
+	const isMapFlagOn = false; // useFeatureFlag("browse-maps-v1_5");
 	const [gridViewMode, setGridViewMode] = useState<GridViewMode>(() => readGridViewMode(userId));
 	useEffect(() => {
 		setGridViewMode(readGridViewMode(userId));
