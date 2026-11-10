@@ -10,7 +10,7 @@ use crate::error::GrindrError;
 /// version mirrors this string but means nothing to Cargo on its own.
 pub const APP_VERSION: &str = "26.24.0.195444";
 pub(crate) const BUILD_NUMBER: &str = "195444";
-const OKHTTP_USER_AGENT: &str = "okhttp/5.5.0";
+const OKHTTP_USER_AGENT: &str = "okhttp/5.5.1";
 
 const MEDIA_ACCEPT: &str = "image/webp,image/*;q=0.8";
 

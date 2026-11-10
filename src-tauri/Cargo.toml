@@ -53,7 +53,7 @@ tauri-plugin-notification = { path = "notification-patched" }
 tauri-plugin-http = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 wreq = { version = "0.15", features = ["gzip", "json"] }
-# Vendored 0.32.1 plus account creation and SMS verification, the banned
+# Vendored 0.34.0 plus account creation and SMS verification, the banned
 # profile's id in BanInfo and a settable API language (L-Locale) until they
 # land upstream (grindr-patched/account-creation-and-sms-verification.patch,
 # ban-profile-id.patch, api-locale.patch).
