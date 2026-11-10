@@ -51,6 +51,7 @@ import { sendViaRealtime } from "./chatRealtime";
 import { MAX_CHAT_MEDIA_BYTES, uploadStagedVideo } from "./stagedVideoUpload";
 import { assertUploadFits, stagedEdit, uploadProgressReporter } from "./videoReencode";
 import { isPaywallError, withEntitlementBypass } from "./entitlementBypass";
+import { expiringKindOfMessage, markExpiringAllowanceStale } from "./expiringAllowance";
 
 export { ApiFunctionError as ChatApiError };
 
@@ -377,16 +378,25 @@ export function createChatService(
 					return messageSchema.parse(await parseJsonSafe(response));
 				}
 			};
+			const expiringKind = expiringKindOfMessage(safePayload.type, safePayload.body);
 			const reason =
-				safePayload.type === "ExpiringImage"
+				expiringKind === "pics"
 					? t("entitlement_bypass.reason_expiring_photo", {
 							defaultValue:
 								"Daily expiring photo limit reached. Sending more requires a Grindr subscription.",
 						})
-					: t("entitlement_bypass.reason_message", {
-							defaultValue: "Sending this message requires a Grindr subscription.",
-						});
-			return withEntitlementBypass(reason, send);
+					: expiringKind === "videos"
+						? t("entitlement_bypass.reason_expiring_video", {
+								defaultValue:
+									"Expiring video limit reached. Sending more requires a Grindr subscription.",
+							})
+						: t("entitlement_bypass.reason_message", {
+								defaultValue: "Sending this message requires a Grindr subscription.",
+							});
+			const sent = withEntitlementBypass(reason, send);
+			// Sent or refused, the counters shown next to the expiry toggles changed.
+			if (expiringKind) void sent.then(() => markExpiringAllowanceStale(expiringKind), () => markExpiringAllowanceStale(expiringKind));
+			return sent;
 		},
 
 		async sendText(payload: SendTextPayload): Promise<Message> {
@@ -723,7 +733,7 @@ export function createChatService(
 				(profile) => profile.expirationType !== "INDEFINITE" && profile.expirationType !== 0,
 			);
 			if (isExpiringShare) {
-				await share().catch((error: unknown) => {
+				await share().finally(() => markExpiringAllowanceStale("albums")).catch((error: unknown) => {
 					if (isPaywallError(error)) {
 						throw new Error(
 							t("entitlement_bypass.expiring_album_no_bypass", {

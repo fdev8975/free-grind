@@ -37,6 +37,7 @@ import {
 	DrawerTileCornerButton,
 	ExpiryToggleButton,
 	GroupTileOverlay,
+	tighterAllowance,
 	useDrawerMediaPreview,
 	VideoExpiryButton,
 } from "./drawerUi";
@@ -58,6 +59,7 @@ import {
 } from "../../../services/restoredDrawerMedia";
 import { usePreferences } from "../../../contexts/PreferencesContext";
 import { useCanSendExpiringAlbums } from "../../../services/assignmentsStore";
+import { useExpiringAllowanceInfo } from "../../../hooks/queries/useEntitlementQueries";
 import * as chatDb from "../../../services/chatDb";
 import type { StoredDrawerCollection } from "../../../services/chatDb";
 import { appLog } from "../../../utils/logger";
@@ -260,8 +262,15 @@ export function ChatDrawerPanel({
 	const EXPIRY_OPTIONS = ["INDEFINITE", "ONCE", "TEN_MINUTES", "ONE_HOUR", "ONE_DAY"];
 	const [albumExpirationType, setAlbumExpirationType] = useState<string>(defaultAlbumExpirationType);
 	// Free accounts can't share expiring albums: no expiry picker, always INDEFINITE.
-	const canSendExpiringAlbums = useCanSendExpiringAlbums();
-	const effectiveAlbumExpirationType = canSendExpiringAlbums ? albumExpirationType : "INDEFINITE";
+	// Known allowance wins over the tier guess: 0/0 = not allowed at all, used up
+	// = no way around it (Grindr has no bypass for expiring albums either).
+	const albumAllowance = useExpiringAllowanceInfo("albums");
+	const tierAllowsExpiringAlbums = useCanSendExpiringAlbums();
+	const canSendExpiringAlbums = albumAllowance.allowance ? albumAllowance.allowance.total > 0 : tierAllowsExpiringAlbums;
+	const expiringAlbumsBlocked = albumAllowance.blocked;
+	const effectiveAlbumExpirationType = canSendExpiringAlbums && !expiringAlbumsBlocked ? albumExpirationType : "INDEFINITE";
+	const picsAllowance = useExpiringAllowanceInfo("pics");
+	const videosAllowance = useExpiringAllowanceInfo("videos");
 	const EXPIRY_LABELS: Record<string, string> = {
 		INDEFINITE: t("chat_drawer.expiry.unlimited", { defaultValue: "Unlimited" }),
 		ONCE: t("chat_drawer.expiry.once", { defaultValue: "Once" }),
@@ -484,6 +493,7 @@ export function ChatDrawerPanel({
 	// (2) only means something for videos, so it's not offered once photos
 	// are in the mix.
 	const isMixedSelection = hasAnyVideo && hasAnyImage;
+	const mediaAllowance = isMixedSelection ? tighterAllowance(picsAllowance, videosAllowance) : hasAnyVideo ? videosAllowance : picsAllowance;
 	useEffect(() => {
 		if (mediaMaxViews === 2 && hasAnyImage) setMediaMaxViews(1);
 	}, [mediaMaxViews, hasAnyImage]);
@@ -985,12 +995,21 @@ export function ChatDrawerPanel({
 												<div className={`${SHEET_FOOTER_FIELD_CLASS} min-w-0 flex-1`}>
 													<Hourglass className="pointer-events-none absolute start-3 h-4 w-4 shrink-0" />
 													<select
-														value={albumExpirationType}
+														value={effectiveAlbumExpirationType}
 														onChange={(e) => setAlbumExpirationType(e.target.value)}
+														title={albumAllowance.limited && albumAllowance.allowance
+															? expiringAlbumsBlocked
+																? t("expiring_allowance.albums_exhausted", { defaultValue: "Expiring album limit reached. Only unlimited shares are possible right now." })
+																: t("expiring_allowance.remaining", { defaultValue: "{{available}} of {{total}} expiring left", available: albumAllowance.allowance.available, total: albumAllowance.allowance.total })
+															: undefined}
 														className="h-full w-full appearance-none rounded-full bg-transparent ps-9 pe-3 text-sm font-semibold text-[var(--text)] focus:outline-none cursor-pointer text-center"
 													>
 														{EXPIRY_OPTIONS.map((opt) => (
-															<option key={opt} value={opt}>{EXPIRY_LABELS[opt]}</option>
+															<option key={opt} value={opt} disabled={expiringAlbumsBlocked && opt !== "INDEFINITE"}>
+																{opt !== "INDEFINITE" && albumAllowance.limited && albumAllowance.allowance
+																	? `${EXPIRY_LABELS[opt]} (${albumAllowance.allowance.available}/${albumAllowance.allowance.total})`
+																	: EXPIRY_LABELS[opt]}
+															</option>
 														))}
 													</select>
 												</div>
@@ -1017,11 +1036,12 @@ export function ChatDrawerPanel({
 							<DrawerFooter>
 								{/* Only videos have a third choice (repeat); otherwise it's on/off. */}
 								{hasAnyVideo && !isMixedSelection ? (
-									<VideoExpiryButton value={mediaMaxViews} onChange={setMediaMaxViews} isDesktop={isDesktop} />
+									<VideoExpiryButton value={mediaMaxViews} onChange={setMediaMaxViews} isDesktop={isDesktop} allowance={videosAllowance} />
 								) : (
 									<ExpiryToggleButton
 										expiring={mediaMaxViews !== 2147483647}
 										onChange={(expiring) => setMediaMaxViews(expiring ? 1 : 2147483647)}
+										allowance={mediaAllowance}
 										expiringLabel={isMixedSelection
 											? t("chat_drawer.expiry.ten_seconds_or_once", { defaultValue: "10s / once" })
 											: t("chat_drawer.expiry.ten_seconds", { defaultValue: "10s" })}

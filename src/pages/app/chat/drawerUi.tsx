@@ -12,6 +12,10 @@ import { VideoFirstFrame } from "../../../components/VideoFirstFrame";
 import { EmptyStateCreateButton, SheetActionList } from "../../../components/ui/action-sheet";
 import { MediaUploadOverlay } from "../../../components/ui/progress-ring";
 import type { DrawerUpload } from "./useUploadTiles";
+import toast from "react-hot-toast";
+import type { ExpiringAllowanceInfo } from "../../../hooks/queries/useEntitlementQueries";
+import { AllowanceCounter, useAllowanceHint, useResetWhenBlocked } from "../../../components/ExpiringAllowance";
+export { tighterAllowance } from "../../../components/ExpiringAllowance";
 
 // Shared building blocks for every media drawer sheet (chat drawer, collection
 // editor, album "add from drawer", profile pictures), so they stay in sync:
@@ -883,15 +887,21 @@ export function VideoExpiryButton({
 	onChange,
 	isDesktop,
 	disabled,
+	allowance,
 }: {
 	/** maxViews: 1 = once, 2 = repeat, anything else = unlimited. */
 	value: number;
 	onChange: (maxViews: number) => void;
 	isDesktop: boolean;
 	disabled?: boolean;
+	/** Expiring video allowance: counter in the pill, once/repeat locked when it's used up for good. */
+	allowance?: ExpiringAllowanceInfo;
 }) {
 	const { t } = useTranslation();
 	const [isOpen, setIsOpen] = useState(false);
+	const hint = useAllowanceHint(allowance);
+	const blocked = allowance?.blocked ?? false;
+	useResetWhenBlocked(blocked, value === 1 || value === 2, () => onChange(VIDEO_VIEWS_UNLIMITED));
 	const options = [
 		{ value: VIDEO_VIEWS_UNLIMITED, icon: InfinityIcon, iconClassName: "bg-sky-500/15 text-sky-400", label: t("chat_drawer.expiry.unlimited", { defaultValue: "Unlimited" }), description: t("chat_drawer.video_expiry_unlimited_desc", { defaultValue: "Can be watched as often as they like" }) },
 		{ value: 1, icon: Eye, iconClassName: "bg-amber-500/15 text-amber-400", label: t("chat_drawer.expiry.once", { defaultValue: "Once" }), description: t("chat_drawer.video_expiry_once_desc", { defaultValue: "Can be watched one time" }) },
@@ -906,6 +916,7 @@ export function VideoExpiryButton({
 				onClick={() => setIsOpen(true)}
 				disabled={disabled}
 				aria-haspopup="dialog"
+				title={hint ?? undefined}
 				className={`inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold transition-[transform,background-color,color] duration-150 active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 ${
 					isLimited
 						? EXPIRY_ACTIVE_CLASS
@@ -914,6 +925,7 @@ export function VideoExpiryButton({
 			>
 				<current.icon className="h-4 w-4" />
 				<span>{current.label}</span>
+				<AllowanceCounter info={allowance} />
 				<ChevronDown className="h-3.5 w-3.5 opacity-70" />
 			</button>
 			{/* Portaled: this sits inside another (transformed) sheet, where a fixed sheet wouldn't cover the screen. */}
@@ -927,9 +939,16 @@ export function VideoExpiryButton({
 						icon: option.icon,
 						iconClassName: option.iconClassName,
 						label: option.label,
-						description: option.description,
+						// Once / repeat: the allowance's state instead, when there's one to tell.
+						description: option.value !== VIDEO_VIEWS_UNLIMITED && hint ? hint : option.description,
+						disabled: blocked && option.value !== VIDEO_VIEWS_UNLIMITED,
 						selected: option.value === current.value,
-						onSelect: () => onChange(option.value),
+						onSelect: () => {
+							if (option.value !== VIDEO_VIEWS_UNLIMITED && allowance?.needsBypass && hint) {
+								toast(hint, { id: "expiring-allowance" });
+							}
+							onChange(option.value);
+						},
 					}))}
 				/>,
 				document.body,
@@ -994,22 +1013,39 @@ export function ExpiryToggleButton({
 	onChange,
 	expiringLabel,
 	disabled,
+	allowance,
 }: {
 	expiring: boolean;
 	onChange: (expiring: boolean) => void;
 	/** Shown while expiring, e.g. "10s". */
 	expiringLabel: string;
 	disabled?: boolean;
+	/** Expiring photo (or video) allowance: counter in the pill, can't turn on when it's used up for good. */
+	allowance?: ExpiringAllowanceInfo;
 }) {
 	const { t } = useTranslation();
 	const unlimitedLabel = t("chat_drawer.expiry.unlimited", { defaultValue: "Unlimited" });
+	const hint = useAllowanceHint(allowance);
+	const blocked = allowance?.blocked ?? false;
+	useResetWhenBlocked(blocked, expiring, () => onChange(false));
 	return (
 		<button
 			type="button"
-			onClick={() => onChange(!expiring)}
+			onClick={() => {
+				if (!expiring && hint && (blocked || allowance?.needsBypass)) {
+					// Blocked: say why instead of toggling. Bypass: toggle, but say what sending will ask.
+					if (blocked) {
+						toast.error(hint, { id: "expiring-allowance" });
+						return;
+					}
+					toast(hint, { id: "expiring-allowance" });
+				}
+				onChange(!expiring);
+			}}
 			disabled={disabled}
 			aria-pressed={expiring}
-			title={expiring ? expiringLabel : unlimitedLabel}
+			aria-disabled={blocked || undefined}
+			title={hint ?? (expiring ? expiringLabel : unlimitedLabel)}
 			className={`inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold tabular-nums transition-[transform,background-color,color] duration-150 active:scale-[0.96] disabled:pointer-events-none disabled:opacity-50 ${
 				expiring
 					? EXPIRY_ACTIVE_CLASS
@@ -1018,6 +1054,7 @@ export function ExpiryToggleButton({
 		>
 			{expiring ? <Hourglass className="h-4 w-4 animate-hourglass-rotate" /> : <InfinityIcon className="h-4 w-4" />}
 			<span>{expiring ? expiringLabel : unlimitedLabel}</span>
+			<AllowanceCounter info={allowance} />
 		</button>
 	);
 }

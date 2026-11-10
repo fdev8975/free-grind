@@ -45,6 +45,7 @@ import { ApiFunctionError, assertSuccess, parseJsonSafe } from "../apiHelpers";
 import { notifyOwnAlbumsChanged, rememberOwnAlbumDetail, rememberOwnAlbumList } from "../ownAlbumsChanged";
 import { MAX_CHAT_MEDIA_BYTES, uploadStagedVideo } from "../stagedVideoUpload";
 import { assertUploadFits, stagedEdit, uploadProgressReporter } from "../videoReencode";
+import { expiringAllowancePath, expiringAllowanceSchema, type ExpiringAllowance, type ExpiringMediaKind } from "../expiringAllowance";
 
 export function createAlbumMethods(fetchRest: RestFetcher, t: (key: string, options?: { defaultValue?: string }) => string) {
 	return {
@@ -330,6 +331,13 @@ export function createAlbumMethods(fetchRest: RestFetcher, t: (key: string, opti
 			});
 			await assertSuccess(response, t("api.errors.unshare_album"));
 			return { ok: true };
+		},
+
+		/** GET /v4/{pics,videos,albums}/expiring/status, see expiringAllowance. */
+		async getExpiringAllowance(kind: ExpiringMediaKind): Promise<ExpiringAllowance> {
+			const response = await fetchRest(expiringAllowancePath(kind));
+			await assertSuccess(response, t("api.errors.load_expiring_allowance", { defaultValue: "Couldn't load the expiring media allowance" }));
+			return expiringAllowanceSchema.parse(await parseJsonSafe(response));
 		},
 
 		async getAlbumContentProcessing(input: GetAlbumContentProcessingInput): Promise<boolean> {

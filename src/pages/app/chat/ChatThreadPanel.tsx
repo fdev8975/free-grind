@@ -147,6 +147,7 @@ import {
 } from "../../../services/savedPhrases";
 import { useScrollRowFade } from "../../../hooks/useScrollRowFade";
 import { AddToDrawerChip, DrawerEmptyState, ExpiryToggleButton, VideoExpiryButton } from "./drawerUi";
+import { useExpiringAllowanceInfo } from "../../../hooks/queries/useEntitlementQueries";
 import { haptic } from "../../../utils/haptics";
 import { menuTransitionStyle, usePresence } from "../../../hooks/usePresence";
 import { useNicknameNameChange } from "../../../hooks/useNicknameNameChange";
@@ -451,6 +452,9 @@ function SortableSavedPhraseRow({ phrase, onUse, onLongPress, onDelete, isDeskto
 const UNLIMITED_CALL_SECONDS = 30 * 86_400;
 export function ChatThreadPanel(props: ChatThreadPanelProps) {
 	const { t } = useTranslation();
+	// Counters / limits of the attachment dialog's expiry buttons; fetched once it opens (then cached).
+	const picsAllowance = useExpiringAllowanceInfo("pics", props.pendingAttachmentFiles != null);
+	const videosAllowance = useExpiringAllowanceInfo("videos", props.pendingAttachmentFiles != null);
 	const { chat: blurChatMedia } = useMediaBlur();
 	useAvatarCache();
     const apiFunctions = useApiFunctions();
@@ -2796,12 +2800,14 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 										value={attachmentMaxViews}
 										onChange={setAttachmentMaxViews}
 										isDesktop={isDesktop}
+										allowance={videosAllowance}
 									/>
 								) : (
 									// Photos: unlimited or 10s, a single toggle.
 									<ExpiryToggleButton
 										expiring={attachmentMaxViews !== 2147483647}
 										onChange={(expiring) => setAttachmentMaxViews(expiring ? 1 : 2147483647)}
+										allowance={picsAllowance}
 										expiringLabel={t("chat_drawer.expiry.ten_seconds", { defaultValue: "10s" })}
 									/>
 								)

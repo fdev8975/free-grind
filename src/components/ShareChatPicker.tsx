@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Hourglass, Loader2, Search, Star, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import toast from "react-hot-toast";
 import { HeaderBackButton } from "./HeaderBackButton";
 import { PageHeaderBackground } from "./ui/PageHeaderBackground";
 import { ProfileImage } from "./ui/profile-image";
@@ -21,6 +22,8 @@ import {
 import type { ConversationEntry } from "../types/messages";
 import { appLog } from "../utils/logger";
 import { sheetButtonClass } from "./ui/bottom-sheet";
+import { AllowanceCounter, tighterAllowance, useAllowanceHint, useResetWhenBlocked } from "./ExpiringAllowance";
+import { useExpiringAllowanceInfo } from "../hooks/queries/useEntitlementQueries";
 
 const PREVIEW_COUNT = 6;
 
@@ -86,6 +89,13 @@ export function ShareChatPicker({
 	const [selectedIds, setSelectedIds] = useState<string[]>([]);
 	const { defaultExpiringPhotos } = usePreferences();
 	const [viewOnce, setViewOnce] = useState(Boolean(defaultExpiringPhotos));
+	const hasVideo = files.some((file) => file.type.startsWith("video/"));
+	const hasImage = files.some((file) => !file.type.startsWith("video/"));
+	const picsAllowance = useExpiringAllowanceInfo("pics", hasImage);
+	const videosAllowance = useExpiringAllowanceInfo("videos", hasVideo);
+	const allowance = hasImage && hasVideo ? tighterAllowance(picsAllowance, videosAllowance) : hasVideo ? videosAllowance : picsAllowance;
+	const allowanceHint = useAllowanceHint(allowance);
+	useResetWhenBlocked(allowance.blocked, viewOnce, () => setViewOnce(false));
 	const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
 	const api = useApiFunctions();
 	const isSending = progress !== null;
@@ -407,16 +417,28 @@ export function ShareChatPicker({
 							<div className="flex gap-2 px-3">
 								<button
 									type="button"
-									onClick={() => setViewOnce((value) => !value)}
+									onClick={() => {
+										if (!viewOnce && allowanceHint && (allowance.blocked || allowance.needsBypass)) {
+											// Blocked: say why instead of toggling. Bypass: toggle, but say what sending will ask.
+											if (allowance.blocked) {
+												toast.error(allowanceHint, { id: "expiring-allowance" });
+												return;
+											}
+											toast(allowanceHint, { id: "expiring-allowance" });
+										}
+										setViewOnce((value) => !value);
+									}}
 									disabled={isSending}
 									aria-pressed={viewOnce}
-									title={t("chat.attachments.view_once_description")}
+									aria-disabled={allowance.blocked || undefined}
+									title={allowanceHint ?? t("chat.attachments.view_once_description")}
 									className={`inline-flex h-12 min-w-[120px] items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold transition active:scale-[0.97] disabled:opacity-50 ${viewOnce ? "accent-tint-15 text-[var(--accent)]" : "ink-tint-10 text-[var(--text)] hover:ink-tint-14"}`}
 								>
 									<Hourglass className={`h-4 w-4 shrink-0 ${viewOnce ? "" : "text-[var(--text-muted)]"}`} />
 									{viewOnce
 										? t("chat_drawer.expiry.ten_seconds", { defaultValue: "10s" })
 										: t("chat_drawer.expiry.unlimited", { defaultValue: "Unlimited" })}
+									<AllowanceCounter info={allowance} />
 								</button>
 								<button
 									type="button"

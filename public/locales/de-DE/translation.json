@@ -2616,7 +2616,8 @@
             "update_right_now": "Beitrag konnte nicht aktualisiert werden",
             "add_album_content_by_ids": "Medien konnten nicht zum Album hinzugefügt werden.",
             "load_album_poster": "Albumvorschau konnte nicht geladen werden.",
-            "check_profile_album_share": "Albumstatus konnte nicht geprüft werden."
+            "check_profile_album_share": "Albumstatus konnte nicht geprüft werden.",
+            "load_expiring_allowance": "Kontingent für ablaufende Medien konnte nicht geladen werden"
         }
     },
     "errors": {
@@ -3339,7 +3340,8 @@
         "still_refused": "Grindr hat diese kostenpflichtige Funktion weiterhin verweigert",
         "no_location": "Lege deinen Standort fest, bevor du diese Umgehung nutzt",
         "failed": "Diese kostenpflichtige Funktion konnte nicht umgangen werden",
-        "expiring_album_no_bypass": "Ablaufende Alben sind eine kostenpflichtige Grindr-Funktion, und dafür gibt es keine Umgehung."
+        "expiring_album_no_bypass": "Ablaufende Alben sind eine kostenpflichtige Grindr-Funktion, und dafür gibt es keine Umgehung.",
+        "reason_expiring_video": "Limit für ablaufende Videos erreicht. Für mehr verlangt Grindr ein Abo."
     },
     "auto_translate": {
         "api_key_desc": "Wird für alle Chat-Übersetzungen verwendet. Ein Schlüssel für die ganze App, nur auf diesem Gerät gespeichert.",
@@ -3796,5 +3798,11 @@
         "copy_details": "Details kopieren",
         "copy_success": "Details in die Zwischenablage kopiert",
         "continue": "Weiter"
+    },
+    "expiring_allowance": {
+        "remaining": "Noch {{available}} von {{total}} ablaufenden übrig",
+        "exhausted_blocked": "Limit für ablaufende Medien erreicht. Gerade kannst du keine weiteren senden.",
+        "exhausted_bypass": "Limit für ablaufende Medien erreicht. Für mehr verlangt Grindr ein Abo; beim Senden wird der Honduras-Bypass angeboten.",
+        "albums_exhausted": "Limit für ablaufende Alben erreicht. Gerade ist nur unbegrenztes Teilen möglich."
     }
 }
