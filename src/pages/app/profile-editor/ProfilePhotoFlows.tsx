@@ -60,6 +60,7 @@ export function ProfilePhotoFlows({ photos }: { photos: ProfileEditorState["phot
 					deletingHash={photos.deletingPoolHash}
 					onDeleteImage={photos.handleDeletePoolImage}
 					onUploadFile={photos.handleDrawerUploadFile}
+					allowVideo={photos.allowVideo}
 					onAddFromDrawer={openDrawerPicker}
 					uploadTiles={photos.uploadTiles}
 					onClose={() => photos.setIsDrawerOpen(false)}

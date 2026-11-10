@@ -440,6 +440,13 @@
         "request_accepted_waiting": "Anfrage angenommen",
         "request_sent_toast": "Anfrage gesendet",
         "request_error": "Anfrage konnte nicht gesendet werden",
+        "request_already_sent": "Du hast für diesen Post schon eine Anfrage gesendet",
+        "request_post_gone": "Dieser Post ist nicht mehr verfügbar",
+        "request_limit": "Du hast dein Limit für Anfragen erreicht. Versuch es später noch mal.",
+        "request_answer_post_gone": "Dein Post ist beendet, die Anfrage kann nicht mehr beantwortet werden",
+        "discreet_not_allowed": "Diskrete Posts sind für deinen Account nicht freigeschaltet",
+        "error_discreet_not_allowed_created": "Dein Post wurde erstellt, bleibt aber versteckt: Diskrete Posts sind für deinen Account nicht freigeschaltet. Bearbeite ihn, um ihn normal zu posten.",
+        "error_location_missing": "Right Now braucht deinen Standort. Erlaube den Standortzugriff und versuch es noch mal.",
         "requests_title": "Anfragen",
         "request_accept": "Annehmen",
         "request_decline": "Ablehnen",
@@ -649,6 +656,9 @@
         }
     },
     "browse_page": {
+        "view_map": "Karte",
+        "view_list": "Raster",
+        "map_empty": "In der Nähe teilt niemand seinen Standort auf der Karte.",
         "share_distance": {
             "title": "Entfernung teilen",
             "description": "Wähle, wie deine Entfernung für andere angezeigt wird.",
@@ -1101,6 +1111,7 @@
             "footer": "Deine Änderungen bleiben lokal, bis du auf Speichern drückst."
         },
         "toasts": {
+            "video_uploaded": "Video hochgeladen – wird verarbeitet",
             "updated": "Profil aktualisiert",
             "photos_updated": "Profilfotos aktualisiert",
             "photo_uploaded": "Foto hochgeladen",
@@ -1487,16 +1498,10 @@
             "change": "Server ändern",
             "official": "Offizielle Server",
             "official_hint": "Mit deinem Grindr-Konto anmelden.",
-            "custom": "Eigener Server",
-            "custom_hint": "Ein selbst gehosteter free-grind-server. Konten dort sind getrennt.",
-            "url_hint": "https ist Pflicht; http geht nur für lokale Adressen (z. B. 192.168.x.x).",
-            "test": "Verbindung testen",
-            "testing": "Teste…",
-            "reachable": "Erreichbar ({{ms}} ms)",
             "unreachable": "Nicht erreichbar: {{error}}",
             "save": "Diesen Server verwenden",
             "saving": "Wechsle…",
-            "current": "Aktuell: {{server}}"
+            "free_grind_hint": "Der Free-Grind-Server. Konten dort sind von Grindr getrennt."
         },
         "sign_in": {
             "title": "Anmelden",
@@ -1604,6 +1609,27 @@
             "account_created": "Konto erstellt",
             "logged_out": "Abgemeldet",
             "switched_account": "Konto gewechselt"
+        },
+        "email_verification": {
+            "title": "E-Mail bestätigen",
+            "hint": "Wir haben einen 6-stelligen Code an {{email}} geschickt. Gib ihn hier ein oder öffne den Link in der E-Mail.",
+            "your_address": "deine Adresse",
+            "code_placeholder": "Bestätigungscode",
+            "verify": "Bestätigen",
+            "verifying": "Wird geprüft...",
+            "resend": "Neuen Code senden",
+            "resend_in": "Erneut senden ({{seconds}} s)",
+            "sent": "Neuer Code gesendet",
+            "done": "E-Mail-Adresse bestätigt",
+            "wrong_code": "Falscher Code. Prüfe die E-Mail und versuche es erneut.",
+            "expired": "Der Code ist abgelaufen. Fordere einen neuen an.",
+            "too_many": "Zu viele Anfragen. Bitte warte einen Moment.",
+            "send_failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es später erneut.",
+            "failed": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+            "banner": "Bitte bestätige deine E-Mail-Adresse.",
+            "confirm": "Bestätigen",
+            "later": "Später",
+            "sign_out": "Abmelden"
         }
     },
     "chat": {

@@ -15,6 +15,7 @@ import { getThumbImageUrl, validateMediaHash } from "../../../utils/media";
 import { appLog } from "../../../utils/logger";
 import { DrawerEmptyState } from "../chat/drawerUi";
 import type { RightNowReceivedRequest } from "../../../types/right-now";
+import { RightNowPostGoneError } from "../../../services/api/feedMethods";
 
 /** Requests still waiting for an answer. */
 export function pendingRightNowRequests(requests: RightNowReceivedRequest[] | undefined): RightNowReceivedRequest[] {
@@ -100,6 +101,12 @@ function RequestRow({ request }: { request: RightNowReceivedRequest }) {
 			await queryClient.invalidateQueries({ queryKey: ["rightnow", "requests", "inbox"] });
 		} catch (error) {
 			appLog.error("Failed to answer Right Now request:", error);
+			if (error instanceof RightNowPostGoneError) {
+				// The post ended meanwhile; its pending requests are gone with it.
+				toast.error(t("right_now.request_answer_post_gone", { defaultValue: "Your post has ended, so this request can't be answered anymore" }));
+				await queryClient.invalidateQueries({ queryKey: ["rightnow", "requests", "inbox"] });
+				return;
+			}
 			toast.error(
 				error instanceof Error ? error.message : t("right_now.request_answer_error", { defaultValue: "Could not answer the request" }),
 			);

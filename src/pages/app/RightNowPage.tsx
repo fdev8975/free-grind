@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { RightNowLimitError, RightNowPostGoneError, RightNowRequestAlreadySentError } from "../../services/api/feedMethods";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -1183,6 +1184,21 @@ export function RightNowPage() {
 			void queryClient.invalidateQueries({ queryKey: ["rightnow", "requests", "outbox"] });
 		},
 		onError: (requestError) => {
+			if (requestError instanceof RightNowRequestAlreadySentError) {
+				// Nothing went wrong: it's already waiting for an answer.
+				toast(t("right_now.request_already_sent", { defaultValue: "You already sent a request for this post" }));
+				void queryClient.invalidateQueries({ queryKey: ["rightnow", "requests", "outbox"] });
+				return;
+			}
+			if (requestError instanceof RightNowPostGoneError) {
+				toast.error(t("right_now.request_post_gone", { defaultValue: "This post is no longer available" }));
+				void queryClient.invalidateQueries({ queryKey: ["rightnow"] });
+				return;
+			}
+			if (requestError instanceof RightNowLimitError) {
+				toast.error(t("right_now.request_limit", { defaultValue: "You've reached your limit for requests. Try again later." }));
+				return;
+			}
 			toast.error(requestError instanceof Error ? requestError.message : t("right_now.request_error", { defaultValue: "Could not send the request" }));
 		},
 	});

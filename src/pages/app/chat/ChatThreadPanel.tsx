@@ -32,6 +32,7 @@ import {
 	X,
 	BellOff,
 } from "lucide-react";
+import { useFeatureFlag } from "../../../services/assignmentsStore";
 import { MediaEditSheet } from "./MediaEditSheet";
 import type { MediaEdit } from "./MediaEditStep";
 import { BananaFilled, BellOffFilled, StickerFilled, CameraPlusFilled, EyeFilled, MicFilled, EyeOffFilled, ImagesFilled, MapPinFilled, MessageCircleXFilled, MessageSquareQuoteFilled, PencilLineFilled, SendHorizontalFilled, ShieldCheckFilled, UserFilled, VideoOffFilled } from "../../../components/icons/FilledIcons";
@@ -445,6 +446,9 @@ function SortableSavedPhraseRow({ phrase, onUse, onLongPress, onDelete, isDeskto
 	);
 }
 
+
+/** remainingSeconds at or above this means no real limit (30 days). */
+const UNLIMITED_CALL_SECONDS = 30 * 86_400;
 export function ChatThreadPanel(props: ChatThreadPanelProps) {
 	const { t } = useTranslation();
 	const { chat: blurChatMedia } = useMediaBlur();
@@ -500,6 +504,10 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 	// RTCPeerConnection (confirmed missing on some Linux WebKitGTK builds)
 	// instead of showing a menu item that would only fail after tapping it.
 	const [webRtcSupported] = useState(() => isWebRtcSupported());
+	// Both servers hand out video calls as the CreateVideoCall feature in the
+	// session token: without it there's no call button at all. With it but
+	// without WebRTC the button stays, disabled with a hint.
+	const canVideoCall = useFeatureFlag("CreateVideoCall");
 	const [pendingLocationShare, setPendingLocationShare] = useState<{ lat: number; lon: number } | null>(null);
 	const [banWordPrompt, setBanWordPrompt] = useState<{ text: string } | null>(null);
 	const [banNamePrompt, setBanNamePrompt] = useState<{ text: string } | null>(null);
@@ -1670,11 +1678,13 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 												{t("chat.log_encounter", { defaultValue: "We just hooked up" })}
 											</button>
 											)}
-											{!isArchived && profileId != null && (() => {
+											{!isArchived && profileId != null && canVideoCall && (() => {
 												const videoCallExhausted =
 													webRtcSupported && videoCallRemainingSeconds != null && videoCallRemainingSeconds <= 0;
 												const videoCallDisabled = !webRtcSupported || videoCallExhausted;
-												const remainingMinutes = videoCallRemainingSeconds != null ? Math.floor(videoCallRemainingSeconds / 60) : null;
+												// Effectively unlimited (self-hosted default): no countdown hint.
+												const remainingMinutes =
+													videoCallRemainingSeconds != null && videoCallRemainingSeconds < UNLIMITED_CALL_SECONDS ? Math.floor(videoCallRemainingSeconds / 60) : null;
 												return (
 												<button
 													type="button"

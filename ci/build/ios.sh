@@ -76,6 +76,11 @@ cargo metadata --locked --format-version 1 --manifest-path src-tauri/Cargo.toml 
 bun install --frozen-lockfile
 bun run build
 
+# Free Grind server (optional): FG_API_URL / FG_MEDIA_URL / FG_RTC_URL, see
+# scripts/free-grind-config.mjs. Unset → the build has no Free Grind server.
+TAURI_CONFIG="$(bun scripts/free-grind-config.mjs)"
+export TAURI_CONFIG
+
 # `tauri ios init` regenerates gen/apple from Tauri's templates, which drops
 # our committed customizations (project.yml with the app-disguise alternate
 # icons, AppIcon-* sets, LaunchScreen). Restore them.

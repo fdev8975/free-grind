@@ -24,6 +24,8 @@ import type { SpotifyTrack } from "../../../services/spotify";
 import { BannedTermsError } from "../../../services/apiHelpers";
 import { validateMediaHash } from "../../../utils/media";
 import { sanitizeUploadFile } from "../../../services/uploadSanitize";
+import { useFeatureFlag } from "../../../services/assignmentsStore";
+import { useServerInfo } from "../../../services/serverConfig";
 import { buildTagLabelMap } from "../../../utils/tags";
 import {
 	getBodyTypeOptions,
@@ -114,6 +116,11 @@ export function useProfileEditor() {
 	const pendingPhotoEditRef = useRef<MediaEdit | null>(null);
 	// The upload, as a placeholder tile in the picture drawer.
 	const photoUploadTiles = useUploadTiles();
+	// Profile videos are a self-hosted-server extension, rolled out via the
+	// "profile_videos" assignment; the official servers never offer them.
+	const isProfileVideosFlagOn = useFeatureFlag("profile_videos");
+	const serverInfo = useServerInfo();
+	const allowProfileVideos = isProfileVideosFlagOn && serverInfo.kind === "freeGrind";
 
 	// Tracks each photo's last-seen moderation state across reloads, so a
 	// background poll can toast when one changes (e.g. pending -> approved)
@@ -675,6 +682,11 @@ export function useProfileEditor() {
 	// the profile's photo slots (see uploadPhotoFile), so there's no need to
 	// gate this on the slot count the way the old direct-upload flow did.
 	const handleDrawerUploadFile = (file: File) => {
+		if (allowProfileVideos && file.type.startsWith("video/")) {
+			// No crop step: the server transcodes the video and makes the poster.
+			void uploadVideoFile(file);
+			return;
+		}
 		if (!file.type.startsWith("image/")) {
 			toast.error(t("profile_editor.toasts.error_upload_type"));
 			return;
@@ -781,9 +793,8 @@ export function useProfileEditor() {
 					: await buildSquareThumbCoords(upload);
 				const contentType = upload.type;
 
-				// Primary: the media upload (signed /v5 for in-app captures, unsigned
-				// /v4 otherwise — picked Rust-side). Fallback: the older, unsigned
-				// /v3/me/profile/images path, unchanged.
+				// The media upload: signed /v5 for in-app captures, unsigned /v4
+				// otherwise (picked Rust-side). POST /v3/me/profile/images is gone upstream.
 				const uploadAttempts = [
 					() =>
 						apiFunctions.uploadProfilePhoto({
@@ -792,15 +803,10 @@ export function useProfileEditor() {
 							thumbCoords,
 							takenOnGrindr,
 						}),
-					() =>
-						apiFunctions.uploadProfileImage({
-							path: "/v3/me/profile/images",
-							body,
-							contentType,
-						}),
 				];
 
 				let uploadedHash: string | null = null;
+				let uploadedState: number = MEDIA_MODERATION_STATE.PENDING;
 				const failedMessages: string[] = [];
 
 				for (const attempt of uploadAttempts) {
@@ -811,6 +817,10 @@ export function useProfileEditor() {
 							uploaded.mediaHash ??
 							uploaded.imageSizes?.find((item) => item.mediaHash)?.mediaHash ??
 							null;
+						// Upstream reports no state until moderation has run (stays
+						// pending); a self-hosted server approves right away ("1").
+						const reportedState = Number(uploaded.imageSizes?.find((item) => item.state != null)?.state);
+						if (Number.isInteger(reportedState)) uploadedState = reportedState;
 						if (uploadedHash) {
 							break;
 						}
@@ -838,7 +848,7 @@ export function useProfileEditor() {
 				// edit sheet) swaps the upload's placeholder for the new image, as a
 				// pickable, not-yet-used tile.
 				setPoolImages((prev) => [
-					{ mediaHash: uploadedHash, type: 0, state: MEDIA_MODERATION_STATE.PENDING },
+					{ mediaHash: uploadedHash, type: 0, state: uploadedState },
 					...prev.filter((image) => image.mediaHash !== uploadedHash),
 				]);
 				toast.success(t("profile_editor.toasts.photo_uploaded"));
@@ -849,6 +859,31 @@ export function useProfileEditor() {
 					? error.message
 					: t("profile_editor.toasts.error_upload");
 			toast.error(message);
+		} finally {
+			photoUploadTiles.drop([tileId]);
+			setIsUploadingPhoto(false);
+		}
+	};
+
+	const uploadVideoFile = async (file: File) => {
+		setIsUploadingPhoto(true);
+		const [tileId] = photoUploadTiles.add([file]);
+		try {
+			await photoUploadTiles.track(tileId, false, async () => {
+				const uploaded = await apiFunctions.uploadProfileVideo({ file });
+				// null: this app binary can't stream uploads (old binary over OTA).
+				if (!uploaded) throw new Error(t("profile_editor.toasts.error_upload"));
+				const hash = uploaded.hash ?? uploaded.mediaHash ?? null;
+				if (!hash || !validateMediaHash(hash)) throw new Error("Upload completed but no valid media hash was returned");
+				// type 2 = video (server extension); state 0 until the worker has transcoded it.
+				setPoolImages((prev) => [
+					{ mediaHash: hash, type: 2, state: MEDIA_MODERATION_STATE.PENDING },
+					...prev.filter((image) => image.mediaHash !== hash),
+				]);
+				toast.success(t("profile_editor.toasts.video_uploaded", { defaultValue: "Video uploaded – it's being processed" }));
+			});
+		} catch (error) {
+			toast.error(error instanceof Error ? error.message : t("profile_editor.toasts.error_upload"));
 		} finally {
 			photoUploadTiles.drop([tileId]);
 			setIsUploadingPhoto(false);
@@ -948,6 +983,7 @@ export function useProfileEditor() {
 			handleAddSelectedImages,
 			handleDeletePoolImage,
 			handleDrawerUploadFile,
+			allowVideo: allowProfileVideos,
 			pendingFile: pendingPhotoFile,
 			setPendingEdit: (edit: MediaEdit) => { pendingPhotoEditRef.current = edit; },
 			finishPendingEdit: finishPendingPhotoEdit,

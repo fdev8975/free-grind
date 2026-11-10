@@ -1,6 +1,7 @@
 import type { RestFetcher } from "../../types/chat-service";
 import { assertSuccess, parseJsonSafe } from "../apiHelpers";
 import type { StartVideoCallResult, VideoCallInfoResult, RenewVideoCallResult } from "../../types/video-call";
+import { type CallProvider, callProviderOf } from "../videoCall/engine";
 
 export function createVideoCallMethods(fetchRest: RestFetcher, t: (key: string) => string) {
 	return {
@@ -16,7 +17,7 @@ export function createVideoCallMethods(fetchRest: RestFetcher, t: (key: string) 
 		// Response body isn't documented — some backends return a fresh Agora
 		// token here for the callee, so we parse it defensively rather than
 		// assuming an empty body.
-		async joinVideoCall(channelId: string): Promise<{ token: string | null }> {
+		async joinVideoCall(channelId: string): Promise<{ token: string | null; provider: CallProvider }> {
 			const response = await fetchRest("/v1/video-call/join", {
 				method: "PATCH",
 				body: { channelId },
@@ -27,7 +28,7 @@ export function createVideoCallMethods(fetchRest: RestFetcher, t: (key: string) 
 				payload && typeof payload === "object" && typeof (payload as Record<string, unknown>).token === "string"
 					? ((payload as Record<string, unknown>).token as string)
 					: null;
-			return { token };
+			return { token, provider: callProviderOf(payload) };
 		},
 
 		async leaveVideoCall(channelId: string): Promise<void> {

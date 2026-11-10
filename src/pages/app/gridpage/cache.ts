@@ -117,6 +117,17 @@ export function getAllCachedBrowseCardsById(): Map<string, BrowseCard> {
 	return map;
 }
 
+/**
+ * Drops cached favorites-filter pages. Favorites (and their notes) change
+ * outside the grid's own request, so a cached favorites page would otherwise
+ * keep showing the old set for the cache lifetime.
+ */
+export function invalidateFavoritesBrowseCache(): void {
+	for (const key of browseCache.keys()) {
+		if (key.includes('"favorites":true')) browseCache.delete(key);
+	}
+}
+
 export function removeProfileFromBrowseCache(profileId: string) {
 	for (const [cacheKey, entry] of browseCache) {
 		browseCache.set(cacheKey, {

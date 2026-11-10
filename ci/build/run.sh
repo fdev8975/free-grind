@@ -57,6 +57,9 @@ case "$engine" in *docker*) owner="$(id -u):$(id -g)" ;; esac
 "$engine" run --rm \
 	-v "$root:/work:z" \
 	-e FG_CHANNEL \
+	-e FG_API_URL \
+	-e FG_MEDIA_URL \
+	-e FG_RTC_URL \
 	-e FG_OWNER="$owner" \
 	-e FG_ARTIFACT="$artifact" \
 	-e FG_IMAGE_ID="$image_id" \

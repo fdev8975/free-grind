@@ -17,7 +17,9 @@ import { sanitizeUploadFile } from "../../../services/uploadSanitize";
 import { useApiFunctions } from "../../../hooks/useApiFunctions";
 import {
 	NoFreeRightNowPostsError,
+	RightNowDiscreetNotAllowedError,
 	RightNowDiscreetSetupError,
+	RightNowLocationMissingError,
 	RightNowPostAlreadyRunningError,
 	RightNowSessionEndedError,
 	type RightNowCreatePostRequest,
@@ -423,10 +425,20 @@ function RightNowPostSheetContent({ onPost }: Pick<RightNowPostPageProps, "onPos
 					rightNowRemaining: isUnlimited ? rightNowRemaining : Math.max(0, rightNowRemaining - 1),
 				});
 				void queryClient.invalidateQueries({ queryKey: ["entitlements"] });
-				toast.error(t("right_now.error_discreet_setup", {
-					defaultValue: "Your post was created but kept hidden, because it couldn't be made discreet. Edit it to try again.",
-				}));
+				toast.error(
+					error.reason instanceof RightNowDiscreetNotAllowedError
+						? t("right_now.error_discreet_not_allowed_created", {
+								defaultValue: "Your post was created but kept hidden: discreet posts aren't available for your account. Edit it to post it normally.",
+							})
+						: t("right_now.error_discreet_setup", {
+								defaultValue: "Your post was created but kept hidden, because it couldn't be made discreet. Edit it to try again.",
+							}),
+				);
 				handleClose();
+			} else if (error instanceof RightNowDiscreetNotAllowedError) {
+				toast.error(t("right_now.discreet_not_allowed", { defaultValue: "Discreet posts aren't available for your account" }));
+			} else if (error instanceof RightNowLocationMissingError) {
+				toast.error(t("right_now.error_location_missing", { defaultValue: "Right Now needs your location. Allow location access and try again." }));
 			} else if (error instanceof NoFreeRightNowPostsError) {
 				await setPreferences({ rightNowRemaining: 0 });
 				toast.error(t("right_now.limit_reached_desc"));

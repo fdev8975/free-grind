@@ -12,7 +12,7 @@ const OFFICIAL_MEDIA_BASE_URL = "https://cdns.grindr.com";
 /** Public-media origin of the active backend (official CDN or the self-hosted server). */
 export function publicMediaBaseUrl(): string {
 	const server = getServerInfo();
-	return server.kind === "custom" ? (server.mediaBase ?? server.apiBase) : OFFICIAL_MEDIA_BASE_URL;
+	return server.kind === "freeGrind" ? (server.mediaBase ?? server.apiBase) : OFFICIAL_MEDIA_BASE_URL;
 }
 
 export function validateMediaHash(hash: string): boolean {

@@ -3,19 +3,24 @@ import { useSyncExternalStore } from "react";
 import { isTauriRuntime } from "./tauriWebSocket";
 
 /**
- * The backend the app talks to: the official servers or a self-hosted,
- * API-compatible free-grind-server. Chosen on the sign-in screen and applied
- * in Rust (src-tauri/src/api/server.rs) to REST, WebSocket and media.
+ * The backend the app talks to: the official servers or the Free Grind server
+ * built into the app (addresses fixed at build time via FG_API_URL /
+ * FG_MEDIA_URL, see grindr's server.rs; a build without them has none). Chosen on the sign-in screen and
+ * applied in Rust (src-tauri/src/api/server.rs) to REST, WebSocket and media.
  */
+export type ServerKind = "official" | "freeGrind";
+
 export type ServerInfo = {
-	kind: "official" | "custom";
+	kind: ServerKind;
 	apiBase: string;
 	mediaBase: string | null;
+	/** Whether this build has a Free Grind server at all. */
+	freeGrindAvailable: boolean;
 };
 
 export type ServerProbe = { ok: boolean; latencyMs: number; error: string | null };
 
-const OFFICIAL: ServerInfo = { kind: "official", apiBase: "https://grindr.mobi", mediaBase: null };
+const OFFICIAL: ServerInfo = { kind: "official", apiBase: "https://grindr.mobi", mediaBase: null, freeGrindAvailable: false };
 
 let current: ServerInfo = OFFICIAL;
 let loaded = false;
@@ -39,8 +44,12 @@ export function getServerInfo(): ServerInfo {
 	return current;
 }
 
+/** Display name of the built-in server. */
+export const FREE_GRIND_SERVER_NAME = "Free Grind";
+
+/** Whether the Free Grind server (not Grindr's) is active. */
 export function isCustomServer(): boolean {
-	return current.kind === "custom";
+	return current.kind === "freeGrind";
 }
 
 export function useServerInfo(): ServerInfo {
@@ -55,22 +64,14 @@ export function useServerInfo(): ServerInfo {
 	);
 }
 
-export async function testServer(apiBase: string | null): Promise<ServerProbe> {
-	return invoke<ServerProbe>("test_server", { selection: { apiBase, mediaBase: null } });
+/** Checks that the Free Grind server is reachable (GET /healthz). */
+export async function testServer(): Promise<ServerProbe> {
+	return invoke<ServerProbe>("test_server", { selection: { server: "freeGrind" } });
 }
 
 /** Switches the backend (signed out only). Rust rotates the device identity. */
-export async function setServer(apiBase: string | null): Promise<ServerInfo> {
-	const info = await invoke<ServerInfo>("set_server_config", { selection: { apiBase, mediaBase: null } });
+export async function setServer(server: ServerKind): Promise<ServerInfo> {
+	const info = await invoke<ServerInfo>("set_server_config", { selection: { server } });
 	emit(info);
 	return info;
-}
-
-/** Host shown in the UI, e.g. "api.example.org". */
-export function serverLabel(info: ServerInfo): string {
-	try {
-		return new URL(info.apiBase).host;
-	} catch {
-		return info.apiBase;
-	}
 }

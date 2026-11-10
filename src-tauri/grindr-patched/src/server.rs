@@ -1,97 +1,98 @@
-//! Which backend the client talks to.
+//! Which backend the client talks to: the official servers, or the Free Grind
+//! server built into the app next to them.
 //!
-//! Defaults to the official servers. A self-hosted, API-compatible server can
-//! be selected at runtime ([`set_server_config`]); REST, WebSocket and the
-//! media-host allowlist all read from here, so switching needs no rebuild.
-//! Only one client is active at a time (account switches rebuild it), so a
-//! process-wide setting is enough.
+//! Free Grind's addresses are fixed at build time, like the official ones:
+//! `FG_API_URL` and `FG_MEDIA_URL` in the build environment. A build without
+//! them has no Free Grind server ([`free_grind_available`] is false). There is
+//! no user-entered server. REST, WebSocket and the media-host allowlist all
+//! read from here. Only one client is active at a time (account switches
+//! rebuild it), so a process-wide setting is enough.
 
-use std::net::IpAddr;
 use std::sync::{Arc, LazyLock, RwLock};
 
 use serde::{Deserialize, Serialize};
 use wreq::Url;
 
-use crate::error::GrindrError;
-
 pub(crate) const OFFICIAL_API_BASE: &str = "https://grindr.mobi";
 const OFFICIAL_WS_URL: &str = "wss://grindr.mobi/v1/ws";
 
-/// A backend: the official one, or a self-hosted server identified by its
-/// API base URL (and optionally a separate media origin).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+/// Free Grind REST/WebSocket origin (`FG_API_URL` at build time).
+pub const FREE_GRIND_API_BASE: Option<&str> = option_env!("FG_API_URL");
+
+/// Free Grind media origin (`FG_MEDIA_URL` at build time).
+pub const FREE_GRIND_MEDIA_BASE: Option<&str> = option_env!("FG_MEDIA_URL");
+
+/// Placeholder for a build without Free Grind addresses: never resolves.
+const UNCONFIGURED: &str = "https://free-grind.invalid";
+
+fn configured(value: Option<&'static str>) -> Option<&'static str> {
+	value.map(trimmed).filter(|v| !v.is_empty())
+}
+
+/// Whether this build has a Free Grind server (both addresses were set).
+pub fn free_grind_available() -> bool {
+	configured(FREE_GRIND_API_BASE).is_some() && configured(FREE_GRIND_MEDIA_BASE).is_some()
+}
+
+/// The backend: official, or the built-in Free Grind server.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ServerConfig {
 	/// The official servers (grindr.mobi, cdns.grindr.com, CloudFront).
 	#[default]
 	Official,
-	/// A self-hosted, API-compatible server.
-	#[serde(rename_all = "camelCase")]
-	Custom {
-		/// e.g. `https://api.example.org`, no trailing slash, no path.
-		api_base: String,
-		/// Origin serving `/images/...` and signed media; defaults to `api_base`.
-		#[serde(default, skip_serializing_if = "Option::is_none")]
-		media_base: Option<String>,
-	},
+	/// The Free Grind server. Reads `{"kind":"custom",…}` stored by builds that
+	/// still let users type a server address.
+	#[serde(alias = "custom")]
+	FreeGrind,
+}
+
+fn trimmed(origin: &'static str) -> &'static str {
+	origin.trim().trim_end_matches('/')
 }
 
 impl ServerConfig {
-	/// Validates and normalizes a user-entered server URL.
-	///
-	/// `https` is required, except for loopback and private-network hosts
-	/// (local development), where `http` is allowed too.
-	pub fn custom(api_base: &str, media_base: Option<&str>) -> Result<Self, GrindrError> {
-		let api_base = normalize_origin(api_base)?;
-		let media_base = media_base
-			.filter(|m| !m.trim().is_empty())
-			.map(normalize_origin)
-			.transpose()?;
-		Ok(Self::Custom { api_base, media_base })
-	}
-
 	/// Whether this is the official backend.
 	pub fn is_official(&self) -> bool {
 		matches!(self, Self::Official)
 	}
 
 	/// REST origin, e.g. `https://grindr.mobi`.
-	pub fn api_base(&self) -> &str {
+	pub fn api_base(&self) -> &'static str {
 		match self {
 			Self::Official => OFFICIAL_API_BASE,
-			Self::Custom { api_base, .. } => api_base,
+			Self::FreeGrind => configured(FREE_GRIND_API_BASE).unwrap_or(UNCONFIGURED),
 		}
 	}
 
-	/// WebSocket endpoint (`/v1/ws`) derived from the API origin.
+	/// WebSocket endpoint (`/v1/ws`).
 	pub fn ws_url(&self) -> String {
 		match self {
 			Self::Official => OFFICIAL_WS_URL.to_owned(),
-			Self::Custom { api_base, .. } => {
-				let ws = if let Some(rest) = api_base.strip_prefix("https://") {
+			Self::FreeGrind => {
+				let api = self.api_base();
+				let ws = if let Some(rest) = api.strip_prefix("https://") {
 					format!("wss://{rest}")
-				} else if let Some(rest) = api_base.strip_prefix("http://") {
+				} else if let Some(rest) = api.strip_prefix("http://") {
 					format!("ws://{rest}")
 				} else {
-					api_base.clone()
+					api.to_owned()
 				};
 				format!("{ws}/v1/ws")
 			}
 		}
 	}
 
-	/// The media origin of a custom server (`None` for the official one).
-	pub fn media_base(&self) -> Option<&str> {
+	/// The Free Grind media origin (`None` for the official servers, whose CDNs
+	/// are allowlisted separately).
+	pub fn media_base(&self) -> Option<&'static str> {
 		match self {
 			Self::Official => None,
-			Self::Custom {
-				api_base,
-				media_base,
-			} => Some(media_base.as_deref().unwrap_or(api_base)),
+			Self::FreeGrind => Some(configured(FREE_GRIND_MEDIA_BASE).unwrap_or(UNCONFIGURED)),
 		}
 	}
 
-	/// Whether `url` points at this custom server's media origin.
+	/// Whether `url` points at this server's media origin (exact scheme, host and port).
 	pub fn is_custom_media_url(&self, url: &Url) -> bool {
 		let Some(base) = self.media_base() else {
 			return false;
@@ -103,56 +104,6 @@ impl ServerConfig {
 			&& url.host_str() == base.host_str()
 			&& url.port_or_known_default() == base.port_or_known_default()
 	}
-}
-
-fn is_local_host(host: &str) -> bool {
-	if host.eq_ignore_ascii_case("localhost") {
-		return true;
-	}
-	let host = host.trim_start_matches('[').trim_end_matches(']');
-	match host.parse::<IpAddr>() {
-		Ok(IpAddr::V4(ip)) => ip.is_loopback() || ip.is_private() || ip.is_link_local(),
-		Ok(IpAddr::V6(ip)) => ip.is_loopback() || (ip.segments()[0] & 0xfe00) == 0xfc00,
-		Err(_) => false,
-	}
-}
-
-fn normalize_origin(input: &str) -> Result<String, GrindrError> {
-	let trimmed = input.trim().trim_end_matches('/');
-	let url = Url::parse(trimmed)
-		.map_err(|e| GrindrError::InvalidRequest(format!("invalid server URL: {e}")))?;
-	let host = url
-		.host_str()
-		.ok_or_else(|| GrindrError::InvalidRequest("server URL has no host".to_owned()))?;
-	match url.scheme() {
-		"https" => {}
-		"http" if is_local_host(host) => {}
-		"http" => {
-			return Err(GrindrError::InvalidRequest(
-				"server URL must use https (http is only allowed for local addresses)".to_owned(),
-			))
-		}
-		other => {
-			return Err(GrindrError::InvalidRequest(format!(
-				"unsupported server URL scheme {other:?}"
-			)))
-		}
-	}
-	if url.path() != "/" && !url.path().is_empty() {
-		return Err(GrindrError::InvalidRequest(
-			"server URL must not contain a path".to_owned(),
-		));
-	}
-	if url.query().is_some() || url.fragment().is_some() || !url.username().is_empty() {
-		return Err(GrindrError::InvalidRequest(
-			"server URL must be a plain origin".to_owned(),
-		));
-	}
-	let mut origin = format!("{}://{}", url.scheme(), host);
-	if let Some(port) = url.port() {
-		origin.push_str(&format!(":{port}"));
-	}
-	Ok(origin)
 }
 
 static CURRENT: LazyLock<RwLock<Arc<ServerConfig>>> =
@@ -187,58 +138,39 @@ mod tests {
 	}
 
 	#[test]
-	fn custom_https_normalizes_and_derives_ws() {
-		let c = ServerConfig::custom("https://api.example.org/", None).unwrap();
-		assert_eq!(c.api_base(), "https://api.example.org");
-		assert_eq!(c.ws_url(), "wss://api.example.org/v1/ws");
-		assert_eq!(c.media_base(), Some("https://api.example.org"));
-	}
-
-	#[test]
-	fn http_only_for_local_hosts() {
-		assert!(ServerConfig::custom("http://192.168.1.20:8080", None).is_ok());
-		assert!(ServerConfig::custom("http://localhost:8080", None).is_ok());
-		assert!(ServerConfig::custom("http://10.0.2.2:8080", None).is_ok());
-		assert!(ServerConfig::custom("http://example.org", None).is_err());
-		let c = ServerConfig::custom("http://localhost:8080", None).unwrap();
-		assert_eq!(c.ws_url(), "ws://localhost:8080/v1/ws");
-	}
-
-	#[test]
-	fn rejects_paths_queries_credentials_and_schemes() {
-		assert!(ServerConfig::custom("https://example.org/api", None).is_err());
-		assert!(ServerConfig::custom("https://example.org?x=1", None).is_err());
-		assert!(ServerConfig::custom("https://u:p@example.org", None).is_err());
-		assert!(ServerConfig::custom("ftp://example.org", None).is_err());
-		assert!(ServerConfig::custom("not a url", None).is_err());
+	fn free_grind_uses_build_time_hosts() {
+		let c = ServerConfig::FreeGrind;
+		match configured(FREE_GRIND_API_BASE) {
+			Some(api) => assert_eq!(c.api_base(), api),
+			None => assert_eq!(c.api_base(), UNCONFIGURED),
+		}
+		assert!(c.ws_url().ends_with("/v1/ws"));
+		assert!(c.ws_url().starts_with("ws"));
+		assert!(c.media_base().is_some());
 	}
 
 	#[test]
 	fn media_origin_match_is_exact() {
-		let c = ServerConfig::custom("https://api.example.org", Some("https://media.example.org")).unwrap();
-		let ok = Url::parse("https://media.example.org/1/abc?Expires=1").unwrap();
-		assert!(c.is_custom_media_url(&ok));
-		for bad in [
-			"http://media.example.org/1/abc",
-			"https://media.example.org.evil.test/1/abc",
-			"https://evilmedia.example.org/1/abc",
-			"https://media.example.org:8443/1/abc",
-			"https://api.example.org/1/abc",
-		] {
-			assert!(!c.is_custom_media_url(&Url::parse(bad).unwrap()), "{bad}");
+		let base = Url::parse(ServerConfig::FreeGrind.media_base().unwrap()).unwrap();
+		let host = base.host_str().unwrap();
+		let ok = Url::parse(&format!("{}/1/abc?Expires=1", base.as_str().trim_end_matches('/'))).unwrap();
+		assert!(ServerConfig::FreeGrind.is_custom_media_url(&ok));
+		for bad in [format!("https://{host}.evil.test/1/abc"), format!("https://evil{host}/1/abc"), format!("https://{host}:8443/1/abc")] {
+			assert!(!ServerConfig::FreeGrind.is_custom_media_url(&Url::parse(&bad).unwrap()), "{bad}");
 		}
 		assert!(!ServerConfig::Official.is_custom_media_url(&ok));
 	}
 
 	#[test]
-	fn serde_round_trip() {
-		let c = ServerConfig::custom("https://api.example.org", None).unwrap();
-		let json = serde_json::to_string(&c).unwrap();
-		assert_eq!(json, r#"{"kind":"custom","apiBase":"https://api.example.org"}"#);
-		assert_eq!(serde_json::from_str::<ServerConfig>(&json).unwrap(), c);
+	fn serde_round_trip_and_legacy_custom() {
+		let json = serde_json::to_string(&ServerConfig::FreeGrind).unwrap();
+		assert_eq!(json, r#"{"kind":"freeGrind"}"#);
+		assert_eq!(serde_json::from_str::<ServerConfig>(&json).unwrap(), ServerConfig::FreeGrind);
+		assert_eq!(serde_json::from_str::<ServerConfig>(r#"{"kind":"official"}"#).unwrap(), ServerConfig::Official);
+		// Stored by the earlier free-text server selection.
 		assert_eq!(
-			serde_json::from_str::<ServerConfig>(r#"{"kind":"official"}"#).unwrap(),
-			ServerConfig::Official
+			serde_json::from_str::<ServerConfig>(r#"{"kind":"custom","apiBase":"https://api.example.org"}"#).unwrap(),
+			ServerConfig::FreeGrind
 		);
 	}
 }

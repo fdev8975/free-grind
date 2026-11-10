@@ -37,7 +37,7 @@ function isProxiedHost(hostname: string): boolean {
 /** The self-hosted server's media origin, which grindr.rs also allows (exact origin). */
 function isCustomServerMedia(url: URL): boolean {
 	const server = getServerInfo();
-	if (server.kind !== "custom") return false;
+	if (server.kind !== "freeGrind") return false;
 	try {
 		return new URL(server.mediaBase ?? server.apiBase).origin === url.origin;
 	} catch {

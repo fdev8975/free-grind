@@ -49,6 +49,8 @@ import i18n from "../i18n";
 
 const AUTH_USER_ID_STORAGE_KEY = "fg-user-id";
 const PUSH_TOKEN_STORAGE_KEY = "fg-fcm-token";
+// Self-hosted server: token of its own Firebase project (see SelfHostedPushBridge).
+const SELF_HOSTED_PUSH_TOKEN_STORAGE_KEY = "fg-fcm-token-selfhosted";
 const PUSH_TOKEN_SYNCED_STORAGE_KEY = "fg-fcm-token-synced";
 
 // A hard ban clears the session (grindr.rs drops it on the ban response), so
@@ -86,6 +88,8 @@ function writeStoredBan(status: AccountStatus) {
 
 /** The FCM token Android handed over, cached or still waiting on window. */
 function cachedPushToken(): string | null {
+	// Each server only ever gets the token of the Firebase project it sends with.
+	if (isCustomServer()) return window.localStorage.getItem(SELF_HOSTED_PUSH_TOKEN_STORAGE_KEY) || null;
 	const fallback = (window as Window & { __FG_FCM_TOKEN?: unknown }).__FG_FCM_TOKEN;
 	return window.localStorage.getItem(PUSH_TOKEN_STORAGE_KEY) || (typeof fallback === "string" ? fallback : null) || null;
 }
@@ -872,7 +876,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 			appLog.debug(`[PUSH_SYNC] Received native FCM token event (len=${token.length})`);
 
-			window.localStorage.setItem(PUSH_TOKEN_STORAGE_KEY, token);
+			const selfHosted = event.type === "fg:fcm-token-selfhosted";
+			window.localStorage.setItem(selfHosted ? SELF_HOSTED_PUSH_TOKEN_STORAGE_KEY : PUSH_TOKEN_STORAGE_KEY, token);
+			// Grindr's token goes to the official server only, ours to ours only.
+			if (selfHosted !== (isCustomServer())) return;
 
 			if (!state.userId || state.isLoading) {
 				appLog.debug("[PUSH_SYNC] Token cached; waiting for authenticated session before sync");
@@ -898,8 +905,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		};
 
 		window.addEventListener("fg:fcm-token", onFcmToken as EventListener);
+		window.addEventListener("fg:fcm-token-selfhosted", onFcmToken as EventListener);
 		return () => {
 			window.removeEventListener("fg:fcm-token", onFcmToken as EventListener);
+			window.removeEventListener("fg:fcm-token-selfhosted", onFcmToken as EventListener);
 		};
 	}, [callMethod, asAppError, state.userId, state.isLoading]);
 
@@ -916,6 +925,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				return;
 			}
 
+			if (isCustomServer()) {
+				const own = window.localStorage.getItem(SELF_HOSTED_PUSH_TOKEN_STORAGE_KEY);
+				if (!own) return;
+				const marker = `${own}::${state.userId}`;
+				if (window.localStorage.getItem(PUSH_TOKEN_SYNCED_STORAGE_KEY) === marker) return;
+				void callMethod("sync_push_token", { token: own })
+					.then(() => window.localStorage.setItem(PUSH_TOKEN_SYNCED_STORAGE_KEY, marker))
+					.catch((error) => appLog.warn("[PUSH_SYNC] Failed to sync self-hosted push token", asAppError(error)?.prettyMessage || error));
+				return;
+			}
 			const token = window.localStorage.getItem(PUSH_TOKEN_STORAGE_KEY);
 			const fallbackToken =
 				typeof (window as Window & { __FG_FCM_TOKEN?: unknown }).__FG_FCM_TOKEN ===

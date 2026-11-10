@@ -68,6 +68,46 @@ export class RightNowDiscreetSetupError extends Error {
 	}
 }
 
+/** POST /v1/rightnow/requests answers 409 when we already asked about this post. */
+export class RightNowRequestAlreadySentError extends Error {
+	constructor() {
+		super("A request for this post was already sent");
+		this.name = "RightNowRequestAlreadySentError";
+	}
+}
+
+/** The post behind a request is gone (expired, hidden, deleted) or not reachable (404). */
+export class RightNowPostGoneError extends Error {
+	constructor() {
+		super("The Right Now post is no longer available");
+		this.name = "RightNowPostGoneError";
+	}
+}
+
+/** A Right Now allowance is used up (402 entitlement_limit), e.g. requests per day. */
+export class RightNowLimitError extends Error {
+	constructor() {
+		super("Right Now limit reached");
+		this.name = "RightNowLimitError";
+	}
+}
+
+/** Creating a post needs a known location: none in the body and none set via Update location. */
+export class RightNowLocationMissingError extends Error {
+	constructor() {
+		super("Right Now needs your location");
+		this.name = "RightNowLocationMissingError";
+	}
+}
+
+/** The account may not post discreetly (402 tiered_feature on the v5 edit). */
+export class RightNowDiscreetNotAllowedError extends Error {
+	constructor() {
+		super("Discreet Right Now posts aren't available for this account");
+		this.name = "RightNowDiscreetNotAllowedError";
+	}
+}
+
 const SESSION_ENDED_URNS = new Set(["urn:gr:err:client_action", "urn:gr:err:resource_not_found"]);
 
 function errorUrn(payload: unknown): string | null {
@@ -148,6 +188,7 @@ function toFeedEntry(raw: unknown): RightNowFeedEntry | null {
 export function createFeedMethods(fetchRest: RestFetcher, t: (key: string, defaultValue?: string) => string) {
 	async function patchRunningPost(path: string, body: unknown, fallbackMessage: string): Promise<void> {
 		const response = await fetchRest(path, { method: "PATCH", body });
+		if (response.status === 402) throw new RightNowDiscreetNotAllowedError();
 		if (response.status === 400) {
 			const urn = errorUrn(await parseJsonSafe(response));
 			if (urn !== null && SESSION_ENDED_URNS.has(urn)) throw new RightNowSessionEndedError();
@@ -303,7 +344,12 @@ export function createFeedMethods(fetchRest: RestFetcher, t: (key: string, defau
 				body,
 			});
 			if (response.status === 400 && errorUrn(await parseJsonSafe(response)) === "urn:gr:err:client_action") {
-				throw new RightNowPostAlreadyRunningError();
+				// Upstream answers client_action both while a post is running and when
+				// no location is known yet — the running post tells the two apart.
+				const active = await fetchRest("/v3/rightnow/active-post")
+					.then(async (r) => (r.status === 200 ? ((await parseJsonSafe(r)) as { post?: unknown } | null)?.post : null))
+					.catch(() => null);
+				throw active ? new RightNowPostAlreadyRunningError() : new RightNowLocationMissingError();
 			}
 			await assertSuccess(response, t("api.errors.session_right_now"));
 			const payload = await parseJsonSafe(response);
@@ -383,6 +429,9 @@ export function createFeedMethods(fetchRest: RestFetcher, t: (key: string, defau
 		async sendRightNowRequest(postId: number): Promise<{ ok: true }> {
 			appLog.info("POST /v1/rightnow/requests REQUEST:", { postId });
 			const response = await fetchRest("/v1/rightnow/requests", { method: "POST", body: { postId } });
+			if (response.status === 409) throw new RightNowRequestAlreadySentError();
+			if (response.status === 404) throw new RightNowPostGoneError();
+			if (response.status === 402) throw new RightNowLimitError();
 			await assertSuccess(response, t("api.errors.send_right_now_request", "Failed to send request"));
 			appLog.info("POST /v1/rightnow/requests RESPONSE:", await parseJsonSafe(response));
 			return { ok: true };
@@ -392,6 +441,7 @@ export function createFeedMethods(fetchRest: RestFetcher, t: (key: string, defau
 		async respondToRightNowRequest(requestId: number, status: "ACCEPTED" | "REJECTED"): Promise<{ ok: true }> {
 			appLog.info(`PUT /v1/rightnow/requests/${requestId} REQUEST:`, { status });
 			const response = await fetchRest(`/v1/rightnow/requests/${requestId}`, { method: "PUT", body: { status } });
+			if (response.status === 404) throw new RightNowPostGoneError();
 			await assertSuccess(response, t("api.errors.update_right_now_request", "Failed to answer request"));
 			return { ok: true };
 		},

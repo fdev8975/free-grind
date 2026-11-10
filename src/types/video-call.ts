@@ -7,6 +7,9 @@ export interface StartVideoCallResult {
 	token: string | null;
 	maxSeconds: number | null;
 	message: string | null;
+	/** Self-hosted servers: "livekit" plus its WebSocket URL. Absent upstream (Agora). */
+	provider?: string;
+	url?: string;
 }
 
 // GET /v3/video-call — remaining allowance for the current period (daily for

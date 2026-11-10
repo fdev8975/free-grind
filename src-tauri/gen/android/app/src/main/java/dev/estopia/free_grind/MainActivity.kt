@@ -433,6 +433,18 @@ class MainActivity : TauriActivity() {
       Log.d("FCM", "JsBridge.setActiveRoute=$route foreground=$inForeground")
     }
 
+    /**
+     * Self-hosted server: register with its Firebase project (config from the
+     * public `push_fcm_config` assignment). The token arrives as the
+     * `fg:fcm-token-selfhosted` event, separate from Grindr's `fg:fcm-token`.
+     */
+    @JavascriptInterface
+    fun configureSelfHostedPush(configJson: String) {
+      PushFirebase.selfHostedToken(applicationContext, configJson) { token ->
+        dispatchSelfHostedTokenToWebview(token)
+      }
+    }
+
     /** Extra state included in a renderer-death report (see RenderProcessGuard). */
     @JavascriptInterface
     fun setCrashContext(key: String, value: String?) {
@@ -788,6 +800,16 @@ class MainActivity : TauriActivity() {
         }
       }
     }
+  }
+
+  private fun dispatchSelfHostedTokenToWebview(token: String) {
+    val script =
+      "(function(){" +
+      "var token = ${JSONObject.quote(token)};" +
+      "try { localStorage.setItem('fg-fcm-token-selfhosted', token); } catch (e) {}" +
+      "window.dispatchEvent(new CustomEvent('fg:fcm-token-selfhosted', { detail: { token: token } }));" +
+      "})();"
+    runOnUiThread { webViewRef?.evaluateJavascript(script, null) }
   }
 
   // Not persisted to localStorage (unlike the FCM token): it's a Google

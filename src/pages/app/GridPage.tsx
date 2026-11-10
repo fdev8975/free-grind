@@ -1,14 +1,17 @@
 import { useAuth } from "../../contexts/useAuth";
-import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2 } from "lucide-react";
+import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2, Map as MapIcon, LayoutGrid } from "lucide-react";
+import { useFeatureFlag } from "../../services/assignmentsStore";
+import { GridMap, hasCardPosition, type MapCard } from "./gridpage/components/GridMap";
+import { readGridViewMode, writeGridViewMode, type GridViewMode } from "./gridpage/gridViewMode";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
 import { EyeOffFilled, LocateApproximateFilled, LocateFixedFilled, MapPinFilled, UserFilled, UserSearchFilled } from "../../components/icons/FilledIcons";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useApiFunctions } from "../../hooks/useApiFunctions";
 import { useScrollRowFade } from "../../hooks/useScrollRowFade";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { encodeGeohash } from "../../utils/geohash";
+import { decodeGeohash, encodeGeohash } from "../../utils/geohash";
 import { reverseGeocodeGeohash } from "./gridpage/geocoding";
 import { getThumbImageUrl, validateMediaHash } from "../../utils/media";
 import { usePreferences } from "../../contexts/PreferencesContext";
@@ -25,8 +28,10 @@ import {
 	removeProfileFromBrowseCache,
 	setCachedBrowseCards,
 	setCachedProfileDetail,
+	invalidateFavoritesBrowseCache,
 } from "./gridpage/cache";
 import { setSavedAccountDisplayName, setSavedAccountPhotoHash } from "../../services/savedAccountProfiles";
+import { FAVORITES_CHANGED_EVENT, type FavoritesChangedDetail } from "../../services/api/favoritesMethods";
 import {
 	type BrowseSortOption,
 	getCachedBrowseFiltersDraft,
@@ -355,6 +360,26 @@ export function GridPage() {
 	const [isDistanceSheetOpen, setIsDistanceSheetOpen] = useState(false);
 
 	const isDesktop = useDesktopBreakpoint();
+	// Viewport y of the header's bottom edge: the full-bleed grid map is pulled
+	// up by this much (like Right Now's map) and keeps its center below it.
+	const [headerBottom, setHeaderBottom] = useState(0);
+	useLayoutEffect(() => {
+		const header = headerRef.current;
+		if (!header) return;
+		const measure = () => setHeaderBottom(Math.round(header.getBoundingClientRect().bottom));
+		measure();
+		const observer = "ResizeObserver" in window ? new ResizeObserver(measure) : null;
+		observer?.observe(header);
+		window.addEventListener("resize", measure);
+		return () => {
+			observer?.disconnect();
+			window.removeEventListener("resize", measure);
+		};
+	}, []);
+	// The map runs on under the desktop nav rail.
+	const railWidth = isDesktop
+		? parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--nav-rail-width")) || 0
+		: 0;
 	const [hasSeenGesturesIntro, setHasSeenGesturesIntro] = useState(hasSeenGridGesturesIntro);
 
 	const handleFetchNotes = useCallback(async () => {
@@ -441,6 +466,26 @@ export function GridPage() {
 			void handleFetchNotes();
 		}
 	}, [browseFilters.favorites, hasAttemptedFetchNotes, handleFetchNotes]);
+
+	// A favorite or note changed somewhere (grid, profile, chat): drop cached
+	// favorites pages, refetch notes, and reload now if the favorites filter is on.
+	const favoritesFilterOnRef = useRef(browseFilters.favorites);
+	favoritesFilterOnRef.current = browseFilters.favorites;
+	const loadBrowseCardsRef = useRef<((opts?: { preferCache?: boolean; showLoadingState?: boolean }) => Promise<void>) | null>(null);
+	useEffect(() => {
+		const onChanged = (event: Event) => {
+			const { profileId, favorite } = (event as CustomEvent<FavoritesChangedDetail>).detail;
+			// An unfavorited profile leaves the favorites grid at once, before the reload.
+			if (favoritesFilterOnRef.current && favorite === false) {
+				setCards((previous) => previous.filter((card) => card.profileId !== profileId));
+			}
+			invalidateFavoritesBrowseCache();
+			setHasAttemptedFetchNotes(false);
+			if (favoritesFilterOnRef.current) void loadBrowseCardsRef.current?.({ preferCache: false, showLoadingState: false });
+		};
+		window.addEventListener(FAVORITES_CHANGED_EVENT, onChanged);
+		return () => window.removeEventListener(FAVORITES_CHANGED_EVENT, onChanged);
+	}, []);
 
 	// Reload whenever the active account's chatDb is ready (settingsReady),
 	// so switching accounts from GridPage's own account switcher also
@@ -672,6 +717,65 @@ export function GridPage() {
 		[browseRequestFilters, getBrowseCardsWithTimeout],
 	);
 
+	// Grid map view (flag "browse-maps-v1_5")
+	const isMapFlagOn = useFeatureFlag("browse-maps-v1_5");
+	const [gridViewMode, setGridViewMode] = useState<GridViewMode>(() => readGridViewMode(userId));
+	useEffect(() => {
+		setGridViewMode(readGridViewMode(userId));
+	}, [userId]);
+	const showGridMap = isMapFlagOn && gridViewMode === "map";
+	const changeGridViewMode = useCallback(
+		(mode: GridViewMode) => {
+			setGridViewMode(mode);
+			writeGridViewMode(userId, mode);
+		},
+		[userId],
+	);
+	const [mapCards, setMapCards] = useState<MapCard[]>([]);
+	// Explore mode on the map: a pin the user drops anywhere by tapping the
+	// map. Starts at the explore place, but moving it doesn't change that place
+	// (the location picker's choice stays as it is). Outside explore mode the
+	// map shows the cascade around the user's own location.
+	const [explorePin, setExplorePin] = useState<{ lat: number; lon: number } | null>(null);
+	const [mapError, setMapError] = useState<string | null>(null);
+	useEffect(() => {
+		if (!exploreLocation) {
+			setExplorePin(null);
+			return;
+		}
+		try {
+			const { lat, lon } = decodeGeohash(exploreLocation.geohash);
+			setExplorePin({ lat: (lat[0] + lat[1]) / 2, lon: (lon[0] + lon[1]) / 2 });
+		} catch {
+			setExplorePin(null);
+		}
+	}, [exploreLocation]);
+	const explorePinGeohash = explorePin ? encodeGeohash(explorePin.lat, explorePin.lon) : null;
+	useEffect(() => {
+		if (!showGridMap || !geohash) return;
+		let cancelled = false;
+		void (async () => {
+			try {
+				// The same cascade as the grid; the server adds positions only for
+				// profiles that share one, so cards without fuzzedLat/Lon stay off the map.
+				const parsed = await getBrowseCardsWithTimeout({
+					geohash,
+					exploreGeohash: exploreLocation ? (explorePinGeohash ?? exploreLocation.geohash) : undefined,
+					page: 1,
+					filters: browseRequestFilters,
+				});
+				if (cancelled) return;
+				setMapCards(parsed.cards.filter(hasCardPosition));
+				setMapError(null);
+			} catch {
+				if (!cancelled) setMapError(t("api.errors.load_browse_profiles"));
+			}
+		})();
+		return () => {
+			cancelled = true;
+		};
+	}, [showGridMap, geohash, explorePinGeohash, exploreLocation, browseRequestFilters, getBrowseCardsWithTimeout, t]);
+
 	const refreshLocation = useCallback(async () => {
 		if (!useAutoLocation || !("geolocation" in navigator)) {
 			return;
@@ -884,6 +988,8 @@ export function GridPage() {
 			fetchGridCards,
 		],
 	);
+
+	loadBrowseCardsRef.current = loadBrowseCards;
 
 	useEffect(() => {
 		if (!isLoadingPreferences && useAutoLocation && !initialLocationChecked && !hasRefreshedLocationThisAppLaunch) {
@@ -1729,7 +1835,8 @@ export function GridPage() {
 						overrideGeohash: activeGeohash || undefined
 					});
 				}}
-				isDisabled={isLoadingCards || isLoadingMoreCards || isIncognitoActive}
+				// Dragging the map must pan it, not pull to refresh.
+				isDisabled={isLoadingCards || isLoadingMoreCards || isIncognitoActive || showGridMap}
 				refreshingLabel={t("browse_page.refreshing_feed")}
 			>
 				<header ref={headerRef} className="relative z-20 flex shrink-0 flex-col pb-2 pointer-events-none">
@@ -1827,6 +1934,21 @@ export function GridPage() {
 										}
 									</button>
 								</div>
+								{isMapFlagOn ? (
+									<button
+										type="button"
+										onClick={() => changeGridViewMode(showGridMap ? "list" : "map")}
+										title={showGridMap ? t("browse_page.view_list", { defaultValue: "Grid" }) : t("browse_page.view_map", { defaultValue: "Map" })}
+										aria-label={showGridMap ? t("browse_page.view_list", { defaultValue: "Grid" }) : t("browse_page.view_map", { defaultValue: "Map" })}
+										aria-pressed={showGridMap}
+										className={cn(
+											"inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-all active:scale-95 rail:h-[38px] rail:w-[38px]",
+											showGridMap ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-lg" : "glass-pill text-[var(--text-muted)] hover:text-[var(--text)]",
+										)}
+									>
+										{showGridMap ? <LayoutGrid className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
+									</button>
+								) : null}
 								<button
 									type="button"
 									// Don't steal focus from the name input: its onBlur would close
@@ -2081,6 +2203,39 @@ export function GridPage() {
 					</div>
 				</header>
 
+				{showGridMap ? (
+					<div
+						// Full bleed like Right Now's map: up behind the header and, on
+						// desktop, on under the nav rail.
+						className="relative flex-1 min-h-0 rail:-ms-[var(--nav-rail-width)]"
+						style={{ marginTop: -headerBottom }}
+					>
+						<GridMap
+							cards={mapCards}
+							selectedProfileId={activeProfileId}
+							onSelectProfile={(profileId) => {
+								if (profileId) setActiveProfileId(profileId);
+							}}
+							explorePin={exploreLocation ? explorePin : null}
+							onPlacePin={exploreLocation ? setExplorePin : undefined}
+							topInset={headerBottom}
+							leftInset={railWidth}
+						/>
+						{/* Keeps the rail's tabs readable over the map. */}
+						<div
+							aria-hidden="true"
+							className="pointer-events-none absolute inset-y-0 start-0 z-10 hidden w-[calc(var(--nav-rail-width)+4rem)] rail:block"
+							style={{ background: "linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.75) 55%, transparent 100%)" }}
+						/>
+						{mapError || mapCards.length === 0 ? (
+							<div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-8">
+								<p className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]/90 px-4 py-3 text-center text-sm text-[var(--text-muted)] shadow-lg backdrop-blur">
+									{mapError ?? t("browse_page.map_empty", { defaultValue: "Nobody nearby shares their location on the map." })}
+								</p>
+							</div>
+						) : null}
+					</div>
+				) : (
 				<FeedScrollContainer ref={feedContainerRef}>
 					<div
 						className={cn(
@@ -2128,6 +2283,7 @@ export function GridPage() {
 						/>
 					</div>
 				</FeedScrollContainer>
+				)}
 			</PullToRefreshContainer>
 
 			{/* First run: introduce the tile gestures once a location is set and

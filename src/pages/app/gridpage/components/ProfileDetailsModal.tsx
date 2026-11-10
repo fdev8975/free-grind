@@ -1439,6 +1439,16 @@ export function ProfileDetailsModal({
 		return () => el.removeEventListener("wheel", onWheel);
 	}, [isModalSplit]);
 
+	// Profile videos (self-hosted server, type 2): played muted and looping over
+	// their poster, which the media hash resolves to as an image.
+	const videoUrlByHash = useMemo(() => {
+		const map: Record<string, string> = {};
+		for (const media of activeProfile?.medias ?? []) {
+			if (media.type === 2 && media.mediaHash && media.videoUrl) map[media.mediaHash] = media.videoUrl;
+		}
+		return map;
+	}, [activeProfile]);
+
 	const photoCreatedAtByHash = useMemo(() => {
 		if (!activeProfile) {
 			return {} as Record<string, { createdAt: number | null; takenOnGrindr: boolean | null }>;
@@ -2473,6 +2483,20 @@ export function ProfileDetailsModal({
 					className="relative h-full w-full object-cover"
 					revealed={!photoReveal.isBlurred(hash)}
 				/>
+				{videoUrlByHash[hash] && !photoReveal.isBlurred(hash) ? (
+					// Over the poster; clicks still reach the slide button above (z-10).
+					<video
+						key={videoUrlByHash[hash]}
+						src={proxyMediaUrl(videoUrlByHash[hash], { as: "video" })}
+						className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+						autoPlay
+						muted
+						loop
+						playsInline
+						preload="metadata"
+						aria-hidden="true"
+					/>
+				) : null}
 			</>
 		);
 	};

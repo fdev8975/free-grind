@@ -440,6 +440,13 @@
     "request_accepted_waiting": "Request accepted",
     "request_sent_toast": "Request sent",
     "request_error": "Could not send the request",
+    "request_already_sent": "You already sent a request for this post",
+    "request_post_gone": "This post is no longer available",
+    "request_limit": "You've reached your limit for requests. Try again later.",
+    "request_answer_post_gone": "Your post has ended, so this request can't be answered anymore",
+    "discreet_not_allowed": "Discreet posts aren't available for your account",
+    "error_discreet_not_allowed_created": "Your post was created but kept hidden: discreet posts aren't available for your account. Edit it to post it normally.",
+    "error_location_missing": "Right Now needs your location. Allow location access and try again.",
     "requests_title": "Requests",
     "request_accept": "Accept",
     "request_decline": "Decline",
@@ -649,6 +656,9 @@
     }
   },
   "browse_page": {
+    "view_map": "Map",
+    "view_list": "Grid",
+    "map_empty": "Nobody nearby shares their location on the map.",
     "share_distance": {
       "title": "Share Distance",
       "description": "Choose how your distance appears to others.",
@@ -751,31 +761,31 @@
     "visibility": "Visibility"
   },
   "about_page": {
-      "media": {
-          "section": "Video formats on this device",
-          "h264": "H.264",
-          "h264_desc": "MP4 · MOV · 3GP: the usual phone and camera videos",
-          "hevc": "HEVC / H.265",
-          "hevc_desc": "MP4 · MOV: iPhone and newer Android videos",
-          "vp9": "VP8 / VP9",
-          "vp9_desc": "WebM · MKV: screen recordings, downloads",
-          "av1": "AV1",
-          "av1_desc": "WebM · MKV · MP4",
-          "matroska_h264": "H.264 in MKV",
-          "matroska_h264_desc": "MKV: OBS recordings, for one",
-          "sound": "Sound to AAC",
-          "sound_desc": "Opus, PCM, MP3 … in any of the above",
-          "no_preview": "no preview in the editor",
-          "send_direct": "Sent directly",
-          "send_converted": "Converted",
-          "send_converted_aac": "Converted",
-          "send_as_is": "Sent unconverted",
-          "send_unsupported": "Not possible",
-          "output": "Videos are always sent as MP4 with H.264 and AAC; whatever isn't is converted on this device first.",
-          "no_upright": "This device can't encode H.264, so landscape videos can't be turned upright here.",
-          "platform_linux": "On Linux the codecs come from GStreamer. Missing ones (HEVC, AAC, AV1) come with gst-plugins-bad, gst-plugins-ugly and gst-libav; restart the app after installing them.",
-          "platform_macos": "On macOS the system's codecs are used; MOV videos from an iPhone or camera are read like MP4."
-      },
+    "media": {
+      "section": "Video formats on this device",
+      "h264": "H.264",
+      "h264_desc": "MP4 · MOV · 3GP: the usual phone and camera videos",
+      "hevc": "HEVC / H.265",
+      "hevc_desc": "MP4 · MOV: iPhone and newer Android videos",
+      "vp9": "VP8 / VP9",
+      "vp9_desc": "WebM · MKV: screen recordings, downloads",
+      "av1": "AV1",
+      "av1_desc": "WebM · MKV · MP4",
+      "matroska_h264": "H.264 in MKV",
+      "matroska_h264_desc": "MKV: OBS recordings, for one",
+      "sound": "Sound to AAC",
+      "sound_desc": "Opus, PCM, MP3 … in any of the above",
+      "no_preview": "no preview in the editor",
+      "send_direct": "Sent directly",
+      "send_converted": "Converted",
+      "send_converted_aac": "Converted",
+      "send_as_is": "Sent unconverted",
+      "send_unsupported": "Not possible",
+      "output": "Videos are always sent as MP4 with H.264 and AAC; whatever isn't is converted on this device first.",
+      "no_upright": "This device can't encode H.264, so landscape videos can't be turned upright here.",
+      "platform_linux": "On Linux the codecs come from GStreamer. Missing ones (HEVC, AAC, AV1) come with gst-plugins-bad, gst-plugins-ugly and gst-libav; restart the app after installing them.",
+      "platform_macos": "On macOS the system's codecs are used; MOV videos from an iPhone or camera are read like MP4."
+    },
     "licence_value": "MIT",
     "commercial_note": "The source is available under the MIT licence, so anyone is free to use, modify, and fork it.",
     "resources": {
@@ -1101,6 +1111,7 @@
       "footer": "Your changes stay local until you press Save."
     },
     "toasts": {
+      "video_uploaded": "Video uploaded – it's being processed",
       "updated": "Profile updated",
       "photos_updated": "Profile photos updated",
       "photo_uploaded": "Photo uploaded",
@@ -1487,16 +1498,10 @@
       "change": "Change server",
       "official": "Official servers",
       "official_hint": "Sign in with your Grindr account.",
-      "custom": "Own server",
-      "custom_hint": "A self-hosted free-grind-server. Accounts there are separate.",
-      "url_hint": "https is required; http only works for local addresses (e.g. 192.168.x.x).",
-      "test": "Test connection",
-      "testing": "Testing…",
-      "reachable": "Reachable ({{ms}} ms)",
       "unreachable": "Not reachable: {{error}}",
       "save": "Use this server",
       "saving": "Switching…",
-      "current": "Current: {{server}}"
+      "free_grind_hint": "The Free Grind server. Accounts there are separate from Grindr."
     },
     "sign_in": {
       "title": "Sign In",
@@ -1604,6 +1609,27 @@
       "account_created": "Account created",
       "logged_out": "Logged out",
       "switched_account": "Switched account"
+    },
+    "email_verification": {
+      "title": "Confirm your e-mail",
+      "hint": "We sent a 6-digit code to {{email}}. Enter it here or open the link in the e-mail.",
+      "your_address": "your address",
+      "code_placeholder": "Verification code",
+      "verify": "Confirm",
+      "verifying": "Verifying...",
+      "resend": "Send new code",
+      "resend_in": "Resend ({{seconds}}s)",
+      "sent": "New code sent",
+      "done": "E-mail address confirmed",
+      "wrong_code": "Wrong code. Check the e-mail and try again.",
+      "expired": "This code has expired. Request a new one.",
+      "too_many": "Too many requests. Please wait a moment.",
+      "send_failed": "The e-mail couldn't be sent. Please try again later.",
+      "failed": "Something went wrong. Please try again.",
+      "banner": "Please confirm your e-mail address.",
+      "confirm": "Confirm",
+      "later": "Later",
+      "sign_out": "Sign out"
     }
   },
   "chat": {
@@ -1672,10 +1698,10 @@
     "retry": "Retry",
     "not_sent": "Not sent",
     "upload_phase": {
-        "preparing": "Preparing",
-        "converting": "Converting",
-        "finishing": "Finishing",
-        "uploading": "Uploading"
+      "preparing": "Preparing",
+      "converting": "Converting",
+      "finishing": "Finishing",
+      "uploading": "Uploading"
     },
     "loading": "Loading...",
     "load_more": "Load more",

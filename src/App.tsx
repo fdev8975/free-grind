@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SelfHostedPushBridge } from "./components/SelfHostedPushBridge";
 import { Routes, Route, Link, Navigate, useLocation, type Location } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import semver from "semver";
@@ -45,6 +46,7 @@ import { OtaUpdateGate } from "./components/OtaUpdatePrompt";
 import { TestReminderGate } from "./components/TestReminderPrompt";
 import { TokenExpiredGate } from "./components/TokenExpiredPrompt";
 import { AccountStatusGate } from "./components/AccountStatusPrompt";
+import { EmailVerificationGate } from "./components/EmailVerificationGate";
 import { UnsupportedVersionGate } from "./components/UnsupportedVersionPrompt";
 import { EntitlementBypassPrompt } from "./components/EntitlementBypassPrompt";
 import { AgeVerificationRegionPrompt } from "./components/AgeVerificationRegionPrompt";
@@ -236,7 +238,7 @@ export default function App() {
 								onClose={handleAnnouncementClose}
 							/>
 						</div>
-					) : (<UnsupportedVersionGate><AccountStatusGate><TokenExpiredGate><OutdatedVersionGate><TestReminderGate>
+					) : (<UnsupportedVersionGate><AccountStatusGate><TokenExpiredGate><EmailVerificationGate><OutdatedVersionGate><TestReminderGate>
 					{renderPhase >= 1 && <ManagerModeRedirect />}
 					{renderPhase >= 1 && <KeepScreenOnBridge />}
 					{renderPhase >= 2 && <PushNotificationBridge />}
@@ -244,6 +246,7 @@ export default function App() {
 					{renderPhase >= 2 && <NotificationReplyBridge />}
 					{renderPhase >= 2 && <ManagedOptionsCacheBridge />}
 					{renderPhase >= 2 && <AssignmentsBridge />}
+					{renderPhase >= 2 && <SelfHostedPushBridge />}
 					{renderPhase >= 2 && <LgbtqRiskCountryWarning />}
 					{renderPhase >= 3 && <ChatRealtimeBridge />}
 					{renderPhase >= 3 && <VideoCallManager />}
@@ -372,7 +375,7 @@ export default function App() {
 							/>
 						</Routes>
 					)}
-					</TestReminderGate></OutdatedVersionGate></TokenExpiredGate></AccountStatusGate></UnsupportedVersionGate>)}
+					</TestReminderGate></OutdatedVersionGate></EmailVerificationGate></TokenExpiredGate></AccountStatusGate></UnsupportedVersionGate>)}
 					</OtaUpdateGate>
 				</SmoothScroll>
 			</ExploreModeProvider>

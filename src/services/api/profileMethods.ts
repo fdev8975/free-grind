@@ -19,6 +19,8 @@ import { travelPlansResponseSchema, type TravelPlan, type TravelPlanPayload } fr
 import { homeLocationSchema, type HomeLocation } from "../../types/home-location";
 import type { ProfileReportRequest } from "../../types/reports";
 import { invoke } from "@tauri-apps/api/core";
+import { uploadStagedVideo, type UploadProgress } from "../stagedVideoUpload";
+import { uploadProgressReporter } from "../videoReencode";
 import {
 	ApiFunctionError,
 	assertSuccess,
@@ -571,28 +573,6 @@ export function createProfileMethods(fetchRest: RestFetcher, t: (key: string, op
 			return { ok: true };
 		},
 
-		async uploadProfileImage(params: {
-			path: string;
-			body: Uint8Array;
-			contentType: string;
-		}): Promise<ProfileImageUploadResult> {
-			const response = await fetchRest(params.path, {
-				method: "POST",
-				rawBody: params.body,
-				contentType: params.contentType,
-			});
-			await assertSuccess(response, t("api.errors.upload_image"));
-			const payload = await parseJsonSafe(response);
-			if (typeof payload !== "object" || payload === null) {
-				throw new ApiFunctionError(
-					t("api.errors.invalid_upload_profile_response"),
-					response.status,
-					payload,
-				);
-			}
-			return payload as ProfileImageUploadResult;
-		},
-
 		/**
 		 * Profile photo upload through a dedicated command that picks the
 		 * endpoint: in-app captures go to the device-key-signed /v5 upload
@@ -615,6 +595,33 @@ export function createProfileMethods(fetchRest: RestFetcher, t: (key: string, op
 			} catch (error) {
 				throw mediaUploadErrorToApiFunctionError(error, t("api.errors.upload_image"), t);
 			}
+		},
+
+		/**
+		 * Profile video (self-hosted server, assignment "profile_videos"):
+		 * streamed from disk like chat/album videos (see stagedVideoUpload),
+		 * metadata stripped Rust-side. The server transcodes it and makes the
+		 * poster; the result is a pool media hash like an uploaded photo.
+		 */
+		async uploadProfileVideo(params: {
+			file: File;
+			maxBodySize?: number | null;
+			onProgress?: (progress: UploadProgress) => void;
+		}): Promise<ProfileImageUploadResult | null> {
+			const report = uploadProgressReporter(null, params.onProgress);
+			return uploadStagedVideo(
+				params.file,
+				(stagedId) =>
+					invoke<ProfileImageUploadResult>("upload_staged_profile_video", {
+						stagedId,
+						maxBodySize: params.maxBodySize ?? null,
+						edit: null,
+						onProgress: report.channel(),
+					}),
+				t("api.errors.upload_image"),
+				t,
+				(fraction) => report("preparing", fraction),
+			);
 		},
 	};
 }

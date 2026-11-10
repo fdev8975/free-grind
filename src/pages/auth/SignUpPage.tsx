@@ -39,7 +39,7 @@ export function SignUpPage() {
 	// Accounts this app created so far; null until loaded.
 	const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
 	const server = useServerInfo();
-	const isCustom = server.kind === "custom";
+	const isCustom = server.kind === "freeGrind";
 	// The local limit only applies to accounts on the official servers.
 	const isLimitReached = !isCustom && quota !== null && quota.used >= quota.limit;
 

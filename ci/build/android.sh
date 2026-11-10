@@ -29,6 +29,11 @@ cp ci/build/android/network_security_config.xml "$nsc"
 # A fresh Gradle home per build, so nothing cached from another project leaks in.
 export GRADLE_USER_HOME=/root/.gradle
 
+# Free Grind server (optional): FG_API_URL / FG_MEDIA_URL / FG_RTC_URL, see
+# scripts/free-grind-config.mjs. Unset → the build has no Free Grind server.
+TAURI_CONFIG="$(bun scripts/free-grind-config.mjs)"
+export TAURI_CONFIG
+
 bunx tauri android init --ci --skip-targets-install
 # arm64-v8a only: GeckoView (Google sign-in) adds ~85 MB per ABI.
 bunx tauri android build --apk --split-per-abi --target aarch64

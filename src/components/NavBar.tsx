@@ -49,6 +49,7 @@ import { useSystemNavInset } from "../hooks/useSystemNavInset";
 import { getThumbImageUrl } from "../utils/media";
 import { getSavedAccountProfile } from "../services/savedAccountProfiles";
 import { looksLikeMessageUpdate } from "../utils/messageUpdates";
+import { RIGHT_NOW_REQUESTS_CHANGED_EVENT, hasUnseenRightNowRequests, markRightNowRequestsSeen } from "../services/rightNowRequestsSignal";
 
 // Nav icons and tab names (`labels`: the nav.<season>.* keys) swapped in during
 // a seasonal theme (only one is ever active, see useActiveSeason).
@@ -193,6 +194,7 @@ export function NavBar() {
 	const setUnreadCount = useState(0)[1];
 	const [interestUnseen, setInterestUnseen] = useState(false);
 	const [inboxUnseen, setInboxUnseen] = useState(false);
+	const [rightNowUnseen, setRightNowUnseen] = useState(() => hasUnseenRightNowRequests(userId));
 
 	// Read preferences directly from localStorage (defaulting to true if not set)
 	const [showRightNow] = useState(() => window.localStorage.getItem("fg-show-right-now") !== "false");
@@ -513,6 +515,18 @@ export function NavBar() {
 		};
 	}, [interestData]);
 
+	// New Right Now requests (rightnow.v1.request): dot until the page is opened.
+	useEffect(() => {
+		setRightNowUnseen(hasUnseenRightNowRequests(userId));
+		const onChanged = (event: Event) => setRightNowUnseen((event as CustomEvent<{ unseen: boolean }>).detail.unseen);
+		window.addEventListener(RIGHT_NOW_REQUESTS_CHANGED_EVENT, onChanged);
+		return () => window.removeEventListener(RIGHT_NOW_REQUESTS_CHANGED_EVENT, onChanged);
+	}, [userId]);
+
+	useEffect(() => {
+		if (userId != null && location.pathname.startsWith("/right-now")) markRightNowRequestsSeen(userId);
+	}, [location.pathname, userId]);
+
 	// Clear the interest dot immediately when navigating to the interest section
 	useEffect(() => {
 		if (location.pathname === "/interest") {
@@ -828,7 +842,8 @@ export function NavBar() {
 											/>
 										)}
 										{(item.value === "inbox" && inboxUnseen) ||
-										(item.value === "interest" && interestUnseen) ? (
+										(item.value === "interest" && interestUnseen) ||
+										(item.value === "right-now" && rightNowUnseen) ? (
 											<span className="absolute -end-1 -top-1 flex h-2 w-2">
 												<span
 													className={cn(

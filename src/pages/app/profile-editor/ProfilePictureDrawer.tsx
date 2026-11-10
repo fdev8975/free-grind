@@ -30,6 +30,8 @@ export type ProfilePoolImage = {
 };
 
 interface ProfilePictureDrawerProps {
+	/** Self-hosted server with profile videos enabled: the picker offers videos too. */
+	allowVideo?: boolean;
 	images: ProfilePoolImage[];
 	isLoading: boolean;
 	error: string | null;
@@ -63,6 +65,7 @@ export function ProfilePictureDrawer({
 	deletingHash,
 	onDeleteImage,
 	onUploadFile,
+	allowVideo = false,
 	uploadTiles = [],
 	onAddFromDrawer,
 	onClose,
@@ -82,7 +85,7 @@ export function ProfilePictureDrawer({
 		},
 		[onUploadFile],
 	);
-	const { actions: deviceActions, inputs: addInputs } = useDrawerAddActions({ onFiles: onPickFiles, allowVideo: false });
+	const { actions: deviceActions, inputs: addInputs } = useDrawerAddActions({ onFiles: onPickFiles, allowVideo });
 	// Plus picking from the chat drawer, listed with them in the add tile's sheet.
 	const addActions: DrawerAddAction[] = onAddFromDrawer
 		? [

@@ -1,7 +1,7 @@
-//! Backend selection (official Grindr servers or a self-hosted, API-compatible
-//! free-grind-server). The choice is made on the sign-in screen, persisted,
-//! remembered per saved account, and applied to the `grindr` crate's
-//! process-wide [`grindr::set_server_config`].
+//! Backend selection: the official Grindr servers or the Free Grind server
+//! built into the app (addresses fixed at build time, see grindr's server.rs).
+//! The choice is made on the sign-in screen, persisted, remembered per saved
+//! account, and applied to the `grindr` crate's [`grindr::set_server_config`].
 
 use std::time::Duration;
 
@@ -19,8 +19,12 @@ fn account_server_slot(profile_id: &str) -> String {
 pub struct ServerStorage;
 
 impl ServerStorage {
+    /// A stored Free Grind choice falls back to official in a build without
+    /// Free Grind addresses.
     fn decode(bytes: &[u8]) -> Option<grindr::ServerConfig> {
-        serde_json::from_slice(bytes).ok()
+        serde_json::from_slice::<grindr::ServerConfig>(bytes)
+            .ok()
+            .filter(|c| c.is_official() || grindr::free_grind_available())
     }
 
     /// The persisted active backend; official when nothing (or garbage) is stored.
@@ -75,29 +79,32 @@ pub struct ServerInfo {
     pub kind: &'static str,
     pub api_base: String,
     pub media_base: Option<String>,
+    /// Whether this build has a Free Grind server at all.
+    pub free_grind_available: bool,
 }
 
 fn info(config: &grindr::ServerConfig) -> ServerInfo {
     ServerInfo {
-        kind: if config.is_official() { "official" } else { "custom" },
+        kind: if config.is_official() { "official" } else { "freeGrind" },
         api_base: config.api_base().to_owned(),
         media_base: config.media_base().map(str::to_owned),
+        free_grind_available: grindr::free_grind_available(),
     }
 }
 
+/// `"official"` or `"freeGrind"`; nothing else can be chosen.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServerSelection {
-    /// `None` = official servers.
-    pub api_base: Option<String>,
-    pub media_base: Option<String>,
+    pub server: String,
 }
 
 fn parse_selection(selection: &ServerSelection) -> Result<grindr::ServerConfig, AppError> {
-    match selection.api_base.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
-        None => Ok(grindr::ServerConfig::Official),
-        Some(api_base) => grindr::ServerConfig::custom(api_base, selection.media_base.as_deref())
-            .map_err(|e| AppError::Http(e.to_string())),
+    match selection.server.as_str() {
+        "official" => Ok(grindr::ServerConfig::Official),
+        "freeGrind" if grindr::free_grind_available() => Ok(grindr::ServerConfig::FreeGrind),
+        "freeGrind" => Err(AppError::Http("this build has no Free Grind server".to_owned())),
+        other => Err(AppError::Http(format!("unknown server {other:?}"))),
     }
 }
 
@@ -114,7 +121,7 @@ pub struct ServerProbe {
     pub error: Option<String>,
 }
 
-/// Checks that `selection` points at a reachable free-grind-server
+/// Checks that the Free Grind server is reachable
 /// (`GET /healthz` → `{"ok":true}`). Nothing is changed.
 #[tauri::command]
 pub async fn test_server(selection: ServerSelection) -> Result<ServerProbe, AppError> {
@@ -162,7 +169,7 @@ pub async fn set_server_config(app: tauri::AppHandle, selection: ServerSelection
     if *grindr::server_config() == config {
         return Ok(info(&config));
     }
-    activate(config.clone())?;
+    activate(config)?;
     let device = grindr::DeviceInfo::generate();
     let _ = DeviceStorage::save(&device);
     adopt_client(&app, Some(device), None)?;

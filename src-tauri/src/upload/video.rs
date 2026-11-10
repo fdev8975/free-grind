@@ -260,6 +260,34 @@ pub async fn upload_staged_album_video(
     upload_staged_video(&app, &state, &lock, upload).await
 }
 
+/// Default cap for profile videos when the server's entitlement isn't known.
+pub const MAX_PROFILE_VIDEO_BYTES: u64 = 50 * 1024 * 1024;
+
+/// Profile video (self-hosted server extension): same unsigned media-upload
+/// endpoint as profile photos, as a raw MP4 body. The server transcodes it and
+/// generates the poster, so no `thumbCoords` are sent. `max_body_size` is the
+/// account's `profile.video.maxBytes` entitlement, when known.
+#[tauri::command]
+pub async fn upload_staged_profile_video(
+    app: AppHandle,
+    state: tauri::State<'_, AppState>,
+    lock: tauri::State<'_, UploadLock>,
+    staged_id: String,
+    max_body_size: Option<u64>,
+    edit: Option<VideoEdit>,
+    on_progress: Channel<UploadProgress>,
+) -> Result<serde_json::Value, AppError> {
+    let upload = VideoUpload {
+        staged_id,
+        edit,
+        progress: Some(on_progress),
+        multipart: false,
+        max_body_size: max_body_size.unwrap_or(MAX_PROFILE_VIDEO_BYTES),
+        path_for: |_probe: &Probe| "/v4/media/upload?takenOnGrindr=false".to_owned(),
+    };
+    upload_staged_video(&app, &state, &lock, upload).await
+}
+
 #[cfg(test)]
 mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};

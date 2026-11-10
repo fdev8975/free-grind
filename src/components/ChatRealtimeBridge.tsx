@@ -29,6 +29,7 @@ import { useTranslation } from "react-i18next";
 import { platform } from "@tauri-apps/plugin-os";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useQueryClient } from "@tanstack/react-query";
+import { markRightNowRequestsUnseen } from "../services/rightNowRequestsSignal";
 import toast from "react-hot-toast";
 import { BANNER_TOAST_CLASS } from "./AppToaster";
 import { NotificationBanner } from "./NotificationBanner";
@@ -743,6 +744,17 @@ export function ChatRealtimeBridge() {
 						triggerTapNotification(tap);
 						maybeUnarchiveOnActivity(tap.profileId);
 						runAutomationRulesForSender(tap.profileId, "tap_received", apiFunctions).catch(() => {});
+					}
+				}
+
+				// rightnow.v1.request — someone asked to connect about our Right Now
+				// post: refresh the requests inbox and light the Right Now nav dot
+				// (unless that page is already open).
+				if (envelope.type === "rightnow.v1.request") {
+					void queryClient.invalidateQueries({ queryKey: ["rightnow", "requests", "inbox"] });
+					const currentUserId = userIdRef.current;
+					if (currentUserId != null && !window.location.pathname.startsWith("/right-now")) {
+						markRightNowRequestsUnseen(currentUserId);
 					}
 				}
 

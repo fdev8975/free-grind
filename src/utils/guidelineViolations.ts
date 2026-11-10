@@ -8,6 +8,7 @@
  */
 
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { getServerInfo } from "../services/serverConfig";
 
 export const COMMUNITY_GUIDELINES_URL = "https://www.grindr.com/community-guidelines";
 
@@ -459,8 +460,15 @@ const BAN_REASONS: Record<string, BanReasonEntry> = {
 
 export const BAN_APPEAL_URL = "https://web.grindr.com/ban-appeal";
 
+/** The appeal page of the active server: Grindr's, or the Free Grind server's own. */
+export function banAppealUrl(): string {
+	const info = getServerInfo();
+	return info.kind === "freeGrind" ? `${info.apiBase.replace(/\/$/, "")}/ban-appeal` : BAN_APPEAL_URL;
+}
+
 export function openBanAppeal() {
-	openUrl(BAN_APPEAL_URL).catch(() => window.open(BAN_APPEAL_URL, "_blank"));
+	const url = banAppealUrl();
+	openUrl(url).catch(() => window.open(url, "_blank"));
 }
 
 // Timed bans only offer an appeal for these sub-reasons, as in the official app.

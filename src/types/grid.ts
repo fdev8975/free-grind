@@ -45,6 +45,11 @@ export const browseCardSchema = z.object({
 	favorite: z.boolean().optional(),
 	chatted: z.boolean().optional(),
 	rightNow: z.string().nullable().optional(),
+	// Map position as the server obfuscated it (upstream field names, as on the
+	// carousel items). Never the real location, and no fuzz radius either (that
+	// would narrow down the real one).
+	fuzzedLat: z.number().nullable().optional(),
+	fuzzedLon: z.number().nullable().optional(),
 });
 
 export type BrowseCard = z.infer<typeof browseCardSchema>;
@@ -104,6 +109,8 @@ export const profileDetailItemSchema = z.object({
 				reason: z.string().nullable().optional(),
 				takenOnGrindr: z.boolean().nullable().optional(),
 				createdAt: z.number().nullable().optional(),
+				// Self-hosted server: profile videos (type 2) carry their MP4 URL.
+				videoUrl: z.string().nullable().optional(),
 			}),
 		)
 		.nullable()

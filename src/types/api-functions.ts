@@ -209,7 +209,8 @@ export interface ManagedTagCategory {
 export interface ProfileImageUploadResult {
 	hash?: string;
 	mediaHash?: string;
-	imageSizes?: Array<{ mediaHash?: string }>;
+	/** `state`: moderation state; null upstream until reviewed, "1" (approved) on a self-hosted server. */
+	imageSizes?: Array<{ mediaHash?: string; state?: string | number | null }>;
 }
 
 export interface GetSharedAlbumsInput {

@@ -10,6 +10,7 @@
  * up, not just a UI dismissal.
  */
 
+import { isFeatureOn } from "../services/assignmentsStore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -30,8 +31,15 @@ import {
 	type VideoCallIncomingDetail,
 	type VideoCallEndedDetail,
 } from "./ChatRealtimeBridge";
-import type { IRemoteVideoTrack } from "agora-rtc-sdk-ng";
-import { AgoraCallSession, WebRtcUnsupportedError, isWebRtcSupported } from "../services/agoraCall";
+import {
+	type CallProvider,
+	type CallSession,
+	type PlayableTrack,
+	WebRtcUnsupportedError,
+	callProviderOf,
+	createCallSession,
+	isWebRtcSupported,
+} from "../services/videoCall/engine";
 import { getProfileImageUrl } from "../utils/media";
 import { appLog } from "../utils/logger";
 import { isAndroid, isIos } from "../services/saveMedia";
@@ -73,6 +81,8 @@ interface CallInfo {
 	displayName: string;
 	imageHash: string | null;
 	maxSeconds: number;
+	/** Agora (official server) or LiveKit (self-hosted), from the start/join answer. */
+	provider: CallProvider;
 }
 
 const HISTORY_MODAL_KEY = "video-call";
@@ -187,7 +197,7 @@ export function VideoCallManager() {
 		defaultCallCameraRef.current = defaultCallCamera;
 	}, [defaultCallCamera]);
 
-	const sessionRef = useRef<AgoraCallSession | null>(null);
+	const sessionRef = useRef<CallSession | null>(null);
 	const closingRef = useRef(false);
 	const localVideoRef = useRef<HTMLDivElement | null>(null);
 	const remoteVideoRef = useRef<HTMLDivElement | null>(null);
@@ -195,7 +205,7 @@ export function VideoCallManager() {
 	// remoteVideoRef's div) exists — e.g. on the callee side, the caller is
 	// already publishing when we join — so it's kept here and attached once
 	// the tiles mount.
-	const remoteVideoTrackRef = useRef<IRemoteVideoTrack | null>(null);
+	const remoteVideoTrackRef = useRef<PlayableTrack | null>(null);
 
 	// Agora token keep-alive — the initial token is only valid for maxSeconds
 	// (60s in the documented example), so a long call needs it periodically
@@ -298,7 +308,7 @@ export function VideoCallManager() {
 	// with the elapsed timer not yet running, until that fires. The callee
 	// side already made a deliberate "accept" decision, so it goes straight
 	// to active once its own join succeeds.
-	const joinAgoraSession = useCallback(async (channelId: string, token: string, waitForRemoteJoin: boolean) => {
+	const joinAgoraSession = useCallback(async (channelId: string, token: string, waitForRemoteJoin: boolean, provider: CallProvider) => {
 		if (userIdRef.current == null) {
 			toast.error(tRef.current("video_call.connection_failed"));
 			await endCallRef.current();
@@ -310,7 +320,7 @@ export function VideoCallManager() {
 		// entirely — checking here first means we never even construct it, and
 		// everything that follows is safely inside the try/catch instead of a
 		// bare `new AgoraCallSession(...)` above it that could throw uncaught.
-		let session: AgoraCallSession | null = null;
+		let session: CallSession | null = null;
 		try {
 			if (!isWebRtcSupported()) {
 				throw new WebRtcUnsupportedError();
@@ -320,14 +330,11 @@ export function VideoCallManager() {
 			// Their avatar until a video track actually arrives — they may have
 			// started with the camera off too, and then never publish one.
 			setRemoteCameraOff(true);
-			session = new AgoraCallSession({
+			session = await createCallSession(provider, {
 				onRemoteVideoTrack: (track) => {
 					remoteVideoTrackRef.current = track;
 					setRemoteCameraOff(false);
 					if (remoteVideoRef.current) track.play(remoteVideoRef.current);
-				},
-				onRemoteAudioTrack: () => {
-					// AgoraCallSession already plays remote audio directly.
 				},
 				onRemoteUserJoined: () => {
 					if (waitForRemoteJoin) setPhase("active");
@@ -384,6 +391,11 @@ export function VideoCallManager() {
 	const handleStartOutgoing = useCallback(
 		(targetProfileId: string, displayName: string, imageHash: string | null) => {
 			if (phaseRef.current !== "idle") return;
+			// Same gate as the call button: the server must offer video calls.
+			if (!isFeatureOn("CreateVideoCall")) {
+				toast.error(tRef.current("video_call.start_failed"));
+				return;
+			}
 			void (async () => {
 				// No separate remaining-allowance pre-check here — the menu item
 				// that triggers this is already disabled once ChatThreadPanel's own
@@ -397,6 +409,7 @@ export function VideoCallManager() {
 					displayName,
 					imageHash,
 					maxSeconds: 60,
+					provider: { provider: "agora" },
 				});
 				setPhase("outgoing-ringing");
 				try {
@@ -416,13 +429,13 @@ export function VideoCallManager() {
 					}
 					setCallInfo((prev) =>
 						prev
-							? { ...prev, channelId: result.channelId!, token: result.token!, maxSeconds: result.maxSeconds ?? prev.maxSeconds }
+							? { ...prev, channelId: result.channelId!, token: result.token!, maxSeconds: result.maxSeconds ?? prev.maxSeconds, provider: callProviderOf(result) }
 							: prev,
 					);
 					// Join our own Agora session right away so we're ready the
 					// instant the callee answers, but stay on the ringing screen
 					// until Agora's "user-joined" actually fires for them.
-					await joinAgoraSession(result.channelId, result.token, true);
+					await joinAgoraSession(result.channelId, result.token, true, callProviderOf(result));
 				} catch (error) {
 					appLog.warn("[video-call] startVideoCall failed", error);
 					// TARGET_PROFILE_UNAVAILABLE/EXCEED_LENGTH_LIMIT sometimes arrive
@@ -459,6 +472,7 @@ export function VideoCallManager() {
 				displayName: tRef.current("common.unknown_display_name"),
 				imageHash: null,
 				maxSeconds: 60,
+				provider: { provider: "agora" },
 			});
 			setPhase("incoming-ringing");
 			void apiFunctionsRef.current
@@ -549,7 +563,7 @@ export function VideoCallManager() {
 				await endCall();
 				return;
 			}
-			await joinAgoraSession(info.channelId, token, false);
+			await joinAgoraSession(info.channelId, token, false, joinResult.provider);
 		} catch (error) {
 			appLog.warn("[video-call] joinVideoCall failed", error);
 			toast.error(tRef.current("video_call.join_failed"));
