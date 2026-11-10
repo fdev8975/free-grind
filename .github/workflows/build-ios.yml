@@ -12,12 +12,19 @@ on:
         required: false
         type: string
         default: free-grind-ios
+      environment:
+        description: "Deployment environment whose FG_* variables build the Free Grind server into the app (empty: none)"
+        required: false
+        type: string
+        default: ""
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: macos-26
     timeout-minutes: 90
+    # Only build-artifacts passes one; release and reproducibility builds run without.
+    environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -53,6 +60,15 @@ jobs:
           # Default update channel baked into the frontend: builds from main ship
           # on Stable, every other branch (beta builds) on Development.
           FG_CHANNEL: ${{ github.ref_name == 'main' && 'main' || 'development' }}
+          # Free Grind server (empty outside an environment that defines them;
+          # ci/build/ios.sh turns them into TAURI_CONFIG).
+          FG_API_URL: ${{ vars.FG_API_URL }}
+          FG_MEDIA_URL: ${{ vars.FG_MEDIA_URL }}
+          FG_RTC_URL: ${{ vars.FG_RTC_URL }}
+          FG_FCM_PROJECT_ID: ${{ vars.FG_FCM_PROJECT_ID }}
+          FG_FCM_APP_ID: ${{ vars.FG_FCM_APP_ID }}
+          FG_FCM_SENDER_ID: ${{ vars.FG_FCM_SENDER_ID }}
+          FG_FCM_API_KEY: ${{ vars.FG_FCM_API_KEY || secrets.FG_FCM_API_KEY }}
         run: |
           bash ci/build/ios.sh
           echo "ipa_path=$(ls "$PWD"/out/ios/*.ipa)" >> "$GITHUB_OUTPUT"
