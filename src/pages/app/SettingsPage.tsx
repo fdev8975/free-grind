@@ -62,6 +62,7 @@ import {
 } from "../../services/hotswap";
 import { ToggleRow } from "../../components/ui/toggle-row";
 import { hasDemoProfileImages, isDemoProfileImagesEnabled, setDemoProfileImagesEnabled } from "../../utils/demoProfileImages";
+import { setChatArchiveEnabled, useChatArchiveEnabled } from "../../services/chatArchiveMode";
 import { UpdateChannelSheet } from "./UpdateChannelSheet";
 import { TransferAccountSheet } from "./TransferAccountSheet";
 import { FingerprintCheckSheet } from "./settings-dev/DiagnosticsSheets";
@@ -418,6 +419,7 @@ export function SettingsPage() {
 	const [isFingerprintSheetOpen, setIsFingerprintSheetOpen] = useState(false);
 	const [isPreviewsSheetOpen, setIsPreviewsSheetOpen] = useState(false);
 	const [isSeasonalSheetOpen, setIsSeasonalSheetOpen] = useState(false);
+	const isChatArchiveEnabled = useChatArchiveEnabled();
 	const [isChannelSheetOpen, setIsChannelSheetOpen] = useState(false);
 	const [isTransferSheetOpen, setIsTransferSheetOpen] = useState(false);
 	const isDesktop = useDesktopBreakpoint();
@@ -1267,6 +1269,16 @@ export function SettingsPage() {
 										iconClass="bg-slate-500/15 text-slate-400"
 										label="Show Debug Overlays"
 										description="Displays source (cache/network) info in the grid."
+									/>
+									<ToggleRow
+										checked={isChatArchiveEnabled}
+										onChange={setChatArchiveEnabled}
+										icon={<ArchiveRestoreFilled className="h-5 w-5" />}
+										iconClass="bg-slate-500/15 text-slate-400"
+										label="Chat Database (Archive) Mode"
+										description={isChatArchiveEnabled
+											? "Keeps expiring photos, videos, albums and unsent messages accessible forever."
+											: "Off: expiring media and albums expire normally, views count when you open them, unsent messages show as unsent."}
 									/>
 									{navRow(
 										() => setIsSeasonalSheetOpen(true),

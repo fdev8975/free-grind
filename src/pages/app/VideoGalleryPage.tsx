@@ -20,6 +20,7 @@ import {
 import { getThumbImageUrl, validateMediaHash } from "../../utils/media";
 import { proxyMediaUrl } from "../../utils/mediaProxy";
 import { limitChatDbBlobRead } from "../../utils/chatDbBlobLimiter";
+import { isChatArchiveEnabled } from "../../services/chatArchiveMode";
 import { createLimiter } from "../../utils/concurrencyLimit";
 import { cn } from "../../utils/cn";
 import { appLog } from "../../utils/logger";
@@ -215,9 +216,11 @@ export function VideoGalleryPage() {
 	const loadVideos = useCallback(async () => {
 		setError(null);
 		try {
+			// Archive mode off: no kept album videos, and no expiring or unsent chat videos.
+			const archive = isChatArchiveEnabled();
 			const [albumVideos, chatVideos] = await Promise.all([
-				getAllAlbumVideos(),
-				getAllReceivedChatVideos(userId),
+				archive ? getAllAlbumVideos() : Promise.resolve([]),
+				getAllReceivedChatVideos(userId, { liveOnly: !archive }),
 			]);
 			const nameFallback = t("common.unknown_display_name");
 

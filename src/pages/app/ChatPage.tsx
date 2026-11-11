@@ -59,6 +59,7 @@ import { PhotoViewer, type HeroRect, type PhotoViewerMedia, type PhotoViewerMenu
 import { AlbumMediaSheet } from "../../components/AlbumMediaSheet";
 import { PhotoActionBar } from "../../components/PhotoActionBar";
 import { markAlbumContentReacted, useAlbumContentReactions } from "../../services/albumReactionStore";
+import { useAlbumContentViewCounter } from "../../hooks/useAlbumContentViewCounter";
 import {
 	messageSchema,
 	type ConversationEntry,
@@ -117,6 +118,11 @@ import {
 	getMessageTakenOnGrindr,
 	getMessageVideoUrl,
 	getMessageMediaId,
+	getViewsRemaining,
+	isViewLimitedLocked,
+	isViewLimitedMedia,
+	toNonArchiveDisplayMessage,
+	VIEW_LIMITED_LOCK_FLAG,
 	getMessagePreviewLabel,
 	getOtherParticipant,
 	getParticipantOnlineMeta,
@@ -131,6 +137,7 @@ import { loadChatFiltersDraft, saveChatFiltersDraft } from "./chat/chat-filters-
 import { cacheDrawerMedia, fetchAndStoreMedia, getCachedMediaUri, getDrawerMediaKey, getMessageFallbackMediaKey, hydrateMediaByMessageId, isSignedUrlExpired } from "../../services/mediaStore";
 import { albumCaptureInFlight, captureAlbum, captureAlbumsForMessages, deleteLocalAlbum, getLocalAlbum } from "../../services/albumStore";
 import { saveAllAlbumMedia, saveAllMedia } from "../../utils/albumMedia";
+import { isChatArchiveEnabled, useChatArchiveEnabled } from "../../services/chatArchiveMode";
 import { formatDistance } from "./gridpage/utils";
 import { captureReplyPreviewsForMessages } from "../../services/replyMediaStore";
 import { useAvatarCache } from "../../hooks/useAvatarCache";
@@ -262,6 +269,8 @@ function canHaveOwnMedia(message: UiMessage): boolean {
  * for anything without one (text, audio, Giphy, …).
  */
 function resolveThreadMessageMedia(message: UiMessage): { url: string; type: "image" | "video" } | null {
+	// Archive mode off: only opened through the server, one view at a time.
+	if (isViewLimitedLocked(message)) return null;
 	const target = getMediaCaptureTarget(message);
 	if (target) {
 		if (target.kind === "audio") return null;
@@ -285,6 +294,7 @@ function resolveThreadMessageMedia(message: UiMessage): { url: string; type: "im
 function captureMediaForMessages(
 	messages: UiMessage[],
 	conversationId: string,
+	userId: number | null = null,
 ): Promise<void> {
 	const pending: Promise<unknown>[] = [];
 	for (const message of messages) {
@@ -297,7 +307,8 @@ function captureMediaForMessages(
 					url: target.url,
 					conversationId,
 					messageId: message.messageId,
-					viewOnce: target.viewOnce,
+					// Our own media is kept even with archive mode off (see chatArchiveMode).
+					viewOnce: target.viewOnce && !(userId != null && Number(message.senderId) === Number(userId)),
 				}),
 			);
 			// Locally stored bytes always win over the live URL (which may
@@ -390,7 +401,7 @@ function mergeMessagePreservingUnsendWipe(
 	}
 	const prevBody = previous.body as Record<string, unknown> | null | undefined;
 	const newBody = incoming.body as Record<string, unknown> | null | undefined;
-	if (incoming.unsent && !newBody && prevBody) {
+	if (incoming.unsent && !newBody && prevBody && isChatArchiveEnabled()) {
 		return { ...previous, unsent: true, localHistory: true };
 	}
 	// _videoExpired/_imageExpired are client-only flags set by the hydration
@@ -662,6 +673,13 @@ export function ChatPage() {
 		string | null
 	>(null);
 	const [threadMessages, setThreadMessages] = useState<UiMessage[]>([]);
+	const isArchiveModeEnabled = useChatArchiveEnabled();
+	// What the thread shows: with archive mode off, unsent messages without
+	// their kept content and received view-limited media without any URL.
+	const displayThreadMessages = useMemo(
+		() => (isArchiveModeEnabled ? threadMessages : threadMessages.map((message) => toNonArchiveDisplayMessage(message, userId))),
+		[isArchiveModeEnabled, threadMessages, userId],
+	);
 	const [threadLastReadTimestamp, setThreadLastReadTimestamp] = useState<number | null>(null);
 	const [messagePageKey, setMessagePageKey] = useState<string | null>(null);
 	const [isLoadingThread, setIsLoadingThread] = useState(false);
@@ -852,6 +870,11 @@ export function ChatPage() {
 	const [albumViewerMediaIndex, setAlbumViewerMediaIndex] = useState<
 		number | null
 	>(null);
+	useAlbumContentViewCounter(
+		albumViewer !== null && albumViewerMediaIndex !== null ? albumViewer.albumId : null,
+		albumViewer?.content[albumViewerMediaIndex ?? -1]?.contentId,
+		albumViewer?.isOwn ?? false,
+	);
 	const [isAlbumViewerLoading, setIsAlbumViewerLoading] = useState(false);
 	const [isAlbumMediaSheetOpen, setIsAlbumMediaSheetOpen] = useState(false);
 	const [isSavingAlbumAll, setIsSavingAlbumAll] = useState(false);
@@ -2187,7 +2210,7 @@ export function ChatPage() {
 								: null;
 						setMessagePageKey(nextPageKey);
 						messagePageKeyRef.current = nextPageKey;
-						captureMediaForMessages(olderMessages, conversationId);
+						captureMediaForMessages(olderMessages, conversationId, userId);
 						if (selectedConversationIdRef.current === conversationId) {
 							setThreadMessages((previous) => {
 								const map = new Map<string, UiMessage>();
@@ -2218,7 +2241,7 @@ export function ChatPage() {
 						: null;
 				setMessagePageKey(nextPageKey);
 				messagePageKeyRef.current = nextPageKey;
-				captureMediaForMessages(initialMessages, conversationId);
+				captureMediaForMessages(initialMessages, conversationId, userId);
 				if (selectedConversationIdRef.current === conversationId) {
 					setThreadMessages(initialMessages);
 					setThreadLastReadTimestamp(lastRead ?? null);
@@ -2299,7 +2322,7 @@ export function ChatPage() {
 								: null;
 						setMessagePageKey(nextPageKey);
 						messagePageKeyRef.current = nextPageKey;
-						captureMediaForMessages(olderMessages, conversationId);
+						captureMediaForMessages(olderMessages, conversationId, userId);
 						if (selectedConversationIdRef.current === conversationId) {
 							setThreadMessages((previous) => {
 								const map = new Map<string, UiMessage>();
@@ -2388,7 +2411,7 @@ export function ChatPage() {
 					// cached locally, keep showing it instead of the server's emptied
 					// version. Source of truth here is chatDb (durable across
 					// restarts), not just in-memory state.
-					if (message.unsent && !currentBody && localBody) {
+					if (message.unsent && !currentBody && localBody && isChatArchiveEnabled()) {
 						return { ...localMessage, unsent: true, localHistory: true } as UiMessage;
 					}
 
@@ -2406,7 +2429,9 @@ export function ChatPage() {
 							?? getMessageImageUrl(localMessage)
 							?? getMessageVideoUrl(localMessage))
 						: null;
-					if (!cachedUrl || isSignedUrlExpired(cachedUrl)) {
+					// Archive mode off: a view-limited photo/video never gets back the
+					// URL an earlier view handed out.
+					if (!cachedUrl || isSignedUrlExpired(cachedUrl) || (!isChatArchiveEnabled() && isViewLimitedMedia(message))) {
 						return message;
 					}
 
@@ -2426,7 +2451,7 @@ export function ChatPage() {
 					responseMessages,
 					older ? undefined : normalizedLastRead,
 				);
-				captureMediaForMessages(responseMessages, conversationId);
+				captureMediaForMessages(responseMessages, conversationId, userId);
 				captureAlbumsForMessages(
 					responseMessages,
 					conversationId,
@@ -2446,6 +2471,8 @@ export function ChatPage() {
 							imageType === "expiring_image";
 
 						if (!isImageLike) return false;
+						// Fetching it uses one of its views: without archive mode only on tap.
+						if (!isChatArchiveEnabled() && isViewLimitedMedia(message)) return false;
 						return !getMessageImageUrl(message as UiMessage);
 					});
 
@@ -2489,7 +2516,7 @@ export function ChatPage() {
 
 							if (hydratedMessages.length > 0) {
 								void chatLog.appendMessages(conversationId, hydratedMessages);
-								captureMediaForMessages(hydratedMessages, conversationId);
+								captureMediaForMessages(hydratedMessages, conversationId, userId);
 
 								if (selectedConversationIdRef.current !== conversationId) return;
 
@@ -2555,7 +2582,7 @@ export function ChatPage() {
 
 								if (resolvedMessages.length > 0) {
 									void chatLog.appendMessages(conversationId, resolvedMessages);
-									captureMediaForMessages(resolvedMessages, conversationId);
+									captureMediaForMessages(resolvedMessages, conversationId, userId);
 
 									if (selectedConversationIdRef.current !== conversationId) return;
 									setThreadMessages((previous) => {
@@ -2599,6 +2626,7 @@ export function ChatPage() {
 					const mediaIdVideoMessages = responseMessages.filter((message) => {
 						const isVideoLike = message.type === "Video" || message.type === "PrivateVideo" || message.type === "NonExpiringVideo" || (message as UiMessage).chat1Type?.toLowerCase() === "video" || (message as UiMessage).chat1Type?.toLowerCase() === "private_video" || (message as UiMessage).chat1Type?.toLowerCase() === "expiring_video";
 						if (!isVideoLike) return false;
+						if (!isChatArchiveEnabled() && isViewLimitedMedia(message)) return false;
 						return !getMessageVideoUrl(message as UiMessage);
 					});
 
@@ -2627,7 +2655,7 @@ export function ChatPage() {
 							if (updates.length === 0) return;
                             const nonExpiredUpdates = updates.filter((u) => !(u.body as any)?._videoExpired);
                             void chatLog.appendMessages(conversationId, nonExpiredUpdates);
-                            captureMediaForMessages(nonExpiredUpdates, conversationId);
+                            captureMediaForMessages(nonExpiredUpdates, conversationId, userId);
 							if (selectedConversationIdRef.current !== conversationId) return;
 							setThreadMessages((previous) => {
 								const map = new Map<string, UiMessage>();
@@ -2828,7 +2856,7 @@ export function ChatPage() {
 						);
 
 				if (localOnly.length > 0) {
-					captureMediaForMessages(localOnly, conversationId);
+					captureMediaForMessages(localOnly, conversationId, userId);
 					if (selectedConversationIdRef.current !== conversationId) return;
 
 					setThreadMessages((previous) => {
@@ -2885,7 +2913,7 @@ export function ChatPage() {
 					setMessagePageKey(nextPageKey);
 					messagePageKeyRef.current = nextPageKey;
 					if (localOlder.length > 0) {
-						captureMediaForMessages(localOlder, conversationId);
+						captureMediaForMessages(localOlder, conversationId, userId);
 					}
 					if (localOlder.length > 0 && selectedConversationIdRef.current === conversationId) {
 						setThreadMessages((previous) => {
@@ -3160,7 +3188,7 @@ export function ChatPage() {
 		}
 		for (const [cid, msgs] of byConv) {
 			void chatLog.appendMessages(cid, msgs);
-			captureMediaForMessages(msgs, cid);
+			captureMediaForMessages(msgs, cid, userId);
 			captureAlbumsForMessages(msgs, cid, (id) => service.getAlbum(id), userId);
 			captureReplyPreviewsForMessages(msgs, cid);
 		}
@@ -3201,6 +3229,8 @@ export function ChatPage() {
 			const imageType = (m as UiMessage).chat1Type?.toLowerCase();
 			const isImageLike = m.type === "Image" || m.type === "ExpiringImage" || imageType === "image" || imageType === "expiring_image";
 			if (!isImageLike) return false;
+			// Fetching it uses one of its views: without archive mode only on tap.
+			if (!isChatArchiveEnabled() && isViewLimitedMedia(m)) return false;
 			return !getMessageImageUrl(m as UiMessage);
 		});
 		if (incomingImagesWithoutUrl.length > 0) {
@@ -3237,7 +3267,7 @@ export function ChatPage() {
 				}
 				for (const [cid, list] of nonExpiredImageUpdatesByConv) {
 					void chatLog.appendMessages(cid, list);
-					captureMediaForMessages(list, cid);
+					captureMediaForMessages(list, cid, userId);
 				}
 				const activeConversationId = selectedConversationIdRef.current;
 				const activeUpdates = updates.filter((u) => u.conversationId === activeConversationId);
@@ -3266,6 +3296,7 @@ export function ChatPage() {
 			if (m.unsent) return false;
 			const isVideoLike = m.type === "Video" || m.type === "NonExpiringVideo" || (m as UiMessage).chat1Type?.toLowerCase() === "video" || (m as UiMessage).chat1Type?.toLowerCase() === "private_video" || (m as UiMessage).chat1Type?.toLowerCase() === "expiring_video";
 			if (!isVideoLike) return false;
+			if (!isChatArchiveEnabled() && isViewLimitedMedia(m)) return false;
 			return !getMessageVideoUrl(m as UiMessage);
 		});
 		if (incomingVideosWithoutUrl.length > 0) {
@@ -3302,7 +3333,7 @@ export function ChatPage() {
 				}
 				for (const [cid, list] of nonExpiredVideoUpdatesByConv) {
 					void chatLog.appendMessages(cid, list);
-					captureMediaForMessages(list, cid);
+					captureMediaForMessages(list, cid, userId);
 				}
 				const activeConversationId = selectedConversationIdRef.current;
 				const activeUpdates = updates.filter((u) => u.conversationId === activeConversationId);
@@ -6655,6 +6686,15 @@ export function ChatPage() {
 			// only fetches genuinely new ones, so this doesn't re-download
 			// anything we already have.
 			try {
+				// Archive mode off: open it the way the official app does. This is
+				// what enforces a view-once share (refused once it was opened) and
+				// tells both sides it was viewed; the album fetch alone does neither.
+				if (!isOwnAlbum && !isChatArchiveEnabled()) {
+					const opened = await service.openSharedAlbum({ albumId });
+					if (opened.status === 403) {
+						throw new Error(t("chat.thread.album_no_longer_viewable", { defaultValue: "This album can't be opened anymore." }));
+					}
+				}
 				const details = await service.getAlbum(albumId);
 				if (albumViewerCancelledRef.current) return;
 				// All of the album at once, straight away: what's cached from the
@@ -7182,7 +7222,7 @@ export function ChatPage() {
 						map.set(shownMessage.messageId, shownMessage);
 						return [...map.values()].sort((a, b) => a.timestamp - b.timestamp);
 					});
-					captureMediaForMessages([shownMessage], shownMessage.conversationId);
+					captureMediaForMessages([shownMessage], shownMessage.conversationId, userId);
 					setDrawerSendProgress((progress) => (progress ? { ...progress, done: progress.done + 1 } : progress));
 
 					// Track the last sent message for preview update
@@ -7342,7 +7382,7 @@ export function ChatPage() {
 		const mine = isMine(senderId);
 		const list: ThreadMediaItem[] = [];
 		let idx = -1;
-		for (const message of threadMessages) {
+		for (const message of displayThreadMessages) {
 			if (message.messageId === messageId) {
 				// Exactly what the bubble showed, so the hero lands on the same picture.
 				idx = list.length;
@@ -7375,7 +7415,7 @@ export function ChatPage() {
 			setFullScreenMediaIndex(idx);
 		}
 
-	}, [selectedConversation, userId, threadMessages]);
+	}, [selectedConversation, userId, displayThreadMessages]);
 
 	// A profile photo reply opens on the replied-to photo with the rest of that
 	// profile's photos around it — the chat partner's, or our own when they
@@ -7412,6 +7452,66 @@ export function ChatPage() {
 			window.history.back();
 		}
 	}, [fullScreenMediaList.length]);
+
+	// Archive mode off: a received expiring photo/video is only fetched once
+	// it's tapped — that fetch is what uses one of its views on the server —
+	// and shown from the URL it hands out, never stored. An expiring photo
+	// closes again once its time is up, like in the official app.
+	const viewLimitedCloseTimerRef = useRef<number | null>(null);
+	const closeFullScreenImageRef = useRef(closeFullScreenImage);
+	closeFullScreenImageRef.current = closeFullScreenImage;
+	const openingViewLimitedIdsRef = useRef(new Set<string>());
+	useEffect(() => {
+		if (fullScreenMediaList.length > 0 || viewLimitedCloseTimerRef.current == null) return;
+		window.clearTimeout(viewLimitedCloseTimerRef.current);
+		viewLimitedCloseTimerRef.current = null;
+	}, [fullScreenMediaList.length]);
+	useEffect(() => () => {
+		if (viewLimitedCloseTimerRef.current != null) window.clearTimeout(viewLimitedCloseTimerRef.current);
+	}, []);
+	const openViewLimitedMedia = useCallback(async (message: UiMessage, heroRect?: HeroRect | null) => {
+		const { conversationId, messageId } = message;
+		if (openingViewLimitedIdsRef.current.has(messageId)) return;
+		if (getViewsRemaining(message) === 0) {
+			toast(t("chat.thread.no_views_left", { defaultValue: "No views left" }));
+			return;
+		}
+		openingViewLimitedIdsRef.current.add(messageId);
+		try {
+			const fresh = (await service.getMessage({ conversationId, messageId })) as UiMessage;
+			const imageUrl = getMessageImageUrl(fresh);
+			const videoUrl = imageUrl ? null : getMessageVideoUrl(fresh);
+			// Keep the updated counters (views left), never the URL.
+			const counted = toNonArchiveDisplayMessage(fresh, userId);
+			const counters = { ...((counted.body ?? {}) as Record<string, unknown>) };
+			delete counters[VIEW_LIMITED_LOCK_FLAG];
+			const stored: UiMessage = { ...fresh, body: counters };
+			void chatLog.appendMessages(conversationId, [stored]);
+			setThreadMessages((previous) => previous.map((m) => (m.messageId === messageId ? stored : m)));
+			const url = imageUrl ?? videoUrl;
+			if (!url) {
+				toast(t("chat.thread.no_views_left", { defaultValue: "No views left" }));
+				return;
+			}
+			if (selectedConversationIdRef.current !== conversationId) return;
+			openFullScreenImage(url, undefined, videoUrl ? "video" : "image", undefined, undefined, heroRect);
+			if (!videoUrl) {
+				const duration = Number((fresh.body as Record<string, unknown> | null)?.duration);
+				// Milliseconds from the API; small values are seconds (optimistic bodies).
+				const durationMs = duration > 0 ? (duration < 1000 ? duration * 1000 : duration) : 10_000;
+				if (viewLimitedCloseTimerRef.current != null) window.clearTimeout(viewLimitedCloseTimerRef.current);
+				viewLimitedCloseTimerRef.current = window.setTimeout(() => {
+					viewLimitedCloseTimerRef.current = null;
+					closeFullScreenImageRef.current();
+				}, durationMs);
+			}
+		} catch (error) {
+			appLog.warn("[chat] opening view-limited media failed", { messageId, error });
+			toast.error(t("chat.errors.load_messages"));
+		} finally {
+			openingViewLimitedIdsRef.current.delete(messageId);
+		}
+	}, [service, t, userId, openFullScreenImage]);
 
 	useEffect(() => {
 		if (!fullScreenImageUrl || imageViewerHistoryPushedRef.current) {
@@ -7548,7 +7648,7 @@ export function ChatPage() {
 			handleThreadScroll={handleThreadScroll}
 			messagePageKey={messagePageKey}
 			isLoadingOlderMessages={isLoadingOlderMessages}
-			threadMessages={threadMessages}
+			threadMessages={displayThreadMessages}
 			threadLastReadTimestamp={threadLastReadTimestamp}
 			messageElementRefs={messageElementRefs}
 			handleMessageTap={handleMessageTap}
@@ -7556,6 +7656,7 @@ export function ChatPage() {
 			endMessageLongPress={endMessageLongPress}
 			messageLongPressTriggeredRef={messageLongPressTriggeredRef}
 			openFullScreenImage={openFullScreenImage}
+			openViewLimitedMedia={openViewLimitedMedia}
 			openAlbumViewerById={openAlbumViewerById}
 			openProfilePhotos={openProfilePhotos}
 			onJumpToMessage={setPendingMessageScrollId}

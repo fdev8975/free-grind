@@ -299,6 +299,16 @@ export function createAlbumMethods(fetchRest: RestFetcher, t: (key: string, opti
 			return { status: response.status };
 		},
 
+		// Records one view of a shared album's item (archive mode off, see
+		// useAlbumContentViewCounter). Best effort: the response carries nothing
+		// the viewer needs, so failures are only logged by the caller.
+		async viewAlbumContent(albumId: number, contentId: number): Promise<void> {
+			const response = await fetchRest(`/v1/albums/${albumId}/view/content/${contentId}`, {
+				method: "POST",
+			});
+			await assertSuccess(response, t("api.errors.open_shared_album"));
+		},
+
 		// Recipient-initiated removal of *our own* share of someone else's
 		// album — used by the "delete" action on the shared-albums page.
 		// 403 is tolerated the same way openSharedAlbum does: it's the observed

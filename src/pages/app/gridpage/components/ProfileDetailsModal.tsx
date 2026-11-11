@@ -74,6 +74,7 @@ import type { ChatContactIndexRecord } from "../../../../types/chat-contact-inde
 import { PhotoViewer, type HeroRect, type PhotoViewerMenuAction } from "../../../../components/PhotoViewer";
 import { PhotoActionBar } from "../../../../components/PhotoActionBar";
 import { markAlbumContentReacted, useAlbumContentReactions } from "../../../../services/albumReactionStore";
+import { useAlbumContentViewCounter } from "../../../../hooks/useAlbumContentViewCounter";
 import { AlbumMediaSheet } from "../../../../components/AlbumMediaSheet";
 import { useProfileAlbumStatus } from "../../../../hooks/useProfileAlbumStatus";
 import { captureAlbum, getLocalAlbum } from "../../../../services/albumStore";
@@ -1806,6 +1807,11 @@ export function ProfileDetailsModal({
 	// only shown once an item is picked, and closing it returns to the sheet.
 	const [isAlbumSheetOpen, setIsAlbumSheetOpen] = useState(false);
 	const [isAlbumViewerShown, setIsAlbumViewerShown] = useState(false);
+	useAlbumContentViewCounter(
+		albumViewer != null && isAlbumViewerShown ? albumViewer.albumId : null,
+		albumViewer?.content[albumViewerIndex]?.contentId,
+		isOwnProfile,
+	);
 	const albumViewerShownRef = useRef(false);
 	albumViewerShownRef.current = albumViewer != null && isAlbumViewerShown;
 	const albumSheetOpenRef = useRef(false);

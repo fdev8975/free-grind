@@ -5,7 +5,7 @@ import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState }
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { EmptyState, ErrorState } from "../../components/ui/states";
+import { FeedEmptyState, FeedErrorState } from "../../components/ui/states";
 import { ConfirmDialog } from "../../components/ui/confirm-dialog";
 import { FeedScrollContainer } from "../../components/ui/FeedScrollContainer";
 import { PageHeaderBackground } from "../../components/ui/PageHeaderBackground";
@@ -24,14 +24,16 @@ import {
 	deleteLocalAlbum,
 	getCachedAlbumCoverUri,
 	getLocalAlbum,
+	listArchivedAlbums,
 } from "../../services/albumStore";
-import { getAlbumMediaCounts, getAllAlbums, getConversation } from "../../services/chatDb";
+import { getAlbumMediaCounts, getConversation } from "../../services/chatDb";
 import { toDataUri } from "../../services/mediaStore";
 import { PullToRefreshContainer } from "./components/PullToRefreshContainer";
 import { PhotoViewer, type HeroRect, type PhotoViewerMedia, type PhotoViewerMenuAction } from "../../components/PhotoViewer";
 import { AlbumMediaSheet } from "../../components/AlbumMediaSheet";
 import { PhotoActionBar } from "../../components/PhotoActionBar";
 import { markAlbumContentReacted, useAlbumContentReactions } from "../../services/albumReactionStore";
+import { useAlbumContentViewCounter } from "../../hooks/useAlbumContentViewCounter";
 import { useRevealOnScroll } from "../../hooks/useRevealOnScroll";
 import { saveAllAlbumMedia } from "../../utils/albumMedia";
 import { proxyMediaUrl } from "../../utils/mediaProxy";
@@ -177,6 +179,7 @@ export function SharedAlbumsPage() {
 	const [viewer, setViewer] = useState<AlbumViewer | null>(null);
 	const hasReactedToAlbumContent = useAlbumContentReactions(userId, viewer !== null);
 	const [viewerIndex, setViewerIndex] = useState(0);
+	useAlbumContentViewCounter(viewer?.albumId ?? null, viewer?.content[viewerIndex]?.contentId, false);
 	const [isContentSheetOpen, setIsContentSheetOpen] = useState(false);
 	const [isSavingAll, setIsSavingAll] = useState(false);
 	const feedContainerRef = useRef<HTMLDivElement>(null);
@@ -303,7 +306,7 @@ export function SharedAlbumsPage() {
 			const liveAlbumIds = new Set(feed.sharedAlbums.map((sharedAlbum) => sharedAlbum.albumId));
 			const cachedOnlyAlbums = hasActiveFilter
 				? []
-				: (await getAllAlbums().catch(() => [])).filter(
+				: (await listArchivedAlbums().catch(() => [])).filter(
 					(stored) => !liveAlbumIds.has(Number(stored.albumId)),
 				);
 			// Counts only, in one query: loading each album's media just to count
@@ -1012,13 +1015,15 @@ export function SharedAlbumsPage() {
 								))}
 							</div>
 						) : error ? (
-							<ErrorState
+							<FeedErrorState
 								title={t("shared_albums.error_load_title")}
 								description={error}
 								onRetry={() => { setIsLoading(true); void loadSharedAlbums(); }}
+								retryLabel={t("right_now.try_again")}
 							/>
 						) : items.length === 0 ? (
-							<EmptyState
+							<FeedEmptyState
+								icon={<Album />}
 								title={t("shared_albums.empty_title")}
 								description={t("shared_albums.empty_desc")}
 							/>

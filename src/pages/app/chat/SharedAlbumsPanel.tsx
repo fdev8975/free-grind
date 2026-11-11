@@ -1,4 +1,5 @@
 import { Album, Images, MessageCircle, RefreshCw, UserRound } from "lucide-react";
+import { useAlbumContentViewCounter } from "../../../hooks/useAlbumContentViewCounter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -15,8 +16,8 @@ import { formatDistance, getOnlineStatusLabelArgs, getOnlineStatusMeta } from ".
 import { useAvatarCache } from "../../../hooks/useAvatarCache";
 import { resolveAvatarSrc } from "../../../services/avatarStore";
 import { PhotoViewer, type PhotoViewerMedia, type PhotoViewerMenuAction } from "../../../components/PhotoViewer";
-import { getAllAlbums, getConversation } from "../../../services/chatDb";
-import { cacheAlbumFromSharedPage, captureAlbum, getCachedAlbumCoverUri, getLocalAlbum } from "../../../services/albumStore";
+import { getConversation } from "../../../services/chatDb";
+import { cacheAlbumFromSharedPage, captureAlbum, getCachedAlbumCoverUri, getLocalAlbum, listArchivedAlbums } from "../../../services/albumStore";
 import { toDataUri } from "../../../services/mediaStore";
 import { saveAllAlbumMedia } from "../../../utils/albumMedia";
 import { proxyMediaUrl } from "../../../utils/mediaProxy";
@@ -56,6 +57,7 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 	const pendingOpenAlbumIdRef = useRef<AlbumViewer["albumId"] | null>(null);
 	const [viewer, setViewer] = useState<AlbumViewer | null>(null);
 	const [viewerIndex, setViewerIndex] = useState(0);
+	useAlbumContentViewCounter(viewer?.albumId ?? null, viewer?.content[viewerIndex]?.contentId, false);
 	const [isSavingAll, setIsSavingAll] = useState(false);
 
 	const viewerHistoryPushedRef = useRef(false);
@@ -66,7 +68,7 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 		setError(null);
 
 		// Show cached albums immediately while the API loads
-		const cachedStoredAlbums = await getAllAlbums().catch(() => []);
+		const cachedStoredAlbums = await listArchivedAlbums().catch(() => []);
 		if (cachedStoredAlbums.length > 0) {
 			const cachedItems = await Promise.all(
 				cachedStoredAlbums.map(async (stored): Promise<SharedAlbumItem | null> => {
@@ -176,7 +178,7 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 			nextItems.sort((a, b) => a.albumNumber - b.albumNumber);
 
 			// Append cached-only albums (no longer in live feed) at the end
-			const cachedOnlyItems = (await getAllAlbums().catch(() => [])).filter(
+			const cachedOnlyItems = (await listArchivedAlbums().catch(() => [])).filter(
 				(s) => !liveAlbumIds.has(Number(s.albumId)),
 			);
 			const extraItems = await Promise.all(

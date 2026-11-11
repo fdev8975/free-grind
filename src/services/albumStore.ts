@@ -20,6 +20,7 @@ import type { AlbumDetailsResponse } from "../types/chat-service";
 import type { StoredAlbumMedia } from "../types/chat-db";
 import { appLog } from "../utils/logger";
 import { limitChatDbBlobRead } from "../utils/chatDbBlobLimiter";
+import { isChatArchiveEnabled, subscribeChatArchiveMode } from "./chatArchiveMode";
 
 // Once a background refresh attempt confirms the server doesn't have this
 // album/share anymore (404 once truly gone, 403 once the share is stopped —
@@ -156,9 +157,12 @@ function updateAlbumCacheState(albumId: number, media: StoredAlbumMedia[]): void
 	}
 }
 
-/** Synchronous read: is this album fully captured locally right now? */
+/**
+ * Synchronous read: is this album fully captured locally right now? Always
+ * false with archive mode off, where an album opens only while it's shared.
+ */
 export function isAlbumCachedLocally(albumId: number): boolean {
-	return capturedAlbumIds.has(albumId);
+	return isChatArchiveEnabled() && capturedAlbumIds.has(albumId);
 }
 
 /**
@@ -193,6 +197,13 @@ function setCachedAlbumName(albumId: number, albumName: string | null | undefine
 	}
 }
 
+// Toggling archive mode changes what every cache read above answers.
+subscribeChatArchiveMode(() => {
+	for (const listener of albumCacheListeners) {
+		listener();
+	}
+});
+
 /** Subscribe to in-memory album-cache updates; returns an unsubscribe function. */
 export function subscribeToAlbumCache(listener: () => void): () => void {
 	albumCacheListeners.add(listener);
@@ -203,12 +214,14 @@ export function subscribeToAlbumCache(listener: () => void): () => void {
 
 /** Synchronous read: has any album ever been captured locally for this owner profile? */
 export function isAlbumCachedForProfile(profileId: string): boolean {
+	if (!isChatArchiveEnabled()) return false;
 	const ids = profileIdToAlbumIds.get(profileId);
 	return !!ids && ids.size > 0;
 }
 
 /** Synchronous read of the most recently updated locally-known album id for this profile, or null. */
 export function getCachedAlbumIdForProfile(profileId: string): number | null {
+	if (!isChatArchiveEnabled()) return null;
 	const ids = profileIdToAlbumIds.get(profileId);
 	if (!ids || ids.size === 0) {
 		return null;
@@ -479,8 +492,14 @@ async function captureAlbumContent(
 	}
 }
 
-/** Eagerly downloads and stores every content item's bytes for an album. */
+/**
+ * Eagerly downloads and stores every content item's bytes for an album.
+ * Does nothing with archive mode off: nothing of a received album is kept.
+ */
 export async function captureAlbum(params: CaptureAlbumParams): Promise<void> {
+	if (!isChatArchiveEnabled()) {
+		return;
+	}
 	const {
 		albumId,
 		albumName,
@@ -700,8 +719,17 @@ export function captureAlbumsForMessages(
 		ensureAlbumCacheChecked(albumId);
 	}
 
-	for (const { info, message } of entries) {
-		void captureAlbumFromMessageIfNeeded(info, message, conversationId, getAlbum);
+	// Archive mode off: no album is fetched before it's opened — fetching it
+	// starts a timed share's clock on the server. Only the teaser the share
+	// message itself carries is shown.
+	if (!isChatArchiveEnabled()) {
+		for (const { info, message } of entries) {
+			void captureAlbumPreviewFromMessage(message, info.albumId);
+		}
+	} else {
+		for (const { info, message } of entries) {
+			void captureAlbumFromMessageIfNeeded(info, message, conversationId, getAlbum);
+		}
 	}
 
 	for (const { info, message } of ownEntries) {
@@ -722,6 +750,9 @@ export async function cacheAlbumFromSharedPage(params: {
 	coverUrl: string | null;
 }): Promise<void> {
 	const { albumId, albumName, ownerProfileId, conversationId, coverUrl } = params;
+	if (!isChatArchiveEnabled()) {
+		return;
+	}
 	try {
 		await chatDb.upsertAlbum({
 			albumId: String(albumId),
@@ -749,14 +780,41 @@ export async function cacheAlbumFromSharedPage(params: {
 	}
 }
 
+/**
+ * Every received album kept in chatDb, for lists that show albums no longer
+ * shared — none with archive mode off, where only live shares are listed.
+ */
+export async function listArchivedAlbums(): Promise<Awaited<ReturnType<typeof chatDb.getAllAlbums>>> {
+	if (!isChatArchiveEnabled()) {
+		return [];
+	}
+	return chatDb.getAllAlbums();
+}
+
+/** Received albums kept in chatDb for a conversation; none with archive mode off. */
+export async function listArchivedAlbumsForConversation(
+	conversationId: string,
+): Promise<Awaited<ReturnType<typeof chatDb.getAlbumsForConversation>>> {
+	if (!isChatArchiveEnabled()) {
+		return [];
+	}
+	return chatDb.getAlbumsForConversation(conversationId);
+}
+
 export type LocalAlbumContent = {
 	albumId: number;
 	albumName: string | null;
 	content: AlbumContentItem[];
 };
 
-/** Reads a previously-captured album back out as ready-to-render content items, or null if not cached. */
+/**
+ * Reads a previously-captured album back out as ready-to-render content
+ * items, or null if not cached — always null with archive mode off.
+ */
 export async function getLocalAlbum(albumId: number): Promise<LocalAlbumContent | null> {
+	if (!isChatArchiveEnabled()) {
+		return null;
+	}
 	const media = await chatDb.getAlbumMedia(String(albumId));
 	if (media.length === 0) {
 		return null;

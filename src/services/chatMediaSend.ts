@@ -130,7 +130,8 @@ export async function sendUploadedChatMedia(
 			url: target.url,
 			conversationId: sentMessage.conversationId,
 			messageId: sentMessage.messageId,
-			viewOnce: target.viewOnce,
+			// Our own media: kept even with archive mode off (see chatArchiveMode).
+			viewOnce: false,
 		});
 	}
 	return sentMessage;

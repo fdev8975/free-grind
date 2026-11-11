@@ -1027,7 +1027,8 @@ export function ChatRealtimeBridge() {
 								url: target.url,
 								conversationId: cid,
 								messageId: msg.messageId,
-								viewOnce: target.viewOnce,
+								// Our own media is kept even with archive mode off.
+								viewOnce: target.viewOnce && Number(msg.senderId) !== Number(userIdRef.current),
 							});
 						}
 						captureAlbumsForMessages(msgs, cid, (id) => apiFunctions.getAlbum(id), userIdRef.current);

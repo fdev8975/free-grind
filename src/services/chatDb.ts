@@ -2388,6 +2388,21 @@ export async function deleteStaleDrawerMediaFiles(currentMediaKeys: string[]): P
 }
 
 /**
+ * SQL condition (on media_files `mf` LEFT/JOINed with messages `m`) that
+ * drops what only archive mode keeps: media of unsent messages and of
+ * view-limited photos/videos (by flag, and by message type for rows stored
+ * before the flag caught used-up views).
+ */
+const LIVE_MEDIA_ONLY_SQL = `
+	AND mf.view_once = 0
+	AND (m.message_id IS NULL OR (
+		m.unsent = 0
+		AND COALESCE(m.type, '') NOT IN ('ExpiringImage', 'PrivateVideo')
+		AND COALESCE(m.chat1_type, '') NOT IN ('expiring_image', 'expiring_video', 'private_video')
+		AND NOT (m.type = 'Video' AND COALESCE(json_extract(m.body_json, '$.maxViews'), json_extract(m.body_json, '$.viewsRemaining'), 999999) < 999999)
+	))`;
+
+/**
  * All successfully-cached image/video media for a conversation, newest
  * first — the local, always-available backing for the "received media"
  * panel (chatDb is the single source there, not the live API, since the
@@ -2400,6 +2415,7 @@ export async function deleteStaleDrawerMediaFiles(currentMediaKeys: string[]): P
  */
 export async function getMediaFilesForConversation(
 	conversationId: string,
+	options?: { liveOnly?: boolean },
 ): Promise<StoredMediaFileWithSender[]> {
 	const db = await getDb();
 	const rows = await db.select<(MediaFileRow & { sender_id: number | null })[]>(
@@ -2409,6 +2425,7 @@ export async function getMediaFilesForConversation(
 		WHERE mf.conversation_id = $1
 			AND mf.fetch_status = 'ok'
 			AND mf.kind IN ('image', 'video')
+			${options?.liveOnly ? LIVE_MEDIA_ONLY_SQL : ""}
 		ORDER BY COALESCE(m.timestamp, mf.fetched_at) DESC
 		`,
 		[conversationId],
@@ -2423,7 +2440,10 @@ export async function getMediaFilesForConversation(
  * reply-quote preview captures) is skipped, since its sender is unknown and
  * could just as well be the user's own.
  */
-export async function getAllReceivedChatVideos(userId: number | null): Promise<StoredChatVideo[]> {
+export async function getAllReceivedChatVideos(
+	userId: number | null,
+	options?: { liveOnly?: boolean },
+): Promise<StoredChatVideo[]> {
 	const db = await getDb();
 	const rows = await db.select<
 		{ media_key: string; conversation_id: string; mime_type: string | null; sender_id: number; timestamp: number }[]
@@ -2447,6 +2467,7 @@ export async function getAllReceivedChatVideos(userId: number | null): Promise<S
 				LIMIT 1
 			)
 			${userId != null ? "AND m.sender_id != $1" : ""}
+			${options?.liveOnly ? LIVE_MEDIA_ONLY_SQL : ""}
 		ORDER BY timestamp DESC
 		`,
 		userId != null ? [userId] : [],

@@ -10,6 +10,8 @@
 import type { Message } from "../types/messages";
 import * as chatDb from "./chatDb";
 import { appLog } from "../utils/logger";
+import { isChatArchiveEnabled } from "./chatArchiveMode";
+import { isViewLimitedMedia } from "../pages/app/chat/chatUtils";
 
 let writeQueue: Promise<void> = Promise.resolve();
 
@@ -47,6 +49,8 @@ export async function readLog(conversationId: string): Promise<ChatLogData> {
  *     already had real content cached, the content is kept and the row is
  *     flagged local_history instead of being wiped — it remains visible,
  *     just marked as locally-retained history.
+ *   Neither applies with archive mode off (see chatArchiveMode), except the
+ *   URL of media that isn't view-limited.
  * - lastReadTimestamp is updated if provided.
  *
  * Only the incoming subset is read/written (not every message ever stored
@@ -67,6 +71,10 @@ export async function appendMessages(
 			const existingById = new Map(existing.map((m) => [m.messageId, m] as const));
 			const unsendWipeMessageIds: string[] = [];
 
+			// Archive mode off: an unsend wipes the content like it does
+			// server-side, and a view-limited photo/video doesn't get back the
+			// URL an earlier view handed out.
+			const archive = isChatArchiveEnabled();
 			const merged = messages.map((m) => {
 				const prev = existingById.get(m.messageId);
 				if (!prev) {
@@ -75,12 +83,12 @@ export async function appendMessages(
 				const prevBody = prev.body as Record<string, unknown> | null | undefined;
 				const newBody = m.body as Record<string, unknown> | null | undefined;
 
-				if (m.unsent && !newBody && prevBody) {
+				if (archive && m.unsent && !newBody && prevBody) {
 					unsendWipeMessageIds.push(m.messageId);
 					return { ...prev, unsent: true };
 				}
 
-				if (prevBody?.url && !newBody?.url) {
+				if (prevBody?.url && !newBody?.url && (archive || !isViewLimitedMedia(m))) {
 					return { ...m, body: { ...newBody, url: prevBody.url } };
 				}
 				return m;

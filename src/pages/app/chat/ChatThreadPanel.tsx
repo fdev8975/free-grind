@@ -72,6 +72,7 @@ import {
 	getMessageVideoUrl,
 	getMessageAudioUrl,
 	getMessageAlbumId,
+	isOnceAlbumShareOpened,
 	getAlbumContentReplyTarget,
 	getMessageAlbumCoverUrl,
 	getMediaCaptureTarget,
@@ -156,6 +157,7 @@ import { proxyMediaUrl } from "../../../utils/mediaProxy";
 import { getMessagePosterKey } from "../../../services/videoPosterStore";
 import { VideoFirstFrame } from "../../../components/VideoFirstFrame";
 import type { HeroRect } from "../../../components/PhotoViewer";
+import { useChatArchiveEnabled } from "../../../services/chatArchiveMode";
 
 type ChatThreadPanelProps = {
 	navigate: NavigateFunction;
@@ -204,6 +206,8 @@ type ChatThreadPanelProps = {
 	endMessageLongPress: () => void;
 	messageLongPressTriggeredRef: { current: boolean };
 	openFullScreenImage: (imageUrl: string, meta?: { takenOnGrindr: boolean; createdAt: number | null; createdAtLabel: string | null; timestamp: number }, mediaType?: "image" | "video", messageId?: string, senderId?: number, heroRect?: HeroRect | null) => void;
+	/** Archive mode off: fetches a received expiring photo/video (uses one view) and opens it. */
+	openViewLimitedMedia: (message: UiMessage, heroRect?: HeroRect | null) => void | Promise<void>;
 	openAlbumViewerById: (albumId: number, isOwnAlbum?: boolean) => void | Promise<void>;
 	openProfilePhotos: (mediaHash: string, isPartnerProfile: boolean, heroRect?: HeroRect | null) => void;
 	onJumpToMessage: (messageId: string) => void;
@@ -776,6 +780,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 		endMessageLongPress,
 		messageLongPressTriggeredRef,
 		openFullScreenImage,
+		openViewLimitedMedia,
 		openAlbumViewerById,
 		openProfilePhotos,
 		onJumpToMessage,
@@ -1046,19 +1051,25 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 		return () => { cancelled = true; };
 	}, [isDrawerOpen, headerProfileId, shareableAlbumIdsKey, apiFunctions]);
 
+	const isArchiveModeEnabled = useChatArchiveEnabled();
 	const sharedAlbumIds = useMemo(() => {
 		const ids = new Set<number>();
+		// Without archive mode, a view-once share counts as ended once it was
+		// opened, even while the server still lists it (see isOnceAlbumShareOpened).
+		const usedUpIds = new Set<number>();
 		for (const msg of threadMessages) {
 			const aid = getMessageAlbumId(msg);
 			const body = msg.body as any;
 			if (aid && body?.isViewable) ids.add(aid);
+			if (aid && !isArchiveModeEnabled && isOnceAlbumShareOpened(msg)) usedUpIds.add(aid);
 		}
 		for (const [albumId, shared] of serverAlbumShared) {
 			if (shared) ids.add(albumId);
 			else ids.delete(albumId);
 		}
+		for (const albumId of usedUpIds) ids.delete(albumId);
 		return ids;
-	}, [threadMessages, serverAlbumShared]);
+	}, [threadMessages, serverAlbumShared, isArchiveModeEnabled]);
 
     const [showReadReceiptToggle] = useState(() => getShowReadReceiptToggle());
     // Derived from the privacy cache so a toggle from the chat list's context menu shows up here too.
@@ -2148,6 +2159,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 						endMessageLongPress={endMessageLongPress}
 						messageLongPressTriggeredRef={messageLongPressTriggeredRef}
 						openFullScreenImage={openFullScreenImage}
+						openViewLimitedMedia={openViewLimitedMedia}
 						openAlbumViewerById={openAlbumViewerById}
 						openProfilePhotos={openProfilePhotos}
 						onJumpToMessage={onJumpToMessage}

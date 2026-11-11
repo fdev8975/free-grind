@@ -16,6 +16,7 @@ import type { MediaKind } from "../types/chat-db";
 import { appLog } from "../utils/logger";
 import { limitChatDbBlobRead } from "../utils/chatDbBlobLimiter";
 import { createLimiter } from "../utils/concurrencyLimit";
+import { isChatArchiveEnabled } from "./chatArchiveMode";
 
 // Downloads run through plugin-http, outside the media proxy's own fetch
 // slots — capped so a few hundred uncached items (a big drawer) don't all go
@@ -177,6 +178,11 @@ export async function fetchAndStoreMedia(
 ): Promise<void> {
 	const { mediaKey, url } = params;
 	if (!mediaKey || !url) {
+		return;
+	}
+	// Without archive mode, view-limited media is only ever shown from the
+	// URL its view handed out, never kept.
+	if (params.viewOnce && !isChatArchiveEnabled()) {
 		return;
 	}
 

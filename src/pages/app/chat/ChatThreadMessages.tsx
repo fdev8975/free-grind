@@ -21,6 +21,7 @@ import type { ConversationEntry, Message } from "../../../types/messages";
 import type { AlbumMediaCount, LocalUploadProgress, UiMessage } from "../../../types/chat-page";
 import { useLocalMediaCache } from "../../../hooks/useLocalMediaCache";
 import { getCachedMediaUri, getMessageFallbackMediaKey } from "../../../services/mediaStore";
+import { useChatArchiveEnabled } from "../../../services/chatArchiveMode";
 import {
 	getMessagePosterKey,
 	getVideoPoster,
@@ -68,7 +69,10 @@ import {
 	getMessageText,
 	getMessageVideoUrl,
 	getVideoCallStatusLabel,
+	getViewsRemaining,
 	isLocalClientMessageId,
+	isOnceAlbumShareOpened,
+	isViewLimitedLocked,
 	MAX_VIDEO_VIEWS,
 	stripReplyQuotePrefix,
 } from "./chatUtils";
@@ -101,6 +105,8 @@ type ChatThreadMessagesProps = {
 	endMessageLongPress: () => void;
 	messageLongPressTriggeredRef: { current: boolean };
 	openFullScreenImage: (imageUrl: string, meta?: { takenOnGrindr: boolean; createdAt: number | null; createdAtLabel: string | null; timestamp: number }, mediaType?: "image" | "video", messageId?: string, senderId?: number, heroRect?: HeroRect | null) => void;
+	/** Archive mode off: fetches a received expiring photo/video (uses one view) and opens it. */
+	openViewLimitedMedia: (message: UiMessage, heroRect?: HeroRect | null) => void | Promise<void>;
 	openAlbumViewerById: (albumId: number, isOwnAlbum?: boolean, targetContentId?: number) => void | Promise<void>;
 	openProfilePhotos: (mediaHash: string, isPartnerProfile: boolean, heroRect?: HeroRect | null) => void;
 	onJumpToMessage: (messageId: string) => void;
@@ -185,11 +191,13 @@ function MediaBadge({ icon, label }: { icon: React.ReactNode; label: React.React
  * Centered upload ring over an optimistic image/video tile; with a `label`
  * (a video's phase, see UploadProgress) that and the percentage under it.
  */
-function AlbumExpirationCountdown({ expiresAt, isOnce, t, className = "mt-1" }: { expiresAt: number; isOnce?: boolean; t: any; className?: string }) {
+function AlbumExpirationCountdown({ expiresAt, isOnce, durationLabel = null, t, className = "mt-1", inline = false }: { expiresAt: number; isOnce?: boolean; durationLabel?: string | null; t: any; className?: string; inline?: boolean }) {
 	const [timeLeft, setTimeLeft] = useState<number>(expiresAt - Date.now());
 
 	useEffect(() => {
 		if (isOnce) return;
+		// Right away too: a share opened meanwhile gets its expiry only now.
+		setTimeLeft(expiresAt - Date.now());
 		const timer = setInterval(() => {
 			const next = expiresAt - Date.now();
 			setTimeLeft(next);
@@ -198,7 +206,9 @@ function AlbumExpirationCountdown({ expiresAt, isOnce, t, className = "mt-1" }: 
 		return () => clearInterval(timer);
 	}, [expiresAt, isOnce]);
 
-	if (!isOnce && timeLeft <= 0) return null;
+	// Not opened yet: its clock starts on the first view, so show how long it lasts.
+	const pendingLabel = !isOnce && expiresAt <= 0 ? durationLabel : null;
+	if (!isOnce && !pendingLabel && timeLeft <= 0) return null;
 
 	const seconds = Math.floor((timeLeft / 1000) % 60);
 	const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
@@ -226,14 +236,23 @@ function AlbumExpirationCountdown({ expiresAt, isOnce, t, className = "mt-1" }: 
 					}
 				`}
 			</style>
-			<div className={`flex items-center ${className}`}>
-				<span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 ps-1.5 pe-2.5 text-[11px] font-semibold tracking-wide text-[var(--accent)] shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md uppercase">
+			{inline ? (
+				<span className={`inline-flex items-center gap-1 uppercase tracking-wide text-[var(--accent)] ${className}`}>
 					<Hourglass className="h-3 w-3 animate-hourglass-rotate" />
 					<span>
-						{isOnce ? t("chat.expiration.once") : `${parts.join(" ")} ${t("chat.expiration.remaining")}`}
+						{isOnce ? t("chat.expiration.once") : pendingLabel ?? `${parts.join(" ")} ${t("chat.expiration.remaining")}`}
 					</span>
 				</span>
-			</div>
+			) : (
+				<div className={`flex items-center ${className}`}>
+					<span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 ps-1.5 pe-2.5 text-[11px] font-semibold tracking-wide text-[var(--accent)] shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md uppercase">
+						<Hourglass className="h-3 w-3 animate-hourglass-rotate" />
+						<span>
+							{isOnce ? t("chat.expiration.once") : pendingLabel ?? `${parts.join(" ")} ${t("chat.expiration.remaining")}`}
+						</span>
+					</span>
+				</div>
+			)}
 		</>
 	);
 }
@@ -361,6 +380,35 @@ function MessageContextMenu({
  */
 const MEDIA_BUBBLE_SIZE = "aspect-[3/4] w-60 sm:w-64";
 
+/**
+ * A photo/video that can't be opened anymore (views used up, or its URL ran
+ * out), styled like an expired album share.
+ */
+function ExpiredMediaTile({ kind, className, timeLabel, t }: { kind: "image" | "video"; className: string; timeLabel: string | null; t: (key: string) => string }) {
+	return (
+		<div className={`relative isolate overflow-hidden bg-[var(--surface-2)] ${MEDIA_BUBBLE_SIZE} ${className}`}>
+			{/* Every layer carries the corners: a backdrop blur isn't clipped by overflow-hidden. */}
+			<div className="absolute inset-0 rounded-[inherit] bg-gradient-to-br from-[var(--accent)]/20 via-transparent to-black/40" />
+			<div className="absolute inset-0 flex flex-col items-center justify-center rounded-[inherit] bg-black/40 backdrop-blur-[15px]">
+				<Lock className="h-10 w-10 text-white/90 drop-shadow-lg" />
+				<span className="mt-2 text-[10px] font-bold uppercase tracking-widest text-white/90 drop-shadow">
+					{t("chat.expiration.expired")}
+				</span>
+			</div>
+			<MediaBadge
+				icon={kind === "video" ? <VideoOff className="h-3.5 w-3.5" /> : <ImageOff className="h-3.5 w-3.5" />}
+				label={kind === "video" ? t("chat.thread.video_expired") : t("chat.thread.image_expired")}
+			/>
+			{timeLabel ? (
+				<div className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-2 rounded-b-[inherit] bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-8 text-[10px] text-white/85">
+					<span>{timeLabel}</span>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+
 export function ChatThreadMessages({
 	isDesktop,
 	bottomInset = 0,
@@ -381,6 +429,7 @@ export function ChatThreadMessages({
 	endMessageLongPress,
 	messageLongPressTriggeredRef,
 	openFullScreenImage,
+	openViewLimitedMedia,
 	openAlbumViewerById,
 	openProfilePhotos,
 	onJumpToMessage,
@@ -415,6 +464,17 @@ export function ChatThreadMessages({
 		() => new Set(),
 	);
 	const [hoveredMediaMessageId, setHoveredMediaMessageId] = useState<string | null>(null);
+	const isArchiveModeEnabled = useChatArchiveEnabled();
+	// Expiring photos whose URL didn't load (ran out, view used up): shown as expired.
+	const [failedExpiringImageIds, setFailedExpiringImageIds] = useState<ReadonlySet<string>>(() => new Set());
+	const markExpiringImageFailed = useCallback((messageId: string) => {
+		setFailedExpiringImageIds((previous) => {
+			if (previous.has(messageId)) return previous;
+			const next = new Set(previous);
+			next.add(messageId);
+			return next;
+		});
+	}, []);
 	const [contextMenuState, setContextMenuState] = useState<{ messageId: string; x: number; y: number } | null>(null);
 	const [banWordPrompt, setBanWordPrompt] = useState<{ text: string } | null>(null);
 	const [pendingLinkUrl, setPendingLinkUrl] = useState<string | null>(null);
@@ -1338,6 +1398,9 @@ export function ChatThreadMessages({
                             : null;
                     let videoUrl = getMessageVideoUrl(message);
                     let audioUrl = getMessageAudioUrl(message);
+                    // Archive mode off: received expiring media has no URL here and
+                    // must not fall back to a stored copy either (see openViewLimitedMedia).
+                    const isViewLimitedLockedMessage = isViewLimitedLocked(message);
                     // Prefer the locally-cached copy (survives signed-URL expiry /
                     // view-once limits) over the remote URL once it's available.
                     if (imageUrl || videoUrl || audioUrl) {
@@ -1354,7 +1417,7 @@ export function ChatThreadMessages({
                             else if (videoUrl) videoUrl = cachedUri;
                             else if (audioUrl) audioUrl = cachedUri;
                         }
-                    } else {
+                    } else if (!isViewLimitedLockedMessage) {
                         // The live message no longer carries a URL at all (expired
                         // and never refreshed, conversation archived, etc.) — fall
                         // back to whatever's cached for it by message id, so media
@@ -1378,10 +1441,11 @@ export function ChatThreadMessages({
                         // immediately instead of only after its next refresh.
                         ensureAlbumCacheChecked(albumId);
                     }
-                    // Our own album is always available to us (it's ours, not a
-                    // received share) — once we stop sharing it, its message
-                    // shows as local history like an unsent message, not locked.
-                    const isAlbumCachedForMessage = albumId != null && (mine || isAlbumCachedLocally(albumId));
+                    // With archive mode, our own album is always available to us (it's
+                    // ours, not a received share) — once we stop sharing it, its message
+                    // shows as local history like an unsent message, not locked. Without
+                    // it, the message follows the share and shows as expired too.
+                    const isAlbumCachedForMessage = albumId != null && ((mine && isArchiveModeEnabled) || isAlbumCachedLocally(albumId));
                     // Prefer the cached cover over the live body's
                     // coverUrl/previewUrl, not just as a fallback for when it's
                     // missing — that field can be a stale signed URL that's
@@ -1602,14 +1666,20 @@ export function ChatThreadMessages({
                     const translatedText = mine ? null : messageTranslations.translations.get(message.messageId) ?? null;
                     const isTranslating = !mine && !translatedText && messageTranslations.translatingMessageIds.has(message.messageId);
                     const isExpiringImage = message.type === "ExpiringImage";
+                    // Unsent with nothing kept: only the "unsent" line, no album card.
+                    const isUnsentWithoutContent =
+                        message.unsent === true && messageText === t("chat.thread.unsent");
                     const isAlbumMessage =
+                        !isUnsentWithoutContent && (
                         message.type === "Album" ||
                         message.type === "ExpiringAlbum" ||
-                        message.type === "ExpiringAlbumV2";
+                        message.type === "ExpiringAlbumV2");
                     const isAlbumReactionBubble = message.type === "AlbumContentReaction";
                     const msgBody = message.body as any;
                     const isExpiredVideo = !videoUrl && msgBody?._videoExpired === true;
-                    const isExpiredImage = !imageUrl && msgBody?._imageExpired === true;
+                    const isExpiredImage =
+                        (!imageUrl && msgBody?._imageExpired === true) ||
+                        (isExpiringImage && Boolean(imageUrl) && failedExpiringImageIds.has(message.messageId));
                     const isUnsupportedMessage =
                         messageText === t("chat.thread.unsupported_placeholder") ||
                         messageText === `[${message.type}]`;
@@ -1618,8 +1688,7 @@ export function ChatThreadMessages({
                     // placeholder when body is empty; if a local copy existed,
                     // mergeMessagePreservingUnsendWipe would have restored the
                     // real content and messageText/localHistory would reflect that).
-                    const isTrulyUnsentMessage =
-                        message.unsent === true && messageText === t("chat.thread.unsent");
+                    const isTrulyUnsentMessage = isUnsentWithoutContent;
                     const isImageOnlyBubble =
                         (Boolean(imageUrl) || isExpiredImage) && (messageText === t("chat.thread.shared_image") || messageText === t("chat.thread.shared_gif"));
                     const isVideoOnlyBubble =
@@ -1630,7 +1699,14 @@ export function ChatThreadMessages({
                         Boolean(location) && messageText === t("chat.preview.sent_location");
                 const isAudioOnlyBubble =
                         Boolean(audioUrl) && messageText === t("chat.thread.shared_audio");
+                    const isViewLimitedLockedVideo =
+                        isViewLimitedLockedMessage &&
+                        (message.type === "Video" || message.type === "PrivateVideo" || message.type === "NonExpiringVideo" ||
+                            /video/i.test(message.chat1Type ?? ""));
+                    const viewLimitedViewsLeft = isViewLimitedLockedMessage ? getViewsRemaining(message) : null;
+                    const isViewLimitedUsedUp = viewLimitedViewsLeft === 0;
                     const isMediaOnlyBubble =
+                        isViewLimitedLockedMessage ||
                         isImageOnlyBubble || isVideoOnlyBubble || isAlbumOnlyBubble || isLocationOnlyBubble || isAlbumReactionBubble;
                     const tailCorner = mine ? "rounded-ee-[3px]" : "rounded-es-[3px]";
                     const shouldBlurIncomingMedia =
@@ -1679,22 +1755,45 @@ export function ChatThreadMessages({
                     const isLastMessage = message.messageId === lastMessageId;
                     const isLatestShare = albumId ? latestMessageIdByAlbum.get(albumId) === message.messageId : true;
 
+                    // ExpiringAlbumV2 is the message type of every timed share (10 minutes,
+                    // 1 hour, ...), so only fall back on it when the body has no expirationType.
+                    const hasExpirationType = expirationType != null && expirationType !== "";
                     const isOnce = !isIndefinite && (
-                        expirationType === "ONCE" ||
-                        expirationType === 1 ||
-                        message.type === "ExpiringAlbumV2" ||
-                        (totalLifetimeSec > 1700 && totalLifetimeSec < 1900)
+                        hasExpirationType
+                            ? expirationType === "ONCE" || expirationType === 1
+                            : message.type === "ExpiringAlbumV2" || (totalLifetimeSec > 1700 && totalLifetimeSec < 1900)
                     );
+                    // A timed share's clock only starts when it's first opened.
+                    const pendingDurationKey =
+                        expiresAt > 0 || isOnce ? null
+                            : expirationType === "TEN_MINUTES" || expirationType === 2 ? "chat.expiration.ten_minutes"
+                            : expirationType === "ONE_HOUR" || expirationType === 3 ? "chat.expiration.one_hour"
+                            : expirationType === "ONE_DAY" || expirationType === 4 ? "chat.expiration.one_day"
+                            : null;
+                    const pendingDurationLabel = pendingDurationKey ? t(pendingDurationKey) : null;
 
-                    const isExpiringMedia = isAlbumMessage && !isIndefinite && isLatestShare && (expiresAt > 0 || isOnce);
+                    const isExpiringMedia = isAlbumMessage && !isIndefinite && isLatestShare && (expiresAt > 0 || isOnce || pendingDurationLabel != null);
+                    // Nothing once the share ran out — also for an album kept by archive
+                    // mode, which stays open-able but isn't shared anymore.
+                    const hasAlbumShareRunOut = expiresAt > 0 && expiresAt <= Date.now();
+                    const showAlbumExpiry =
+                        isExpiringMedia && !hasAlbumShareRunOut && (expiresAt > 0 || isOnce || pendingDurationLabel != null);
 
                     // A cached album stays open-able regardless of what the live
                     // message body currently says about viewability/expiry —
                     // that's the whole point of capturing it durably.
+                    // Archive mode off: a view-once share is used up as soon as the
+                    // recipient opened it — its viewing window (viewableUntil) only starts
+                    // then — for them and for us as the sender alike. The server keeps the
+                    // share until that window ends; a new share starts over.
+                    const isOnceShareOpened = !isArchiveModeEnabled && isAlbumMessage && isOnceAlbumShareOpened(message);
+                    // Ran out: locked right away, not only once the server's sweep
+                    // (up to a minute later) has updated the message.
+                    const isAlbumShareTimedOut = isAlbumMessage && !isIndefinite && expiresAt > 0 && expiresAt <= nowTimestamp;
                     const isLocked =
                         isAlbumMessage &&
                         !isAlbumCachedForMessage &&
-                        (!isLatestShare || !msgBody?.isViewable);
+                        (!isLatestShare || !msgBody?.isViewable || isOnceShareOpened || isAlbumShareTimedOut);
                     // Same expiry signal as isLocked, but for the case where it's
                     // only avoided because we have a durable local copy — flag
                     // that so it's clear the live share is actually gone. Suppressed
@@ -1872,7 +1971,58 @@ export function ChatThreadMessages({
                                         </div>
                                     ) : null}
 
-                                    {imageUrl ? (
+                                    {isViewLimitedLockedMessage ? (
+                                        <div
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-disabled={isViewLimitedUsedUp}
+                                            {...mediaTapProps((tile) => {
+                                                if (isViewLimitedUsedUp) return;
+                                                const open = () => void openViewLimitedMedia(message, getHeroRectFromElement(tile));
+                                                if (isDesktop) { open(); return; }
+                                                if (messageLongPressTriggeredRef.current) {
+                                                    messageLongPressTriggeredRef.current = false;
+                                                    return;
+                                                }
+                                                scheduleMobileTap(message, open);
+                                            })}
+                                            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.currentTarget.click(); }}
+                                            className={`group/media block overflow-hidden ${hasReply ? "" : `rounded-2xl ${tailCorner}`} ${isViewLimitedUsedUp ? "cursor-default" : "cursor-pointer"}`}
+                                        >
+                                            <div className={`relative isolate ${MEDIA_BUBBLE_SIZE} overflow-hidden rounded-[inherit] bg-[var(--surface-2)]`}>
+                                                {/* Every layer carries the corners: a backdrop blur isn't clipped by overflow-hidden. */}
+                                                <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-br from-[var(--accent)]/25 via-transparent to-black/40" />
+                                                {isViewLimitedUsedUp ? (
+                                                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-[inherit] bg-black/40 backdrop-blur-[15px]">
+                                                        <Lock className="h-10 w-10 text-white/90 drop-shadow-lg" />
+                                                        <span className="mt-2 text-[10px] font-bold uppercase tracking-widest text-white/90 drop-shadow">
+                                                            {t("chat.expiration.expired")}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2">
+                                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/30 backdrop-blur-md transition group-hover/media:scale-105 group-hover/media:bg-white/25">
+                                                            {isViewLimitedLockedVideo ? <Play className="h-5 w-5 fill-white drop-shadow" /> : <Eye className="h-5 w-5 drop-shadow" />}
+                                                        </div>
+                                                        <span className="text-[11px] font-semibold uppercase tracking-widest text-white/90 drop-shadow">
+                                                            {t("chat.thread.tap_to_view", { defaultValue: "Tap to view" })}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <MediaBadge
+                                                    icon={isViewLimitedLockedVideo ? <Video className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                                                    label={viewLimitedViewsLeft != null && viewLimitedViewsLeft > 1
+                                                        ? t("chat.thread.views_left", { count: viewLimitedViewsLeft, defaultValue: "{{count}} views left" })
+                                                        : t("chat.attachments.view_once")}
+                                                />
+                                                <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-end gap-2 rounded-b-[inherit] bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 pb-2 pt-8 text-[10px] text-white/85">
+                                                    <span>{formatMessageTime(message.timestamp, nowTimestamp, t)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : null}
+
+                                    {imageUrl && !isExpiredImage ? (
                                         <div
                                             role="button"
                                             tabIndex={0}
@@ -1915,6 +2065,7 @@ export function ChatThreadMessages({
                                             <div className="relative">
                                             <img
                                                 src={proxyMediaUrl(imageUrl)}
+                                                onError={isExpiringImage ? () => markExpiringImageFailed(message.messageId) : undefined}
                                                 alt={t("chat.thread.shared_alt")}
                                                 className={`${message.type === "Giphy" ? (hasReply ? "max-h-96 w-full object-cover" : isImageOnlyBubble ? "max-h-80 w-full object-cover" : "max-h-64 w-full object-cover") : `${MEDIA_BUBBLE_SIZE} bg-[var(--surface-2)] object-cover`} ${PRIVACY_BLUR_TRANSITION_CLASS} ${mediaBlurClassName}`}
                                             />
@@ -2009,13 +2160,16 @@ export function ChatThreadMessages({
                                                 });
                                             }}
                                             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.currentTarget.click(); }}
+                                            // Not open-able: no pointer (see index.css's [role="button"] rule).
+                                            aria-disabled={isLocked}
                                             className={`group/media block w-full overflow-hidden rounded-2xl ${tailCorner}`}
                                             onMouseEnter={() => handleMediaMouseEnter(message.messageId)}
                                             onMouseLeave={() => handleMediaMouseLeave(message.messageId)}
                                         >
-                                            <div className={`relative h-56 w-64 max-w-full overflow-hidden rounded-2xl ${tailCorner} bg-[var(--surface-2)] sm:w-72`}>
+                                            {/* The mask makes the corners clip the scaled cover and blurred layers too, which overflow-hidden alone lets bleed. */}
+                                            <div className={`relative isolate h-56 w-64 max-w-full overflow-hidden rounded-2xl ${tailCorner} bg-[var(--surface-2)] [mask-image:radial-gradient(white,black)] sm:w-72`}>
                                                 <div className="absolute inset-0 flex items-center justify-center text-[var(--text-muted)]">
-                                                    <Album className="h-8 w-8 opacity-60" />
+                                                    <Images className="h-8 w-8 opacity-60" />
                                                 </div>
                                                 {albumCover ? (
                                                     <img
@@ -2035,25 +2189,30 @@ export function ChatThreadMessages({
                                                     </div>
                                                 )}
 
-                                                <MediaBadge icon={<Album className="h-3.5 w-3.5" />} label={t("chat.thread.album_label")} />
+                                                <MediaBadge
+                                                    icon={<Images className="h-3.5 w-3.5" />}
+                                                    label={
+                                                        <>
+                                                            {t("chat.thread.album_label")}
+                                                            {!isLocked && showAlbumExpiry ? (
+                                                                <>
+                                                                    <span className="h-3 w-px bg-white/25" aria-hidden="true" />
+                                                                    <AlbumExpirationCountdown expiresAt={expiresAt} isOnce={isOnce} durationLabel={pendingDurationLabel} t={t} className="" inline />
+                                                                </>
+                                                            ) : null}
+                                                        </>
+                                                    }
+                                                />
 
                                                 {!isLocked && (
                                                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                                                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/30 backdrop-blur-md transition group-hover/media:scale-105 group-hover/media:bg-white/25">
-                                                            <Images className="h-5 w-5 drop-shadow" />
+                                                            <Eye className="h-5 w-5 drop-shadow" />
                                                         </div>
                                                     </div>
                                                 )}
 
                                                 <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-1 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-3 pb-2 pt-10 text-white">
-                                                    {!isLocked && isExpiringMedia && (expiresAt > Date.now() || isOnce) && (
-                                                        <AlbumExpirationCountdown
-                                                            expiresAt={expiresAt}
-                                                            isOnce={isOnce}
-                                                            t={t}
-                                                            className="mb-0.5"
-                                                        />
-                                                    )}
                                                     {albumName ? (
                                                         <p className="truncate text-sm font-semibold leading-tight drop-shadow">
                                                             {albumName}
@@ -2111,31 +2270,21 @@ export function ChatThreadMessages({
                                         ) : null}
 
                                         {isExpiredImage ? (
-                                            <div className={`relative flex items-center justify-center overflow-hidden bg-[var(--surface-2)] ${MEDIA_BUBBLE_SIZE} ${isImageOnlyBubble ? (hasReply ? "" : `rounded-2xl ${tailCorner}`) : "mb-2 rounded-xl border border-black/10"}`}>
-                                                <div className="flex flex-col items-center gap-1.5 text-[var(--text-muted)]">
-                                                    <ImageOff className="h-6 w-6" />
-                                                    <span className="text-xs font-medium">{t("chat.thread.image_expired")}</span>
-                                                </div>
-                                                {isImageOnlyBubble && (
-                                                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-2 px-3 py-2 text-[10px] text-[var(--text-muted)]">
-                                                        <span>{formatMessageTime(message.timestamp, nowTimestamp, t)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <ExpiredMediaTile
+                                                kind="image"
+                                                t={t}
+                                                className={isImageOnlyBubble ? (hasReply ? "" : `rounded-2xl ${tailCorner}`) : "mb-2 rounded-xl border border-black/10"}
+                                                timeLabel={isImageOnlyBubble ? formatMessageTime(message.timestamp, nowTimestamp, t) : null}
+                                            />
                                         ) : null}
 
                                         {isExpiredVideo ? (
-                                            <div className={`relative flex items-center justify-center overflow-hidden bg-[var(--surface-2)] ${MEDIA_BUBBLE_SIZE} ${isVideoOnlyBubble ? (hasReply ? "" : `rounded-2xl ${tailCorner}`) : "mb-2 rounded-xl border border-black/10"}`}>
-                                                <div className="flex flex-col items-center gap-1.5 text-[var(--text-muted)]">
-                                                    <VideoOff className="h-6 w-6" />
-                                                    <span className="text-xs font-medium">{t("chat.thread.video_expired")}</span>
-                                                </div>
-                                                {isVideoOnlyBubble && (
-                                                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-end gap-2 px-3 py-2 text-[10px] text-[var(--text-muted)]">
-                                                        <span>{formatMessageTime(message.timestamp, nowTimestamp, t)}</span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <ExpiredMediaTile
+                                                kind="video"
+                                                t={t}
+                                                className={isVideoOnlyBubble ? (hasReply ? "" : `rounded-2xl ${tailCorner}`) : "mb-2 rounded-xl border border-black/10"}
+                                                timeLabel={isVideoOnlyBubble ? formatMessageTime(message.timestamp, nowTimestamp, t) : null}
+                                            />
                                         ) : null}
                                         
                                         {videoUrl ? (() => {
@@ -2350,7 +2499,7 @@ export function ChatThreadMessages({
                                                     <div className="absolute inset-x-0 bottom-0 flex flex-col bg-gradient-to-t from-black/80 via-black/40 to-transparent px-3 py-2 text-white">
                                                         <div className="flex items-center justify-between gap-2 text-[10px]">
                                                             <div className="flex items-center opacity-90">
-                                                                <Album className="h-3 w-3 shrink-0" />
+                                                                <Images className="h-3 w-3 shrink-0" />
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 {localOnly ? (
@@ -2461,10 +2610,11 @@ export function ChatThreadMessages({
                                                     {t("chat.open")}
                                                 </button>
                                             </div>
-                                            {!isLocked && isExpiringMedia && (expiresAt > Date.now() || isOnce) && (
+                                            {!isLocked && showAlbumExpiry && (
                                                 <AlbumExpirationCountdown
                                                     expiresAt={expiresAt}
                                                     isOnce={isOnce}
+                                                    durationLabel={pendingDurationLabel}
                                                     t={t}
                                                 />
                                             )}

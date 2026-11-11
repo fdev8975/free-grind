@@ -1142,6 +1142,88 @@ function isViewLimitedMessage(message: UiMessage): boolean {
 }
 
 /**
+ * Whether this photo/video can only be opened a limited number of times —
+ * also once those views are used up (isViewLimitedMessage reads 0 views left
+ * as "not limited", which is fine for capture but not for gating access).
+ */
+export function isViewLimitedMedia(message: Message | UiMessage): boolean {
+	const chat1Type = (message as UiMessage).chat1Type?.toLowerCase();
+	if (message.type === "ExpiringImage" || message.type === "PrivateVideo") return true;
+	if (chat1Type === "expiring_image" || chat1Type === "expiring_video" || chat1Type === "private_video") return true;
+	const isVideo = message.type === "Video" || chat1Type === "video";
+	if (!isVideo) return false;
+	const body = message.body as Record<string, unknown> | null | undefined;
+	if (typeof body?.maxViews === "number") return body.maxViews < MAX_VIDEO_VIEWS;
+	return typeof body?.viewsRemaining === "number" && body.viewsRemaining < MAX_VIDEO_VIEWS;
+}
+
+/**
+ * A view-once album share the recipient already opened: its viewing window
+ * (viewableUntil) only starts then. The server keeps the share until that
+ * window ends; without archive mode it counts as expired for both sides
+ * right away. A new share of the album starts over (no viewableUntil).
+ */
+export function isOnceAlbumShareOpened(message: Message | UiMessage): boolean {
+	if (message.type !== "Album" && message.type !== "ExpiringAlbum" && message.type !== "ExpiringAlbumV2") return false;
+	const body = message.body as Record<string, unknown> | null | undefined;
+	const expirationType = body?.expirationType;
+	return (expirationType === "ONCE" || expirationType === 1) && Number(body?.viewableUntil || 0) > 0;
+}
+
+/** Marker on a display copy whose view-limited media must be opened through the server. */
+export const VIEW_LIMITED_LOCK_FLAG = "_viewLimitedLocked";
+
+export function isViewLimitedLocked(message: Message | UiMessage): boolean {
+	const body = message.body as Record<string, unknown> | null | undefined;
+	return body?.[VIEW_LIMITED_LOCK_FLAG] === true;
+}
+
+/**
+ * Views left on a view-limited photo/video as the server last reported it,
+ * or null when unknown. An expiring photo with duration -1 is used up.
+ */
+export function getViewsRemaining(message: Message | UiMessage): number | null {
+	const body = message.body as Record<string, unknown> | null | undefined;
+	if (!body) return null;
+	if (typeof body.viewsRemaining === "number") return Math.max(0, body.viewsRemaining);
+	// A single-view photo already looked at, or one the server had no URL for anymore.
+	if (message.type === "ExpiringImage" && (body.duration === -1 || body.viewed === true)) return 0;
+	if (body._imageExpired === true || body._videoExpired === true) return 0;
+	return null;
+}
+
+/**
+ * How a message shows with archive mode off: unsent messages lose whatever
+ * content was kept locally, and received view-limited photos/videos lose
+ * every URL (only the counters stay) so the bubble can't show a stored or
+ * restored copy — opening one goes through the server and uses a view.
+ * Returns the message itself when nothing changes.
+ */
+export function toNonArchiveDisplayMessage<T extends Message | UiMessage>(message: T, userId: number | null): T {
+	if (message.unsent) {
+		if (message.body == null && !(message as UiMessage).localHistory) return message;
+		return { ...message, body: null, localHistory: false } as T;
+	}
+	const mine = userId != null && Number(message.senderId) === Number(userId);
+	if (mine || !isViewLimitedMedia(message)) return message;
+	const body = message.body as Record<string, unknown> | null | undefined;
+	const counters: Record<string, unknown> = {};
+	for (const [key, value] of Object.entries(body ?? {})) {
+		// Numbers and flags only: every URL field (and anything a URL could be
+		// dug out of) is a string or a nested object.
+		if (typeof value === "number" || typeof value === "boolean") counters[key] = value;
+	}
+	counters[VIEW_LIMITED_LOCK_FLAG] = true;
+	// Shown by the locked tile itself (as used up), not the expired bubbles.
+	if (counters._imageExpired === true || counters._videoExpired === true) {
+		delete counters._imageExpired;
+		delete counters._videoExpired;
+		if (typeof counters.viewsRemaining !== "number") counters.viewsRemaining = 0;
+	}
+	return { ...message, body: counters } as T;
+}
+
+/**
  * Whatever this message's media is (if any) and however its URL was
  * resolved, this is what should be eagerly captured into chatDb's
  * media_files table. Giphy is intentionally excluded — it's third-party,
@@ -1159,7 +1241,7 @@ export function getMediaCaptureTarget(message: UiMessage): MediaCaptureTarget | 
 			mediaKey: getMediaKeyForMessage(message, "image"),
 			kind: "image",
 			url: imageUrl,
-			viewOnce: isViewLimitedMessage(message),
+			viewOnce: isViewLimitedMessage(message) || isViewLimitedMedia(message),
 		};
 	}
 
@@ -1169,7 +1251,7 @@ export function getMediaCaptureTarget(message: UiMessage): MediaCaptureTarget | 
 			mediaKey: getMediaKeyForMessage(message, "video"),
 			kind: "video",
 			url: videoUrl,
-			viewOnce: isViewLimitedMessage(message),
+			viewOnce: isViewLimitedMessage(message) || isViewLimitedMedia(message),
 		};
 	}
 
