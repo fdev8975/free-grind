@@ -1,4 +1,4 @@
-import { Archive, BellOff, Check, CheckCheck, EyeOff, ListFilter, Loader2, MessageCircle, PencilLine, Pin, Star, Trash2 } from "lucide-react";
+import { Archive, BellOff, Check, CheckCheck, CornerUpRight, EyeOff, ListFilter, Loader2, MessageCircle, PencilLine, Pin, Star, Trash2 } from "lucide-react";
 import { BellOffFilled, EyeOffFilled, HomeFilled, LocateFixedFilled, Trash2Filled } from "../../../components/icons/FilledIcons";
 import { RightNowIcon } from "../../../components/icons/RightNowIcon";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactElement, type ReactNode, type RefObject } from "react";
@@ -595,6 +595,8 @@ function ChatConversationRow({
 	// Only badge chats that deviate from the global setting; otherwise every row would carry the icon.
 	const readReceiptsOverridden = isReadReceiptsOverridden(conversation.data.conversationId);
 	const readReceiptsHidden = isReadReceiptsHidden(conversation.data.conversationId);
+	const previewSenderId = conversation.data.preview?.senderId;
+	const isLastMessageMine = previewSenderId != null && userId != null && Number(previewSenderId) === Number(userId);
 
 	return (
 		<div ref={ref} className={`relative overflow-hidden ${isDesktop ? "px-2 py-0.5" : ""} ${revealClass}`}>
@@ -724,7 +726,15 @@ function ChatConversationRow({
 								{isTyping ? (
 									<span className="italic text-[var(--accent)]">{t("chat.typing")}</span>
 								) : (
-									getPreviewText(conversation, t, userId)
+									<>
+										{isLastMessageMine && (
+											<CornerUpRight
+												aria-label={t("chat.preview.sent_by_you", { defaultValue: "Sent by you" })}
+												className="me-1 inline-block h-3.5 w-3.5 shrink-0 -translate-y-px align-middle text-[var(--text-muted)] rtl:-scale-x-100"
+											/>
+										)}
+										{getPreviewText(conversation, t, userId)}
+									</>
 								)}
 							</p>
 							{conversation.data.unreadCount > 0 ? (

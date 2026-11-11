@@ -1844,7 +1844,8 @@
             "sent_location": "Hat einen Standort gesendet",
             "sent_message": "Hat eine Nachricht gesendet",
             "replied_profile_photo": "Hat auf ein Profilbild geantwortet",
-            "video_call": "Videoanruf"
+            "video_call": "Videoanruf",
+            "sent_by_you": "Von dir gesendet"
         },
         "video_call_status": {
             "successful": "Videoanruf",
