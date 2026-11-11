@@ -1275,10 +1275,10 @@ export function SettingsPage() {
 										onChange={setChatArchiveEnabled}
 										icon={<ArchiveRestoreFilled className="h-5 w-5" />}
 										iconClass="bg-slate-500/15 text-slate-400"
-										label="Chat Database (Archive) Mode"
+										label="Archive Mode"
 										description={isChatArchiveEnabled
-											? "Keeps expiring photos, videos, albums and unsent messages accessible forever."
-											: "Off: expiring media and albums expire normally, views count when you open them, unsent messages show as unsent."}
+											? "Expiring photos, videos and albums stay viewable after they expire, and unsent messages keep their content."
+											: "Expiring photos, videos and albums expire as sent and use a view only when opened. Unsent messages show as unsent."}
 									/>
 									{navRow(
 										() => setIsSeasonalSheetOpen(true),
