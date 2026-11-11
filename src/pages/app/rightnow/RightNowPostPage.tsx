@@ -36,10 +36,12 @@ import type { SelectSheetOption } from "../../../components/ui/select-sheet";
 import { ManagedOptionsPickerDialog } from "../profile-editor/ManagedOptionsPickerDialog";
 import { useFeatureFlag } from "../../../services/assignmentsStore";
 import { formatDistance } from "../gridpage/utils";
+import { RIGHT_NOW_ACTIVE_POST_KEY } from "../../../hooks/queries/useRightNowQueries";
 import {
 	RIGHT_NOW_LOCATION_RADIUS_MAX,
 	RIGHT_NOW_SHARED_FIELDS,
 	approximateRightNowRadiusMeters,
+	runningRightNowSession,
 	type RightNowShareLocation,
 	type RightNowSharedField,
 } from "../../../types/right-now";
@@ -141,6 +143,12 @@ function RightNowPostSheetContent({ onPost }: Pick<RightNowPostPageProps, "onPos
 				} else {
 					const response = await apiFunctions.getActiveRightNowPost();
 					post = response.post;
+				}
+				// Ended or expired meanwhile (e.g. on another device): nothing to edit.
+				if (!post || (!rightNowTestMode && !runningRightNowSession(post))) {
+					await setPreferences({ activeRightNowId: null, activeRightNowExpiresAt: null, activeRightNowHidden: false });
+					void queryClient.invalidateQueries({ queryKey: RIGHT_NOW_ACTIVE_POST_KEY });
+					return;
 				}
 
 				setText(post.activeText || "");
@@ -361,6 +369,7 @@ function RightNowPostSheetContent({ onPost }: Pick<RightNowPostPageProps, "onPos
 					sharedFields: isDiscreet ? sharedFields : loaded?.sharedFields ?? [],
 				};
 				await setPreferences({ activeRightNowHidden: isHidden });
+				void queryClient.invalidateQueries({ queryKey: RIGHT_NOW_ACTIVE_POST_KEY });
 			} else {
 				const createPayload: RightNowCreatePostRequest = {
 					text: text.trim(),
@@ -400,6 +409,7 @@ function RightNowPostSheetContent({ onPost }: Pick<RightNowPostPageProps, "onPos
 					});
 					// The count depends on the area and refills over time: ask the server again.
 					void queryClient.invalidateQueries({ queryKey: ["entitlements"] });
+					void queryClient.invalidateQueries({ queryKey: RIGHT_NOW_ACTIVE_POST_KEY });
 				}
 			}
 
@@ -445,6 +455,8 @@ function RightNowPostSheetContent({ onPost }: Pick<RightNowPostPageProps, "onPos
 			} else if (error instanceof RightNowPostAlreadyRunningError) {
 				toast.error(t("right_now.error_already_running", { defaultValue: "You already have a Right Now session running." }));
 				void queryClient.invalidateQueries({ queryKey: ["rightnow", "feed"] });
+				// Probably started on another device: pick it up as our session.
+				void queryClient.invalidateQueries({ queryKey: RIGHT_NOW_ACTIVE_POST_KEY });
 			} else if (error instanceof RightNowSessionEndedError) {
 				await setPreferences({ activeRightNowId: null, activeRightNowExpiresAt: null, activeRightNowHidden: false });
 				toast.error(t("right_now.session_expired"), { id: "right-now-expired" });

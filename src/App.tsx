@@ -60,6 +60,7 @@ import { VideoCallManager } from "./components/VideoCallManager";
 import { ActiveRouteBridge } from "./components/ActiveRouteBridge";
 import { KeepScreenOnBridge } from "./components/KeepScreenOnBridge";
 import { EntitlementsBridge } from "./components/EntitlementsBridge";
+import { RightNowSessionBridge } from "./components/RightNowSessionBridge";
 import { AssignmentsBridge } from "./components/AssignmentsBridge";
 import { HondurasRecoveryBridge } from "./components/HondurasRecoveryBridge";
 import { LgbtqRiskCountryWarning } from "./components/LgbtqRiskCountryWarning";
@@ -255,6 +256,7 @@ export default function App() {
 					{renderPhase >= 5 && (
 						<>
 							<EntitlementsBridge />
+							<RightNowSessionBridge />
 							<HondurasRecoveryBridge />
 						</>
 					)}

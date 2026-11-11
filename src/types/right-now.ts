@@ -199,28 +199,49 @@ export const rightNowUploadMediaResponseSchema = z.object({
 
 export type RightNowUploadMediaResponse = z.infer<typeof rightNowUploadMediaResponseSchema>;
 
-export const rightNowCreatePostResponseSchema = z.object({
-	post: z.object({
-		id: z.number(),
-		media: z.array(z.any()).optional().nullable(),
-		profileId: z.coerce.string(),
-		activeText: z.string().optional().nullable(),
-		moderatedText: z.any().optional().nullable(),
-		lat: z.number().optional().nullable(),
-		lon: z.number().optional().nullable(),
-		locationRadius: z.number().optional().nullable(),
-		postStatus: z.string().optional().nullable().default("ACTIVE"),
-		hosting: z.boolean().optional().default(false),
-		posted: z.number().optional().nullable(),
-		expiration: z.number().optional().nullable(),
-		shareLocation: z.string().optional().nullable().default("NONE"),
-		boostUpsellOfferAvailableUntil: z.number().optional().nullable(),
-		isDiscreet: z.any().optional().nullable(),
-		sharedFields: z.array(z.any()).optional().nullable(),
-	}),
+/** RightNowPostDetails: the own post as create, edit and active-post return it. */
+const rightNowPostDetailsSchema = z.object({
+	id: z.number(),
+	media: z.array(z.any()).optional().nullable(),
+	profileId: z.coerce.string(),
+	activeText: z.string().optional().nullable(),
+	moderatedText: z.any().optional().nullable(),
+	lat: z.number().optional().nullable(),
+	lon: z.number().optional().nullable(),
+	locationRadius: z.number().optional().nullable(),
+	postStatus: z.string().optional().nullable().default("ACTIVE"),
+	hosting: z.boolean().optional().default(false),
+	posted: z.number().optional().nullable(),
+	expiration: z.number().optional().nullable(),
+	shareLocation: z.string().optional().nullable().default("NONE"),
+	boostUpsellOfferAvailableUntil: z.number().optional().nullable(),
+	isDiscreet: z.any().optional().nullable(),
+	sharedFields: z.array(z.any()).optional().nullable(),
 });
 
+export type RightNowPostDetails = z.infer<typeof rightNowPostDetailsSchema>;
+
+export const rightNowCreatePostResponseSchema = z.object({ post: rightNowPostDetailsSchema });
+
 export type RightNowCreatePostResponse = z.infer<typeof rightNowCreatePostResponseSchema>;
+
+/** GET /v3/rightnow/active-post: {"post":null} when nothing runs (also once it expired). */
+export const rightNowActivePostResponseSchema = z.object({ post: rightNowPostDetailsSchema.nullable() });
+
+export type RightNowActivePostResponse = z.infer<typeof rightNowActivePostResponseSchema>;
+
+/**
+ * The running session a post stands for, or null: only ACTIVE and HIDDEN
+ * posts before their expiration count (AWAITING_PAYMENT is nobody's session).
+ */
+export function runningRightNowSession(
+	post: RightNowPostDetails | null,
+	now = Date.now(),
+): { id: number; expiresAt: number; hidden: boolean } | null {
+	if (!post || typeof post.expiration !== "number" || post.expiration <= now) return null;
+	if (post.postStatus !== "ACTIVE" && post.postStatus !== "HIDDEN") return null;
+	return { id: post.id, expiresAt: post.expiration, hidden: post.postStatus === "HIDDEN" };
+}
 
 /**
  * PATCH /{v4,v5}/rightnow/posts/{id}: send only the fields being changed.

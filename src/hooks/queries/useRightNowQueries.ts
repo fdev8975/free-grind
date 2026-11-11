@@ -100,3 +100,26 @@ export function useReceivedRightNowRequests(enabled = true) {
 		refetchOnWindowFocus: true,
 	});
 }
+
+const ACTIVE_POST_POLL_MS = 60_000;
+
+/** Query key of the own running post; invalidate it after every local change. */
+export const RIGHT_NOW_ACTIVE_POST_KEY = ["rightnow", "active-post"] as const;
+
+/**
+ * The own running post (GET /v3/rightnow/active-post), hidden ones included.
+ * The server is the source of truth: a session started, paused or edited on
+ * another device shows up here. Polled while the app is visible and on focus.
+ */
+export function useActiveRightNowPost(userId: number | null, enabled = true) {
+	const api = useApiFunctions();
+	return useQuery({
+		queryKey: [...RIGHT_NOW_ACTIVE_POST_KEY, userId],
+		queryFn: async () => (await api.getActiveRightNowPost()).post,
+		enabled: enabled && userId != null,
+		staleTime: 30_000,
+		refetchInterval: ACTIVE_POST_POLL_MS,
+		refetchOnWindowFocus: true,
+		retry: 1,
+	});
+}

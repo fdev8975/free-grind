@@ -6,6 +6,7 @@ import { coarsenGeohash } from "../../utils/geohash";
 import { getIncognitoMode } from "../../utils/privacy";
 import {
 	type RightNowCreatePostRequest,
+	type RightNowActivePostResponse,
 	type RightNowCreatePostResponse,
 	type RightNowFeed,
 	type RightNowFeedEntry,
@@ -21,6 +22,7 @@ import {
 	rightNowReceivedRequestSchema,
 	rightNowSentRequestSchema,
 	rightNowCreatePostRequestSchema,
+	rightNowActivePostResponseSchema,
 	rightNowCreatePostResponseSchema,
 	rightNowFeedEntrySchema,
 	rightNowUploadMediaResponseSchema,
@@ -377,13 +379,13 @@ export function createFeedMethods(fetchRest: RestFetcher, t: (key: string, defau
 			};
 		},
 
-		async getActiveRightNowPost(): Promise<RightNowCreatePostResponse> {
+		async getActiveRightNowPost(): Promise<RightNowActivePostResponse> {
 			const url = "/v3/rightnow/active-post";
 			const response = await fetchRest(url);
 			await assertSuccess(response, t("api.errors.load_right_now"));
 			const payload = await parseJsonSafe(response);
 			appLog.info("GET /v3/rightnow/active-post RESPONSE:", payload);
-			return rightNowCreatePostResponseSchema.parse(payload);
+			return rightNowActivePostResponseSchema.parse(payload);
 		},
 
 		/**
