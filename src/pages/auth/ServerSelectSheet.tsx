@@ -5,16 +5,28 @@ import { BottomSheet, SheetCloseButton } from "../../components/ui/bottom-sheet"
 import { NATIVE_SHEET_BG } from "../../components/ui/action-sheet";
 import { Button } from "../../components/ui/button";
 import { cn } from "../../utils/cn";
-import { FREE_GRIND_SERVER_NAME, setServer, testServer, useServerInfo, type ServerKind } from "../../services/serverConfig";
+import { FREE_GRIND_SERVER_NAME, setParkedAccount, setServer, testServer, useServerInfo, type ServerKind } from "../../services/serverConfig";
+import { useAuth } from "../../contexts/useAuth";
 
 /**
  * "Change server" on the sign-in/up screens: the official servers or the
  * Free Grind server built into the app (fixed addresses, set at build time).
- * Switching is only possible while signed out (enforced in Rust); afterwards
+ * Switching is only possible while signed out (enforced in Rust), except when
+ * adding an account: then the signed-in account is parked in the switcher and
+ * its id goes into `?restore=` so cancelling can switch back to it. Afterwards
  * the UI reloads so every store starts fresh against the new backend.
  */
-export function ServerSelectSheet({ isDesktop, onClose }: { isDesktop: boolean; onClose: () => void }) {
+export function ServerSelectSheet({
+	isDesktop,
+	onClose,
+	addProfile = false,
+}: {
+	isDesktop: boolean;
+	onClose: () => void;
+	addProfile?: boolean;
+}) {
 	const { t } = useTranslation();
+	const { userId } = useAuth();
 	const info = useServerInfo();
 	const closeRef = useRef<(() => void) | null>(null);
 	const [choice, setChoice] = useState<ServerKind>(info.kind);
@@ -38,8 +50,16 @@ export function ServerSelectSheet({ isDesktop, onClose }: { isDesktop: boolean; 
 					return;
 				}
 			}
-			await setServer(choice);
-			window.location.reload();
+			const detachSession = addProfile && userId != null;
+			await setServer(choice, { detachSession });
+			if (detachSession) {
+				setParkedAccount(String(userId));
+				const url = new URL(window.location.href);
+				url.searchParams.set("restore", String(userId));
+				window.location.replace(url.toString());
+			} else {
+				window.location.reload();
+			}
 		} catch (e) {
 			setError(String((e as { message?: unknown })?.message ?? e));
 			setBusy(false);

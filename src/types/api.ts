@@ -173,6 +173,8 @@ export const methodSchemas = {
 				lastUsedAt: z.coerce.number().int().nonnegative(),
 				/** grindr.rs's SessionKind; "Email" for accounts saved before it was recorded. */
 				kind: z.string().optional(),
+				/** The backend the account lives on. */
+				server: z.enum(["official", "freeGrind"]).optional(),
 			}),
 		),
 	},

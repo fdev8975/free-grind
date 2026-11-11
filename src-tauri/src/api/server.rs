@@ -7,8 +7,13 @@ use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 
-use super::auth::{adopt_client, clear_slot, get_slot_bytes, set_slot_bytes, AuthStorage, DeviceStorage};
+use tauri::Manager;
+
+use super::auth::{
+    adopt_client, clear_slot, get_slot_bytes, persist_current_session, set_slot_bytes, AuthStorage, DeviceStorage,
+};
 use crate::error::AppError;
+use crate::state::AppState;
 
 const ACTIVE_SERVER_SLOT: &str = "server-config";
 
@@ -117,7 +122,7 @@ pub struct ServerInfo {
 
 fn info(config: &grindr::ServerConfig) -> ServerInfo {
     ServerInfo {
-        kind: if config.is_official() { "official" } else { "freeGrind" },
+        kind: kind_name(config),
         api_base: config.api_base().to_owned(),
         media_base: config.media_base().map(str::to_owned),
         free_grind_available: grindr::free_grind_available(),
@@ -130,6 +135,19 @@ fn info(config: &grindr::ServerConfig) -> ServerInfo {
 #[serde(rename_all = "camelCase")]
 pub struct ServerSelection {
     pub server: String,
+    /// "Add account" while signed in: park the active account in the switcher
+    /// (its session stays valid there) instead of refusing the switch.
+    #[serde(default)]
+    pub detach_session: bool,
+}
+
+/// `"official"` or `"freeGrind"`, as the frontend names them.
+pub fn kind_name(config: &grindr::ServerConfig) -> &'static str {
+    if config.is_official() {
+        "official"
+    } else {
+        "freeGrind"
+    }
 }
 
 fn parse_selection(selection: &ServerSelection) -> Result<grindr::ServerConfig, AppError> {
@@ -194,15 +212,26 @@ pub async fn test_server(selection: ServerSelection) -> Result<ServerProbe, AppE
 
 /// Switches the backend. Only while signed out, so a session of one server is
 /// never sent to another; the device identity is rotated as well, so the two
-/// servers can't correlate this device.
+/// servers can't correlate this device. With `detach_session` (adding an
+/// account), a signed-in account is first saved to the switcher and then
+/// detached locally, without signing it out on its server; switching back to
+/// it later restores its own backend.
 #[tauri::command]
 pub async fn set_server_config(app: tauri::AppHandle, selection: ServerSelection) -> Result<ServerInfo, AppError> {
     let config = parse_selection(&selection)?;
-    if AuthStorage::get_session().ok().flatten().is_some() {
-        return Err(AppError::Auth("sign out before changing the server".to_owned()));
-    }
     if *grindr::server_config() == config {
         return Ok(info(&config));
+    }
+    if AuthStorage::get_session().ok().flatten().is_some() {
+        if !selection.detach_session {
+            return Err(AppError::Auth("sign out before changing the server".to_owned()));
+        }
+        // Up to date in the switcher (and remembered with its server) before
+        // the active slot lets go of it.
+        if let Ok(client) = app.state::<AppState>().client() {
+            persist_current_session(&client).await;
+        }
+        AuthStorage::clear_session()?;
     }
     activate(config)?;
     let device = grindr::DeviceInfo::generate();

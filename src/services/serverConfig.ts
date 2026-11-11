@@ -73,9 +73,38 @@ export async function testServer(): Promise<ServerProbe> {
 	return invoke<ServerProbe>("test_server", { selection: { server: "freeGrind" } });
 }
 
-/** Switches the backend (signed out only). Rust rotates the device identity. */
-export async function setServer(server: ServerKind): Promise<ServerInfo> {
-	const info = await invoke<ServerInfo>("set_server_config", { selection: { server } });
+/**
+ * The account a server switch parked while adding another one. Switched back
+ * to on a cold start that is still signed out (the add was abandoned).
+ */
+const PARKED_ACCOUNT_KEY = "fg:parked-account";
+
+export function setParkedAccount(profileId: string | null) {
+	try {
+		if (profileId) window.localStorage.setItem(PARKED_ACCOUNT_KEY, profileId);
+		else window.localStorage.removeItem(PARKED_ACCOUNT_KEY);
+	} catch {
+		// Storage unavailable: an abandoned add just stays signed out.
+	}
+}
+
+export function getParkedAccount(): string | null {
+	try {
+		return window.localStorage.getItem(PARKED_ACCOUNT_KEY);
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Switches the backend. Rust rotates the device identity. Signed out only,
+ * unless `detachSession` (adding an account): then the signed-in account is
+ * parked in the switcher, still valid on its own server.
+ */
+export async function setServer(server: ServerKind, options?: { detachSession?: boolean }): Promise<ServerInfo> {
+	const info = await invoke<ServerInfo>("set_server_config", {
+		selection: { server, detachSession: options?.detachSession ?? false },
+	});
 	emit(info);
 	return info;
 }

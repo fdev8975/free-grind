@@ -53,6 +53,8 @@ export interface SavedAccountMeta {
 	lastUsedAt: number;
 	/** How the account signs in: "Email", "Google" or "Facebook". */
 	kind?: string;
+	/** The backend the account lives on. */
+	server?: "official" | "freeGrind";
 }
 
 export interface SignUpData {

@@ -86,6 +86,7 @@ import { areUpdateChecksEnabled, setUpdateChecksEnabled, subscribeUpdateChecks }
 import { Avatar } from "../../components/ui/avatar";
 import { getThumbImageUrl } from "../../utils/media";
 import { getSavedAccountProfile, removeSavedAccountProfile } from "../../services/savedAccountProfiles";
+import { FREE_GRIND_SERVER_NAME } from "../../services/serverConfig";
 import { isAndroid, isIos } from "../../services/saveMedia";
 import { saveIssueLogsFile } from "../../utils/issueTelemetry";
 import { useSettingsSearchIndex } from "../../data/settingsSearchIndex";
@@ -366,8 +367,10 @@ export function SettingsPage() {
 		displayName ||
 		((account?.kind ?? "Email") === "Email" ? account?.email : null) ||
 		t("settings.account_profile_fallback", { defaultValue: "Profile {{id}}", id: profileId });
-	const withSignInMethod = (account: SavedAccountMeta | undefined, text: string) =>
-		account?.kind === "Google" || account?.kind === "Facebook" ? `${account.kind} · ${text}` : text;
+	const withSignInMethod = (account: SavedAccountMeta | undefined, text: string) => {
+		const method = account?.kind === "Google" || account?.kind === "Facebook" ? `${account.kind} · ${text}` : text;
+		return account?.server === "freeGrind" ? `${FREE_GRIND_SERVER_NAME} · ${method}` : method;
+	};
 	const inboxSyncStatus = useInboxSyncStatus(userId);
 	const inboxSyncDisplay = describeInboxSyncStatus(inboxSyncStatus, t);
 	const [searchQuery, setSearchQuery] = useState("");

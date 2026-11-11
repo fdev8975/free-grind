@@ -791,7 +791,7 @@ fn frontend_restriction(session: Option<&grindr::Session>) -> Option<Restriction
 /// command returns. The session-watch task in `spawn_persistence_tasks` does
 /// the same, but asynchronously — the frontend lists the saved accounts right
 /// after `login` resolves and would otherwise miss the account it just added.
-async fn persist_current_session(client: &grindr::GrindrClient) {
+pub(super) async fn persist_current_session(client: &grindr::GrindrClient) {
     let session = client.session_receiver().borrow().clone();
     if let Some(session) = session {
         let device = client.current_device().await;
@@ -1302,9 +1302,25 @@ pub async fn accept_ban_agreement(state: tauri::State<'_, AppState>) -> Result<L
     }
 }
 
+/// A saved account as the switcher shows it: its stored meta plus the
+/// backend it lives on.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SavedAccountEntry {
+    #[serde(flatten)]
+    meta: SavedAccountMeta,
+    server: &'static str,
+}
+
 #[tauri::command]
-pub async fn list_saved_accounts()-> Result<Vec<SavedAccountMeta>, AppError> {
-    AuthStorage::list_saved_accounts()
+pub async fn list_saved_accounts() -> Result<Vec<SavedAccountEntry>, AppError> {
+    Ok(AuthStorage::list_saved_accounts()?
+        .into_iter()
+        .map(|meta| {
+            let server = super::server::kind_name(&super::server::ServerStorage::load_for_account(&meta.profile_id));
+            SavedAccountEntry { meta, server }
+        })
+        .collect())
 }
 
 #[tauri::command]

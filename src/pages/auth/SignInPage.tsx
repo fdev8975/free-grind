@@ -283,6 +283,8 @@ export function SignInPage() {
 	const { t } = useTranslation();
 	const [searchParams] = useSearchParams();
 	const addProfileMode = searchParams.get("mode") === "add-profile";
+	// Set when a server switch while adding an account parked the signed-in one.
+	const restoreProfileId = addProfileMode ? searchParams.get("restore") : null;
 	const [method, setMethod] = useState<SignInMethod>("password");
 
 	const [email, setEmail] = useState("");
@@ -308,10 +310,25 @@ export function SignInPage() {
 	// Set when an email sign-in is refused until the account verifies by SMS.
 	const [verification, setVerification] = useState<{ profileId: string; signIn: SignInRefusal } | null>(null);
 
-	const { login, loginWithGoogle, loginWithGoogleWindow, loginWithFacebook, error: authError, clearError } = useAuth();
+	const { userId, login, loginWithGoogle, loginWithGoogleWindow, loginWithFacebook, switchAccount, error: authError, clearError } = useAuth();
 	const navigate = useNavigate();
 	// While the sheet is open, a failure is the code's and shows there only.
 	const error = showTransfer ? null : authError;
+
+	const cancelAddProfile = async () => {
+		// After a server switch the page was reloaded signed out: back to the
+		// account that was active (switch_account restores its server too).
+		if (userId == null && restoreProfileId) {
+			try {
+				await switchAccount(restoreProfileId);
+				navigate("/", { replace: true });
+			} catch {
+				// switchAccount already surfaced the error.
+			}
+			return;
+		}
+		navigate(-1);
+	};
 
 	// A failure belongs to the method that produced it; also don't carry it to the next page.
 	const changeMethod = (next: SignInMethod) => {
@@ -462,7 +479,7 @@ export function SignInPage() {
 							<QrCode className="h-3.5 w-3.5" />
 							{t("auth.sign_in.qr_entry_title", { defaultValue: "Sign in with a QR code" })}
 						</button>
-						{addProfileMode ? null : <ServerFooterButton onClick={() => setShowServer(true)} />}
+						<ServerFooterButton onClick={() => setShowServer(true)} />
 						{addProfileMode ? null : <BugReportButton />}
 					</div>
 				}
@@ -609,7 +626,7 @@ export function SignInPage() {
 				)}
 				{addProfileMode ? (
 					<AuthAltAction
-						onClick={() => navigate(-1)}
+						onClick={() => void cancelAddProfile()}
 						label={t("common.cancel", { defaultValue: "Cancel" })}
 					/>
 				) : (
@@ -621,7 +638,7 @@ export function SignInPage() {
 				)}
 			</AuthShell>
 			{showTransfer ? <TransferSignInSheet isDesktop={isDesktop} onClose={() => toggleTransfer(false)} /> : null}
-			{showServer ? <ServerSelectSheet isDesktop={isDesktop} onClose={() => setShowServer(false)} /> : null}
+			{showServer ? <ServerSelectSheet isDesktop={isDesktop} onClose={() => setShowServer(false)} addProfile={addProfileMode} /> : null}
 		</>
 	);
 }

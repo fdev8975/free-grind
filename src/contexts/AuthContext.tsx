@@ -43,7 +43,7 @@ import { runRestoredFavorites } from "../services/restoredFavorites";
 import { runTapsAutomationSync } from "../services/tapsSync";
 import { syncSavedPhrasesFromServer } from "../services/savedPhrases";
 import { mintRecaptchaToken, RecaptchaError, type RecaptchaFailure } from "../services/recaptcha";
-import { isCustomServer } from "../services/serverConfig";
+import { getParkedAccount, isCustomServer, loadServerConfig, setParkedAccount } from "../services/serverConfig";
 import { restoreStrandedLocation } from "../services/entitlementBypass";
 import i18n from "../i18n";
 
@@ -305,6 +305,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			} else {
 				appLog.info("[Auth] checkAuth: no active session");
 				dispatch({ type: "CLEAR_USER" });
+				// An "add account" that switched servers and was then abandoned:
+				// back to the account it parked. Not on the reload right after
+				// the switch, which still carries ?restore= for that add.
+				const parked = getParkedAccount();
+				if (parked && !new URLSearchParams(window.location.search).has("restore")) {
+					setParkedAccount(null);
+					appLog.info("[Auth] checkAuth: restoring parked account");
+					void switchAccount(parked).catch(() => undefined);
+				}
 				// The session was dropped by a ban, not a sign-out: show the ban screen again.
 				if (bootBan) {
 					appLog.info("[Auth] checkAuth: restoring ban screen from last run");
@@ -631,6 +640,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 			const result = await callMethod("switch_account", { profileId });
 			appLog.info("[Auth] switchAccount: succeeded");
+			// The account may live on the other server: pick that up before
+			// anything reacts to the new user (media URLs, push token sync).
+			await loadServerConfig().catch((err) => appLog.warn("[Auth] switchAccount: server config reload failed", err));
 			dispatch({ type: "SET_USER", payload: result.profileId });
 			void refreshSavedAccounts();
 			if (!showRestriction(result.restriction)) {
@@ -668,6 +680,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		checkAuth();
 	}, []);
+
+	// Signed in again (the added account, or back to the parked one): nothing
+	// left to restore.
+	useEffect(() => {
+		if (state.userId != null) setParkedAccount(null);
+	}, [state.userId]);
 
 	// Points the chat db at the active account's own file, and on an actual
 	// account change (not the initial boot resolution) clears every other
