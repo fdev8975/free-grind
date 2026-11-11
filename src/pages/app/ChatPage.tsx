@@ -50,6 +50,7 @@ import {
 	CHAT_REALTIME_RESYNC,
 	CHAT_REALTIME_STATUS,
 	CHAT_SYSTEM_MESSAGE_EVENT,
+	CHAT_DYNAMIC_REFRESH_EVENT,
 	TYPING_STATUS_EVENT,
 	getChatRealtimeStatus,
 	type TypingStatusDetail,
@@ -3715,6 +3716,24 @@ export function ChatPage() {
 				return [...map.values()].sort((a, b) => a.timestamp - b.timestamp);
 			});
 		};
+		// Refreshed album messages (chat.v1.refresh_dynamic, persisted by the
+		// bridge): swap in the new bodies of messages already in the thread —
+		// older ones outside the loaded page are picked up when paged in.
+		const onDynamicRefresh = (event: Event) => {
+			const messages = (event as CustomEvent<Message[]>).detail;
+			if (!messages?.length) return;
+			const activeConversationId = selectedConversationIdRef.current;
+			const relevant = messages.filter((m) => m.conversationId === activeConversationId);
+			if (relevant.length === 0) return;
+			setThreadMessages((previous) => {
+				const updates = new Map(relevant.map((m) => [m.messageId, m] as const));
+				if (!previous.some((m) => updates.has(m.messageId))) return previous;
+				return previous.map((m) => {
+					const update = updates.get(m.messageId);
+					return update ? { ...m, ...update } : m;
+				});
+			});
+		};
 		const onStatus = (event: Event) => {
 			const status = (event as CustomEvent<RealtimeStatus>).detail;
 			if (status) handleRealtimeStatus(status);
@@ -3818,6 +3837,7 @@ export function ChatPage() {
 		window.addEventListener(CHAT_REALTIME_STATUS, onStatus as EventListener);
 		window.addEventListener(TYPING_STATUS_EVENT, onTyping as EventListener);
 		window.addEventListener(CHAT_SYSTEM_MESSAGE_EVENT, onSystemMessage as EventListener);
+		window.addEventListener(CHAT_DYNAMIC_REFRESH_EVENT, onDynamicRefresh as EventListener);
 		window.addEventListener(CHAT_ARCHIVE_STATE_EVENT, onArchiveStateChange as EventListener);
 		window.addEventListener(CHAT_HIDE_STATE_EVENT, onHideStateChange as EventListener);
 		return () => {
@@ -3830,6 +3850,10 @@ export function ChatPage() {
 			window.removeEventListener(
 				CHAT_SYSTEM_MESSAGE_EVENT,
 				onSystemMessage as EventListener,
+			);
+			window.removeEventListener(
+				CHAT_DYNAMIC_REFRESH_EVENT,
+				onDynamicRefresh as EventListener,
 			);
 			window.removeEventListener(
 				CHAT_ARCHIVE_STATE_EVENT,

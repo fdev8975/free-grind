@@ -1378,7 +1378,10 @@ export function ChatThreadMessages({
                         // immediately instead of only after its next refresh.
                         ensureAlbumCacheChecked(albumId);
                     }
-                    const isAlbumCachedForMessage = albumId != null && isAlbumCachedLocally(albumId);
+                    // Our own album is always available to us (it's ours, not a
+                    // received share) — once we stop sharing it, its message
+                    // shows as local history like an unsent message, not locked.
+                    const isAlbumCachedForMessage = albumId != null && (mine || isAlbumCachedLocally(albumId));
                     // Prefer the cached cover over the live body's
                     // coverUrl/previewUrl, not just as a fallback for when it's
                     // missing — that field can be a stale signed URL that's

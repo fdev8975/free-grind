@@ -356,6 +356,26 @@ export function createChatService(
 				.parse(await parseJsonSafe(response)).message;
 		},
 
+		/**
+		 * Refresh messages: current bodies of the given messages (oldest first;
+		 * ids that don't exist are left out). Used for dynamic (album) messages
+		 * after chat.v1.refresh_dynamic.
+		 */
+		async refreshMessages(params: {
+			conversationId: string;
+			messageIds: string[];
+		}): Promise<Message[]> {
+			if (!params.messageIds.length) return [];
+			const response = await fetchRest(
+				`/v4/chat/conversation/${params.conversationId}/message-by-id`,
+				{ method: "POST", body: { messageIds: params.messageIds } },
+			);
+			await assertSuccess(response, t("chat.errors.load_messages"));
+			return z
+				.object({ messages: z.array(messageSchema) })
+				.parse(await parseJsonSafe(response)).messages;
+		},
+
 		async sendMessage(payload: SendMessagePayload): Promise<Message> {
 			const safePayload = sendMessagePayloadSchema.parse(payload);
 			const send = async () => {

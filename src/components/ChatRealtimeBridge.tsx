@@ -146,6 +146,12 @@ export const VIEW_RECEIVED_EVENT = "fg:view-received";
 export const TYPING_STATUS_EVENT = "fg:typing-status";
 export const VIDEO_CALL_INCOMING_EVENT = "fg:video-call-incoming";
 export const VIDEO_CALL_ENDED_EVENT = "fg:video-call-ended";
+// Fresh bodies of dynamic (album) messages after chat.v1.refresh_dynamic —
+// detail is Message[], already persisted to chatLog.
+export const CHAT_DYNAMIC_REFRESH_EVENT = "fg:chat-dynamic-refresh";
+
+const DYNAMIC_MESSAGE_TYPES = new Set(["Album", "ExpiringAlbum", "ExpiringAlbumV2"]);
+const REFRESH_BATCH_SIZE = 100;
 // Re-exported so existing importers (e.g. ChatPage.tsx) don't need to change
 // where they pull this from — conversationArchive.ts is now the source of
 // truth since it also dispatches this event from applySelfBlockAction.
@@ -802,6 +808,42 @@ export function ChatRealtimeBridge() {
 								detail: ended,
 							}),
 						);
+					}
+				}
+
+				// chat.v1.refresh_dynamic — an album was shared, unshared, its
+				// expiration changed or it was viewed. The event carries no
+				// message, only the conversation: re-fetch every dynamic message
+				// we have for it (Refresh messages) so e.g. an unshared album's
+				// message turns not-viewable without reopening the chat.
+				if (envelope.type === "chat.v1.refresh_dynamic") {
+					const record = envelope.payload as Record<string, unknown> | undefined;
+					const cid = typeof record?.conversationId === "string" ? record.conversationId : null;
+					if (cid) {
+						try {
+							const { messages: stored } = await chatLog.readLog(cid);
+							const ids = stored
+								.filter((m) => !m.unsent && (m.dynamic === true || DYNAMIC_MESSAGE_TYPES.has(m.type)))
+								.map((m) => m.messageId);
+							const refreshed: Message[] = [];
+							for (let i = 0; i < ids.length; i += REFRESH_BATCH_SIZE) {
+								refreshed.push(
+									...(await apiFunctions.refreshMessages({
+										conversationId: cid,
+										messageIds: ids.slice(i, i + REFRESH_BATCH_SIZE),
+									})),
+								);
+							}
+							if (refreshed.length > 0) {
+								await chatLog.appendMessages(cid, refreshed);
+								captureAlbumsForMessages(refreshed, cid, (id) => apiFunctions.getAlbum(id), userIdRef.current);
+								window.dispatchEvent(
+									new CustomEvent<Message[]>(CHAT_DYNAMIC_REFRESH_EVENT, { detail: refreshed }),
+								);
+							}
+						} catch (error) {
+							appLog.warn("[chat-ws:bridge] refresh_dynamic failed", error);
+						}
 					}
 				}
 
