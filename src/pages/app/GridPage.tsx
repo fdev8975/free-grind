@@ -1492,9 +1492,6 @@ export function GridPage() {
 				state: {
 					returnTo: `${location.pathname}${location.search}`,
 					profileIds: sortedCards.map((c) => c.profileId),
-					// Keep the grid rendered underneath (see App.tsx): it shows
-					// through while the profile is swiped down to close.
-					backgroundLocation: location,
 				},
 			});
 			return;

@@ -318,10 +318,10 @@ export function GridProfilePage() {
 	}, [prevProfileId, nextProfileId]);
 
 	const handlePrevProfile = prevProfileId
-		? () => navigate(`/profile/${prevProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds, backgroundLocation: locationState.backgroundLocation } })
+		? () => navigate(`/profile/${prevProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds } })
 		: undefined;
 	const handleNextProfile = nextProfileId
-		? () => navigate(`/profile/${nextProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds, backgroundLocation: locationState.backgroundLocation } })
+		? () => navigate(`/profile/${nextProfileId}`, { replace: true, state: { returnTo: safeReturnTo, profileIds } })
 		: undefined;
 
 	useEffect(() => {
