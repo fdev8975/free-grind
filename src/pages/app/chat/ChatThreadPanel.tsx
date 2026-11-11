@@ -3155,7 +3155,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 										});
 									}
 
-									if (mediaUrl || audioUrl) {
+									if (isArchiveModeEnabled && (mediaUrl || audioUrl)) {
 										rows.push({
 											key: "download-media",
 											icon: <Download className="h-3.5 w-3.5" />,

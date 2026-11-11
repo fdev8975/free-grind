@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import { isIos, saveMediaToDevice } from "../services/saveMedia";
+import { useChatArchiveEnabled } from "../services/chatArchiveMode";
 import { appLog } from "../utils/logger";
 import { haptic } from "../utils/haptics";
 import { ProfileImage } from "./ui/profile-image";
@@ -95,6 +96,7 @@ const HERO_ANIMATION_MS = 320;
 const HERO_EASING = "cubic-bezier(0.2, 0.8, 0.2, 1)";
 
 export type PhotoViewerMenuAction = {
+	/** "save-all" marks a save-to-device action: hidden while archive mode is off, like the viewer's own save button. */
 	key: string;
 	label: string;
 	icon: React.ComponentType<{ className?: string }>;
@@ -244,6 +246,9 @@ export function PhotoViewer({
 	const [zoomScale, setZoomScale] = useState(1);
 	const [zoomOffset, setZoomOffset] = useState({ x: 0, y: 0 });
 	const [isSaving, setIsSaving] = useState(false);
+	// Saving to the device is an archive-mode feature — with it off, no download buttons.
+	const canSave = useChatArchiveEnabled();
+	const visibleMenuActions = canSave ? menuActions ?? [] : (menuActions ?? []).filter((action) => action.key !== "save-all");
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const menuPresence = usePresence(isMenuOpen);
 	const menuRef = useRef<HTMLDivElement | null>(null);
@@ -1202,6 +1207,7 @@ export function PhotoViewer({
 							)}
 						</div>
 
+						{(canSave || visibleMenuActions.length > 0) && (
 						<div ref={menuRef} className="relative shrink-0">
 							<button
 								type="button"
@@ -1217,6 +1223,7 @@ export function PhotoViewer({
 							{menuPresence.rendered && (
 								<div data-lenis-prevent style={menuTransitionStyle(menuPresence.visible)} className="absolute right-0 top-[calc(100%+0.25rem)] max-h-[calc(100dvh-8rem)] min-w-[200px] overflow-y-auto overscroll-contain rounded-lg border border-white/15 bg-black/90 py-2 shadow-xl backdrop-blur-md">
 									<div className="flex flex-col gap-1 px-2">
+									{canSave && (
 									<button
 										type="button"
 										onClick={() => { setIsMenuOpen(false); void handleSave(); }}
@@ -1226,7 +1233,8 @@ export function PhotoViewer({
 										<Download className="mr-2 h-4 w-4 opacity-70" />
 										{t("profile_details.save")}
 									</button>
-									{menuActions.map((action) => (
+									)}
+									{visibleMenuActions.map((action) => (
 										<button
 											key={action.key}
 											type="button"
@@ -1242,6 +1250,7 @@ export function PhotoViewer({
 								</div>
 							)}
 						</div>
+						)}
 					</div>
 				</div>
 				</>
@@ -1259,6 +1268,7 @@ export function PhotoViewer({
 						<ChevronLeft className="h-4 w-4" />
 					</button>
 
+					{canSave && (
 					<button
 						type="button"
 						onClick={(e) => { e.stopPropagation(); void handleSave(); }}
@@ -1270,6 +1280,7 @@ export function PhotoViewer({
 					>
 						<Download className="h-4 w-4" />
 					</button>
+					)}
 				</>
 			)}
 

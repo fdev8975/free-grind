@@ -927,7 +927,7 @@ export function ChatThreadMessages({
 			});
 		}
 
-		if (imageUrl || videoUrl || audioUrl) {
+		if (isArchiveModeEnabled && (imageUrl || videoUrl || audioUrl)) {
 			actions.push({
 				key: "download",
 				label: t("chat.actions.download", { defaultValue: "Download" }),
@@ -1029,6 +1029,7 @@ export function ChatThreadMessages({
 		messageTranslations,
 		isMutatingMessageId,
 		isArchived,
+		isArchiveModeEnabled,
 		t,
 		handleReply,
 		canReply,

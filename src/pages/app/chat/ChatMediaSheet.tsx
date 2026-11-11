@@ -24,7 +24,7 @@ import { useApiFunctions } from "../../../hooks/useApiFunctions";
 import { isIos, saveMediaBytesBatch } from "../../../services/saveMedia";
 import { fetchAndEncode, toDataUri } from "../../../services/mediaStore";
 import { captureAlbum, getLocalAlbum, listArchivedAlbumsForConversation } from "../../../services/albumStore";
-import { isChatArchiveEnabled } from "../../../services/chatArchiveMode";
+import { isChatArchiveEnabled, useChatArchiveEnabled } from "../../../services/chatArchiveMode";
 import * as chatDb from "../../../services/chatDb";
 import { extractImageHashFromSignedUrl } from "./chatUtils";
 import { appLog } from "../../../utils/logger";
@@ -103,6 +103,7 @@ export function ChatMediaSheet({
 	// Where the tapped tile sits, for the viewer's hero open.
 	const [viewerHeroRect, setViewerHeroRect] = useState<HeroRect | null>(null);
 	const [isSavingAll, setIsSavingAll] = useState(false);
+	const isArchiveModeEnabled = useChatArchiveEnabled();
 
 	const isMine = (senderId: number | null) => senderId != null && userId != null && Number(senderId) === Number(userId);
 	const sentMedia = media.filter((m) => isMine(m.senderId));
@@ -408,7 +409,7 @@ export function ChatMediaSheet({
 		<BottomSheet onClose={onClose} isDesktop={isDesktop} expandable bg={NATIVE_SHEET_BG} panelClassName="px-4">
 			<DrawerHeader
 				title={t("chat.media_sheet.title")}
-				actions={activeMedia.length > 0 ? (
+				actions={isArchiveModeEnabled && activeMedia.length > 0 ? (
 					<button
 						type="button"
 						onClick={() => void handleSaveAll()}
