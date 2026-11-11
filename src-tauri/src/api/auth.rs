@@ -1556,6 +1556,41 @@ pub async fn sync_push_token(state: tauri::State<'_, AppState>, token: String) -
     }
 }
 
+/// Stops push delivery to `token` for the active account. Called before
+/// logout, while the session that registered it still exists.
+#[tauri::command]
+pub async fn revoke_push_token(state: tauri::State<'_, AppState>, token: String) -> Result<(), AppError> {
+    let trimmed = token.trim();
+    if trimmed.is_empty() {
+        return Ok(());
+    }
+
+    // FCM tokens are path-safe; encode anything else so the segment survives.
+    let encoded: String = trimmed
+        .bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b':' => (b as char).to_string(),
+            _ => format!("%{b:02X}"),
+        })
+        .collect();
+
+    let client = state.client()?;
+    let response = client
+        .request(grindr::Method::DELETE, &format!("/v3/push-tokens/{encoded}"))
+        .send()
+        .await
+        .map_err(|e| AppError::from_client_error(e, &client))?;
+
+    if (200..300).contains(&response.status) {
+        Ok(())
+    } else {
+        Err(AppError::from(grindr::GrindrError::from_response(
+            response.status,
+            &response.body,
+        )))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

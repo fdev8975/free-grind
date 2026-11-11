@@ -616,6 +616,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 			// Repair a location left parked in Honduras before the session goes
 			// away, so the account isn't stranded there after sign-out (#446).
 			await restoreStrandedLocation();
+			// Unregister this device's push token while the session still
+			// exists, so the signed-out account stops notifying here. Best
+			// effort: a failure must not block the logout.
+			const pushToken = cachedPushToken();
+			if (pushToken) {
+				await callMethod("revoke_push_token", { token: pushToken }).catch((error) =>
+					appLog.warn("[PUSH_SYNC] Failed to revoke push token on logout", asAppError(error)?.prettyMessage || error),
+				);
+			}
+			// Forget the sync marker so a later sign-in registers the token again.
+			window.localStorage.removeItem(PUSH_TOKEN_SYNCED_STORAGE_KEY);
 			await callMethod("logout");
 			dispatch({ type: "CLEAR_USER" });
 			toast.success(i18n.t("auth.toasts.logged_out"));
