@@ -339,6 +339,13 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 									<span className="inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm sm:text-[11px]">
 										{t(onlineStatus.labelKey, { count: onlineStatus.count })}
 									</span>
+								) : isVisiting ? (
+									<span className="inline-flex" title={`${t("profile_details.visiting")} · ${t(onlineStatus.labelKey, { count: onlineStatus.count })}`}>
+										<Plane
+											className="h-4 w-4 text-gray-400 drop-shadow-[0_1px_1.5px_rgba(0,0,0,1)] drop-shadow-[0_0_0.8px_rgba(0,0,0,1)]"
+											strokeWidth={2.5}
+										/>
+									</span>
 								) : (
 									<OfflineDot title={t(onlineStatus.labelKey, { count: onlineStatus.count })} />
 								)
