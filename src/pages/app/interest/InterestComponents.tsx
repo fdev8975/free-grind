@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Ban, History, MoveHorizontal, Check, Star, Navigation } from "lucide-react";
+import { Ban, History, Check, Star, Navigation } from "lucide-react";
 import { ClockFilled, EyeFilled, HomeFilled, LockFilled } from "../../../components/icons/FilledIcons";
 import { useTranslation } from "react-i18next";
 import { getThumbImageUrl } from "../../../utils/media";
@@ -25,6 +25,44 @@ const emojiColorMap: Record<number, string> = {
 	2: "168, 85, 247", // 😈
 };
 
+const tapGlow = (tapType: number | null | undefined, strong = true) => {
+	const color = emojiColorMap[tapType ?? -1] || "255, 200, 0";
+	return strong
+		? `drop-shadow(0 0 3px rgba(${color}, 0.55)) drop-shadow(0 0 7px rgba(${color}, 0.3))`
+		: `drop-shadow(0 0 3px rgba(${color}, 0.55))`;
+};
+
+/** A mutual tap: their reaction and yours side by side, slightly overlapping. */
+function MutualTapPair({
+	theirs,
+	mine,
+	title,
+	size,
+}: {
+	theirs: number | null;
+	mine: number | null;
+	title: string;
+	size: "row" | "tile";
+}) {
+	const isRow = size === "row";
+	return (
+		<span className="flex items-center select-none leading-none" title={title}>
+			<span
+				className={cn("relative z-10", isRow ? "text-2xl" : "text-lg")}
+				style={{ filter: tapGlow(theirs, isRow) }}
+			>
+				{getTapEmoji(theirs)}
+			</span>
+			<span
+				className={isRow ? "-ms-2 text-2xl" : "-ms-1.5 text-lg"}
+				style={{ filter: tapGlow(mine, isRow) }}
+			>
+				{getTapEmoji(mine)}
+			</span>
+		</span>
+	);
+}
+
 export const InterestRow = memo(function InterestRow({
 	item,
 	mode,
@@ -32,6 +70,7 @@ export const InterestRow = memo(function InterestRow({
 	now,
 	isBlocked = false,
 	canOpenWhileBlocked = false,
+	myTapType,
 }: {
 	item: InterestItem;
 	mode: InterestTab;
@@ -40,6 +79,8 @@ export const InterestRow = memo(function InterestRow({
 	isBlocked?: boolean;
 	/** Blocked, but a local profile snapshot exists — still openable. */
 	canOpenWhileBlocked?: boolean;
+	/** Mutual taps: the tap type you sent back (falls back to theirs). */
+	myTapType?: number | null;
 }) {
 	const { t } = useTranslation();
 	const { unitsPreset } = usePreferences();
@@ -150,35 +191,33 @@ export const InterestRow = memo(function InterestRow({
 				</div>
 			)}
 			{!isPrivate && (mode === "taps" || mode === "sent") && (
-				<div className="shrink-0 flex items-center justify-end h-12 w-12">
-					<div className="relative flex h-12 w-12 items-center justify-center">
-						<span
-							className="text-2xl leading-none select-none"
-							style={{
-								filter: `drop-shadow(0 0 3px rgba(${emojiColorMap[item.tapType ?? -1] || "255, 200, 0"}, 0.55)) drop-shadow(0 0 7px rgba(${emojiColorMap[item.tapType ?? -1] || "255, 200, 0"}, 0.3))`,
-							}}
-						>
-							{getTapEmoji(item.tapType)}
-						</span>
-						{mode === "taps" && item.isMutual && (
+				<div className="shrink-0 flex items-center justify-end h-12 min-w-12">
+					{mode === "taps" && item.isMutual ? (
+						<MutualTapPair
+							theirs={item.tapType}
+							mine={myTapType ?? item.tapType}
+							title={t("interest_page.mutual_tap_tooltip")}
+							size="row"
+						/>
+					) : (
+						<div className="relative flex h-12 w-12 items-center justify-center">
 							<span
-								className="absolute -bottom-0.5 -end-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full text-white shadow-md"
-								style={{ backgroundColor: `rgb(${emojiColorMap[item.tapType ?? -1] || "255, 200, 0"})` }}
-								title={t("interest_page.mutual_tap_tooltip")}
+								className="text-2xl leading-none select-none"
+								style={{ filter: tapGlow(item.tapType) }}
 							>
-								<MoveHorizontal className="h-2.5 w-2.5" />
+								{getTapEmoji(item.tapType)}
 							</span>
-						)}
-						{mode === "sent" && item.isRead && (
-							<span
-								className="absolute -bottom-0.5 -end-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full text-white shadow-md"
-								style={{ backgroundColor: `rgb(${emojiColorMap[item.tapType ?? -1] || "255, 200, 0"})` }}
-								title={t("interest_page.sent_read_tooltip")}
-							>
-								<Check className="h-2.5 w-2.5" />
-							</span>
-						)}
-					</div>
+							{mode === "sent" && item.isRead && (
+								<span
+									className="absolute -bottom-0.5 -end-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full text-white shadow-md"
+									style={{ backgroundColor: `rgb(${emojiColorMap[item.tapType ?? -1] || "255, 200, 0"})` }}
+									title={t("interest_page.sent_read_tooltip")}
+								>
+									<Check className="h-2.5 w-2.5" />
+								</span>
+							)}
+						</div>
+					)}
 				</div>
 			)}
 		</div>
@@ -202,6 +241,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 	canOpenWhileBlocked = false,
 	isDesktop = false,
 	mode = "views",
+	myTapType,
 }: {
 	item: InterestItem;
 	browseCard?: BrowseCard;
@@ -212,6 +252,8 @@ export const InterestViewTile = memo(function InterestViewTile({
 	canOpenWhileBlocked?: boolean;
 	isDesktop?: boolean;
 	mode?: InterestTab;
+	/** Mutual taps: the tap type you sent back (falls back to theirs). */
+	myTapType?: number | null;
 }) {
 	const { t } = useTranslation();
 	const { unitsPreset, showLastOnline } = usePreferences();
@@ -298,23 +340,32 @@ export const InterestViewTile = memo(function InterestViewTile({
 								<EyeFilled className="h-3 w-3" />
 								<span className="tabular-nums">{item.viewCount || 1}</span>
 							</span>
+						) : !isPrivate && mode === "taps" && item.isMutual ? (
+							<span className="absolute start-2 top-2 z-10 flex h-8 items-center rounded-full bg-black/55 px-1.5 backdrop-blur-sm">
+								<MutualTapPair
+									theirs={item.tapType}
+									mine={myTapType ?? item.tapType}
+									title={t("interest_page.mutual_tap_tooltip")}
+									size="tile"
+								/>
+							</span>
 						) : !isPrivate ? (
 							<span className="absolute start-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm">
 								<span
 									className="select-none text-lg leading-none"
-									style={{ filter: `drop-shadow(0 0 3px rgba(${tapColor}, 0.55))` }}
+									style={{ filter: tapGlow(item.tapType, false) }}
 								>
 									{getTapEmoji(item.tapType)}
 								</span>
-								{(mode === "taps" && item.isMutual) || (mode === "sent" && item.isRead) ? (
+								{mode === "sent" && item.isRead && (
 									<span
 										className="absolute -bottom-0.5 -end-0.5 flex h-4 w-4 items-center justify-center rounded-full text-white shadow-md"
 										style={{ backgroundColor: `rgb(${tapColor})` }}
-										title={mode === "taps" ? t("interest_page.mutual_tap_tooltip") : t("interest_page.sent_read_tooltip")}
+										title={t("interest_page.sent_read_tooltip")}
 									>
-										{mode === "taps" ? <MoveHorizontal className="h-2.5 w-2.5" /> : <Check className="h-2.5 w-2.5" />}
+										<Check className="h-2.5 w-2.5" />
 									</span>
-								) : null}
+								)}
 							</span>
 						) : null}
 

@@ -31,6 +31,7 @@ export function InterestViewsGrid({
 	hasProfileSnapshot,
 	scrollContainerRef,
 	mode = "views",
+	sentTapTypeById,
 }: {
 	items: InterestItem[];
 	browseCardsById: Map<string, BrowseCard>;
@@ -40,6 +41,8 @@ export function InterestViewsGrid({
 	hasProfileSnapshot: (profileId: string) => boolean;
 	scrollContainerRef: RefObject<HTMLDivElement | null>;
 	mode?: InterestTab;
+	/** Your sent tap type per profile, for the mutual-tap pair. */
+	sentTapTypeById?: Map<string, number | null>;
 }) {
 	const { isDesktop, mobileGridColumns, gridTemplateColumns, gridClassName } = useViewsGridLayout();
 	const { rowMetrics, probeRef } = useGridRowMetrics(
@@ -115,6 +118,7 @@ export function InterestViewsGrid({
 								canOpenWhileBlocked={hasProfileSnapshot(item.profileId)}
 								isDesktop={isDesktop}
 								mode={mode}
+								myTapType={sentTapTypeById?.get(item.profileId)}
 							/>
 						))}
 					</div>

@@ -173,6 +173,16 @@ export function InterestPage() {
 
 	const sentTaps = useMemo(() => data?.sentTaps ?? [], [data?.sentTaps]);
 
+	// Your latest sent tap type per profile — shown next to theirs on mutual taps.
+	const sentTapTypeById = useMemo(() => {
+		const map = new Map<string, number | null>();
+		const sorted = [...sentTaps].sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+		for (const item of sorted) {
+			if (!map.has(item.profileId)) map.set(item.profileId, item.tapType);
+		}
+		return map;
+	}, [sentTaps]);
+
 	// Views don't carry age/favorite — borrow them from the browse grid's
 	// cache for anyone we've seen there. Re-read whenever the data refreshes.
 	const browseCardsById = useMemo(() => getAllCachedBrowseCardsById(), [data]);
@@ -724,6 +734,7 @@ export function InterestPage() {
 											hasProfileSnapshot={hasProfileSnapshot}
 											scrollContainerRef={feedContainerRef}
 											mode={activeTab}
+											sentTapTypeById={sentTapTypeById}
 										/>
 									) : displayedItems.map((item) => (
 										<InterestRow
@@ -734,6 +745,7 @@ export function InterestPage() {
 											now={nowTimestamp}
 											isBlocked={isProfileBlocked(item.profileId)}
 											canOpenWhileBlocked={hasProfileSnapshot(item.profileId)}
+											myTapType={sentTapTypeById.get(item.profileId)}
 										/>
 									))}
 
