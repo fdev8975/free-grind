@@ -157,8 +157,15 @@ function BrowseFiltersSheetContent({
 		{ key: "isVisiting", label: t("browse_filters.local_filters.is_visiting") },
 	], [t]);
 
-	const genderFilterOptions = useMemo(() => buildGenderOptions(managedGenders), [managedGenders]);
-	const primaryGenderIds = useMemo(() => getPrimaryGenderIds(managedGenders), [managedGenders]);
+	// -1 = "not specified": matches profiles without any gender set.
+	const genderFilterOptions = useMemo<ManagedOption[]>(
+		() => {
+			const options = buildGenderOptions(managedGenders);
+			return options.length > 0 ? [{ value: -1, label: t("browse_filters.not_specified") }, ...options] : options;
+		},
+		[managedGenders, t],
+	);
+	const primaryGenderIds = useMemo(() => [-1, ...getPrimaryGenderIds(managedGenders)], [managedGenders]);
 	// Primary genders inline, plus any selected non-primary ones so they stay visible/removable.
 	const inlineGenderOptions = useMemo(() => {
 		const inlineIds = [...primaryGenderIds, ...genders.filter((id) => !primaryGenderIds.includes(id))];
