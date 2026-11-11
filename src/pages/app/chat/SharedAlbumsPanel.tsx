@@ -1,4 +1,5 @@
 import { Album, Images, MessageCircle, RefreshCw, UserRound } from "lucide-react";
+import { isChatArchiveEnabled } from "../../../services/chatArchiveMode";
 import { useAlbumContentViewCounter } from "../../../hooks/useAlbumContentViewCounter";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -364,7 +365,11 @@ export function SharedAlbumsPanel({ isDesktop }: Props) {
 						setViewer({ ...meta, albumId: local.albumId, albumName: local.albumName ?? meta.albumName, content: local.content });
 					}
 				} else {
-					await apiFunctions.openSharedAlbum({ albumId });
+					const opened = await apiFunctions.openSharedAlbum({ albumId });
+					// Archive mode off: a view-once share that was opened already is refused here.
+					if (opened.status === 403 && !isChatArchiveEnabled()) {
+						throw new Error(t("chat.thread.album_no_longer_viewable", { defaultValue: "This album can't be opened anymore." }));
+					}
 					const details = await apiFunctions.getAlbum(albumId);
 					// Nothing to show: the viewer would just flash open and vanish,
 					// so close it and say why instead.

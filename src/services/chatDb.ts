@@ -2388,6 +2388,41 @@ export async function deleteStaleDrawerMediaFiles(currentMediaKeys: string[]): P
 }
 
 /**
+ * Expiration type of each album's share as its newest received album message
+ * last carried it ("ONCE", "TEN_MINUTES", … or the numeric form), for albums
+ * whose list entry has no such field. Albums without a stored message, or
+ * whose message has no expirationType, are left out.
+ */
+export async function getAlbumShareExpirationTypes(
+	albumIds: number[],
+	userId: number | null,
+): Promise<Map<number, string | number>> {
+	const result = new Map<number, string | number>();
+	if (albumIds.length === 0) return result;
+	const db = await getDb();
+	const placeholders = albumIds.map((_, i) => `$${i + 2}`).join(", ");
+	const rows = await db.select<{ album_id: number; expiration_type: string | number | null }[]>(
+		`
+		SELECT CAST(json_extract(body_json, '$.albumId') AS INTEGER) AS album_id,
+			json_extract(body_json, '$.expirationType') AS expiration_type
+		FROM messages
+		WHERE type IN ('Album', 'ExpiringAlbum', 'ExpiringAlbumV2')
+			AND unsent = 0
+			AND sender_id != $1
+			AND CAST(json_extract(body_json, '$.albumId') AS INTEGER) IN (${placeholders})
+		ORDER BY timestamp DESC
+		`,
+		[userId ?? -1, ...albumIds],
+	);
+	for (const row of rows) {
+		// Newest first: the first one seen per album wins.
+		if (row.expiration_type == null || result.has(Number(row.album_id))) continue;
+		result.set(Number(row.album_id), row.expiration_type);
+	}
+	return result;
+}
+
+/**
  * SQL condition (on media_files `mf` LEFT/JOINed with messages `m`) that
  * drops what only archive mode keeps: media of unsent messages and of
  * view-limited photos/videos (by flag, and by message type for rows stored

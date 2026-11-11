@@ -1,5 +1,5 @@
 import { MapPinFilled } from "../../../components/icons/FilledIcons";
-import { Album, Ban, CircleAlert, Copy, Download, Eye, History, Hourglass, ImagePlay, Images, Languages, Loader2, Lock, MessageCircleQuestion, MessageSquarePlus, Mic, MoreVertical, PhoneOff, Play, Repeat2, Reply, RotateCw, ShieldCheck, Trash2, Undo2, Video, VideoOff, ImageOff } from "lucide-react";
+import { Album, Ban, CircleAlert, Copy, Download, Eye, History, ImagePlay, Images, Languages, Loader2, Lock, MessageCircleQuestion, MessageSquarePlus, Mic, MoreVertical, PhoneOff, Play, Repeat2, Reply, RotateCw, ShieldCheck, Trash2, Undo2, Video, VideoOff, ImageOff } from "lucide-react";
 import { sentMediaEcho } from "./sentMediaEchoes";
 import { TakenOnGrindrBadge } from "./TakenOnGrindrBadge";
 import { createPortal } from "react-dom";
@@ -82,6 +82,7 @@ import { menuTransitionStyle, usePresence } from "../../../hooks/usePresence";
 import { proxyMediaUrl } from "../../../utils/mediaProxy";
 import { getHeroRectFromElement, type HeroRect } from "../../../components/PhotoViewer";
 import { RightNowRequestBubble } from "./RightNowRequestBubble";
+import { AlbumExpirationCountdown, getAlbumShareDurationKey } from "./AlbumExpirationCountdown";
 
 type ChatThreadMessagesProps = {
 	isDesktop: boolean;
@@ -191,71 +192,6 @@ function MediaBadge({ icon, label }: { icon: React.ReactNode; label: React.React
  * Centered upload ring over an optimistic image/video tile; with a `label`
  * (a video's phase, see UploadProgress) that and the percentage under it.
  */
-function AlbumExpirationCountdown({ expiresAt, isOnce, durationLabel = null, t, className = "mt-1", inline = false }: { expiresAt: number; isOnce?: boolean; durationLabel?: string | null; t: any; className?: string; inline?: boolean }) {
-	const [timeLeft, setTimeLeft] = useState<number>(expiresAt - Date.now());
-
-	useEffect(() => {
-		if (isOnce) return;
-		// Right away too: a share opened meanwhile gets its expiry only now.
-		setTimeLeft(expiresAt - Date.now());
-		const timer = setInterval(() => {
-			const next = expiresAt - Date.now();
-			setTimeLeft(next);
-			if (next <= 0) clearInterval(timer);
-		}, 1000);
-		return () => clearInterval(timer);
-	}, [expiresAt, isOnce]);
-
-	// Not opened yet: its clock starts on the first view, so show how long it lasts.
-	const pendingLabel = !isOnce && expiresAt <= 0 ? durationLabel : null;
-	if (!isOnce && !pendingLabel && timeLeft <= 0) return null;
-
-	const seconds = Math.floor((timeLeft / 1000) % 60);
-	const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
-	const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
-	const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-
-	const parts = [];
-	if (days > 0) parts.push(t("right_now.days_short", { count: days }));
-	if (hours > 0 || days > 0) parts.push(t("right_now.hours_short", { count: hours }));
-	if (minutes > 0 || hours > 0 || days > 0) parts.push(t("right_now.minutes_short", { count: minutes }));
-	if (days === 0 && hours === 0) parts.push(t("right_now.seconds_short", { count: seconds }));
-
-	return (
-		<>
-			<style>
-				{`
-					@keyframes hourglass-rotate {
-						0% { transform: rotate(0deg); }
-						40% { transform: rotate(180deg); }
-						60% { transform: rotate(180deg); }
-						100% { transform: rotate(360deg); }
-					}
-					.animate-hourglass-rotate {
-						animation: hourglass-rotate 2.5s infinite ease-in-out;
-					}
-				`}
-			</style>
-			{inline ? (
-				<span className={`inline-flex items-center gap-1 uppercase tracking-wide text-[var(--accent)] ${className}`}>
-					<Hourglass className="h-3 w-3 animate-hourglass-rotate" />
-					<span>
-						{isOnce ? t("chat.expiration.once") : pendingLabel ?? `${parts.join(" ")} ${t("chat.expiration.remaining")}`}
-					</span>
-				</span>
-			) : (
-				<div className={`flex items-center ${className}`}>
-					<span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 ps-1.5 pe-2.5 text-[11px] font-semibold tracking-wide text-[var(--accent)] shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md uppercase">
-						<Hourglass className="h-3 w-3 animate-hourglass-rotate" />
-						<span>
-							{isOnce ? t("chat.expiration.once") : pendingLabel ?? `${parts.join(" ")} ${t("chat.expiration.remaining")}`}
-						</span>
-					</span>
-				</div>
-			)}
-		</>
-	);
-}
 
 function renderTextWithLinks(
     text: string,
@@ -1764,12 +1700,7 @@ export function ChatThreadMessages({
                             : message.type === "ExpiringAlbumV2" || (totalLifetimeSec > 1700 && totalLifetimeSec < 1900)
                     );
                     // A timed share's clock only starts when it's first opened.
-                    const pendingDurationKey =
-                        expiresAt > 0 || isOnce ? null
-                            : expirationType === "TEN_MINUTES" || expirationType === 2 ? "chat.expiration.ten_minutes"
-                            : expirationType === "ONE_HOUR" || expirationType === 3 ? "chat.expiration.one_hour"
-                            : expirationType === "ONE_DAY" || expirationType === 4 ? "chat.expiration.one_day"
-                            : null;
+                    const pendingDurationKey = expiresAt > 0 || isOnce ? null : getAlbumShareDurationKey(expirationType);
                     const pendingDurationLabel = pendingDurationKey ? t(pendingDurationKey) : null;
 
                     const isExpiringMedia = isAlbumMessage && !isIndefinite && isLatestShare && (expiresAt > 0 || isOnce || pendingDurationLabel != null);

@@ -12,6 +12,10 @@ export type SharedAlbumItem = {
 	albumNumber: number;
 	totalAlbumsShared?: number;
 	localOnly?: boolean;
+	/** When the share runs out (ms), once its clock is running; null otherwise. */
+	expiresAt?: number | null;
+	/** The share's expiration type, from its newest album chat message (the feed has none). */
+	expirationType?: string | number | null;
 };
 
 export type AlbumViewer = {

@@ -1,4 +1,4 @@
-import { Album, Film, Images, Layers, MessageCircle, RefreshCw, Star, Trash2, UserRound, Video } from "lucide-react";
+import { Album, Film, Images, Layers, Lock, MessageCircle, RefreshCw, Star, Trash2, UserRound, Video } from "lucide-react";
 import type { TFunction } from "i18next";
 import { HeaderBackButton } from "../../components/HeaderBackButton";
 import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -26,7 +26,9 @@ import {
 	getLocalAlbum,
 	listArchivedAlbums,
 } from "../../services/albumStore";
-import { getAlbumMediaCounts, getConversation } from "../../services/chatDb";
+import { getAlbumMediaCounts, getAlbumShareExpirationTypes, getConversation } from "../../services/chatDb";
+import { AlbumExpirationCountdown, getAlbumShareDurationKey } from "./chat/AlbumExpirationCountdown";
+import { isChatArchiveEnabled, useChatArchiveEnabled } from "../../services/chatArchiveMode";
 import { toDataUri } from "../../services/mediaStore";
 import { PullToRefreshContainer } from "./components/PullToRefreshContainer";
 import { PhotoViewer, type HeroRect, type PhotoViewerMedia, type PhotoViewerMenuAction } from "../../components/PhotoViewer";
@@ -87,6 +89,16 @@ function AlbumCard({
 		: null;
 	const { imageCount, videoCount } = item.album.contentCount;
 	const showsAlbumNumber = !item.localOnly && item.totalAlbumsShared != null && item.totalAlbumsShared > 1;
+	const isArchiveModeEnabled = useChatArchiveEnabled();
+	// The share's status, like the chat's album badge: time left, "Once", the
+	// length of a share whose clock hasn't started, or expired.
+	const expiresAt = item.expiresAt ?? 0;
+	const isOnceShare = item.expirationType === "ONCE" || item.expirationType === 1;
+	// Without archive mode a view-once share is used up once it was opened
+	// (its viewing window, expiresAt, only starts then).
+	const isExpired = item.localOnly === true || (!isArchiveModeEnabled && isOnceShare && expiresAt > 0);
+	const durationKey = expiresAt > 0 ? null : getAlbumShareDurationKey(item.expirationType);
+	const showsExpiry = !isExpired && (expiresAt > Date.now() || (isOnceShare && expiresAt <= 0) || durationKey != null);
 
 	return (
 		<div ref={ref} className={revealClass}>
@@ -108,10 +120,34 @@ function AlbumCard({
 							<Album className="h-8 w-8 opacity-40" />
 						</div>
 					)}
-					{showsAlbumNumber ? (
-						<div className="absolute start-2 top-2 inline-flex h-6 items-center gap-1 rounded-full bg-black/60 px-2 text-[10px] font-semibold leading-none tabular-nums text-white/85">
-							<Layers className="h-3 w-3" />
-							{item.albumNumber}/{item.totalAlbumsShared}
+					{/* One pill, like the chat's album badge: number, then the share's status. */}
+					{showsAlbumNumber || showsExpiry || isExpired ? (
+						<div className="absolute start-2 top-2 inline-flex h-6 max-w-[calc(100%-2.75rem)] items-center gap-1.5 overflow-hidden whitespace-nowrap rounded-full bg-black/65 px-2 text-[10px] font-semibold leading-none tabular-nums text-white/85 backdrop-blur-md">
+							{showsAlbumNumber ? (
+								<span className="inline-flex shrink-0 items-center gap-1">
+									<Layers className="h-3 w-3" />
+									{item.albumNumber}/{item.totalAlbumsShared}
+								</span>
+							) : null}
+							{showsAlbumNumber && (showsExpiry || isExpired) ? (
+								<span className="h-3 w-px shrink-0 bg-white/25" aria-hidden="true" />
+							) : null}
+							{isExpired ? (
+								<span className="inline-flex items-center gap-1 uppercase tracking-wide">
+									<Lock className="h-3 w-3" />
+									{t("chat.expiration.expired")}
+								</span>
+							) : showsExpiry ? (
+								<AlbumExpirationCountdown
+									expiresAt={expiresAt}
+									isOnce={isOnceShare && expiresAt <= 0}
+									durationLabel={durationKey ? t(durationKey) : null}
+									t={t}
+									className="min-w-0"
+									inline
+									compact
+								/>
+							) : null}
 						</div>
 					) : null}
 					{/* Owner and contents, like the chat's album bubble */}
@@ -270,8 +306,19 @@ export function SharedAlbumsPage() {
 					// can't be trusted for the "x/total" indicator.
 					albumNumber: 0,
 					totalAlbumsShared: 0,
+					expiresAt: sharedAlbum.expiresAt == null
+						? null
+						: sharedAlbum.expiresAt < 100_000_000_000 ? sharedAlbum.expiresAt * 1000 : sharedAlbum.expiresAt,
 				};
 			});
+			// The feed has no expiration type; the album's chat messages do.
+			const expirationTypes = await getAlbumShareExpirationTypes(
+				rawItems.map((item) => item.album.albumId),
+				userId,
+			).catch(() => new Map<number, string | number>());
+			for (const item of rawItems) {
+				item.expirationType = expirationTypes.get(item.album.albumId) ?? null;
+			}
 
 			// Group by owner and derive a reliable position/total per group
 			// ourselves instead of trusting the server's numbering (see
@@ -631,7 +678,11 @@ export function SharedAlbumsPage() {
 			}
 
 			try {
-				await apiFunctions.openSharedAlbum({ albumId });
+				const opened = await apiFunctions.openSharedAlbum({ albumId });
+				// Archive mode off: a view-once share that was opened already is refused here.
+				if (opened.status === 403 && !isChatArchiveEnabled()) {
+					throw new Error(t("chat.thread.album_no_longer_viewable", { defaultValue: "This album can't be opened anymore." }));
+				}
 
 				const details = await apiFunctions.getAlbum(albumId);
 

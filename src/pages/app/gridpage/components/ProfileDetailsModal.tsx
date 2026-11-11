@@ -1,4 +1,5 @@
 import { TapFlyBurst, tapFlyBurstDuration, createTapFlyBurst, mutualTapIdFor, tapEmoji, tapGlow, type TapFlyBurstState } from "../../../../components/TapFlyBurst";
+import { isChatArchiveEnabled } from "../../../../services/chatArchiveMode";
 import { Album, AlertTriangle, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleUserRound, Clock, EllipsisVertical, Flag, Flame, Images, Loader2, LockKeyhole, MessageCircle, Pencil, Phone, Plus, ShieldCheck, Star, Trash2, X } from "lucide-react";
 import { BananaFilled, EyeFilled, HomeFilled, MapPinFilled, StickyNoteFilled, EyeOffFilled, LocateFixedFilled, PencilLineFilled, SendHorizontalFilled } from "../../../../components/icons/FilledIcons";
 import { RightNowIcon } from "../../../../components/icons/RightNowIcon";
@@ -2029,7 +2030,11 @@ export function ProfileDetailsModal({
 		// Ignored once the album was closed meanwhile.
 		const isStillOpening = () => pendingAlbumOpenIdRef.current === albumId;
 		try {
-			await apiFunctions.openSharedAlbum({ albumId });
+			const opened = await apiFunctions.openSharedAlbum({ albumId });
+			// Archive mode off: a view-once share that was opened already is refused here.
+			if (opened.status === 403 && !isChatArchiveEnabled()) {
+				throw new Error(t("chat.thread.album_no_longer_viewable", { defaultValue: "This album can't be opened anymore." }));
+			}
 			const details = await apiFunctions.getAlbum(albumId);
 			if (isStillOpening()) {
 				setAlbumViewer({ ...meta, albumId: details.albumId, albumName: details.albumName, content: details.content });
