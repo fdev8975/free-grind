@@ -103,6 +103,24 @@ pub(crate) async fn check_update<R: Runtime>(
         return Ok(None);
     }
 
+    // A bundle built from an older app release than the installed binary is
+    // always older than the binary's embedded frontend. The sequence gate
+    // can't catch this while the embedded assets run (current sequence 0) or
+    // across a channel switch, so compare the release part of the version
+    // (`<release>-ota.<channel>.<seq>`) against the binary directly.
+    if let Some(release) = ota_release_version(&manifest.version) {
+        if release < current_bin {
+            log::info!(
+                "[hotswap] Seq {} ({}) is older than binary {}. Skipping.",
+                manifest.sequence,
+                manifest.version,
+                ctx.binary_version
+            );
+            emit_lifecycle(app, "check-complete", None, None, None);
+            return Ok(None);
+        }
+    }
+
     // Sequence numbers are only comparable within the same channel — a
     // channel with less frequent releases can have a lower "latest"
     // sequence than another channel the device has already applied an
@@ -136,6 +154,13 @@ pub(crate) async fn check_update<R: Runtime>(
         None,
     );
     Ok(Some(manifest))
+}
+
+/// App release a bundle version was built from: `1.0.0-beta.48` for
+/// `1.0.0-beta.48-ota.development.1729500000`. `None` if it isn't semver.
+fn ota_release_version(version: &str) -> Option<Version> {
+    let release = version.split_once("-ota.").map_or(version, |(r, _)| r);
+    Version::parse(release).ok()
 }
 
 /// Options for the download operation, bundled to avoid excessive arguments.
@@ -1277,6 +1302,44 @@ mod tests {
             .await
             .unwrap();
         assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_check_update_skips_release_older_than_binary() {
+        // Embedded frontend of beta.50 must not be "updated" to a beta.48 bundle.
+        let mut m = make_manifest(1_762_800_000, "1.0.0-beta.0");
+        m.version = "1.0.0-beta.48-ota.development.1762800000".into();
+        let resolver = MockResolver::returning_manifest(m);
+        let mut ctx = make_check_ctx("1.0.0-beta.50", 0);
+        ctx.channel = Some("development".into());
+        let result = check_update(&resolver, &ctx, None::<&tauri::AppHandle<tauri::Wry>>)
+            .await
+            .unwrap();
+        assert!(result.is_none());
+    }
+
+    #[tokio::test]
+    async fn test_check_update_offers_same_or_newer_release() {
+        for release in ["1.0.0-beta.50", "1.0.0-beta.51"] {
+            let mut m = make_manifest(1_762_800_000, "1.0.0-beta.0");
+            m.version = format!("{release}-ota.development.1762800000");
+            let resolver = MockResolver::returning_manifest(m);
+            let ctx = make_check_ctx("1.0.0-beta.50", 0);
+            let result = check_update(&resolver, &ctx, None::<&tauri::AppHandle<tauri::Wry>>)
+                .await
+                .unwrap();
+            assert!(result.is_some(), "{release} should be offered");
+        }
+    }
+
+    #[test]
+    fn test_ota_release_version() {
+        assert_eq!(
+            ota_release_version("1.0.0-beta.48-ota.development.1729500000"),
+            Some(Version::parse("1.0.0-beta.48").unwrap())
+        );
+        assert_eq!(ota_release_version("1.2.0"), Some(Version::parse("1.2.0").unwrap()));
+        assert_eq!(ota_release_version("garbage"), None);
     }
 
     #[tokio::test]
