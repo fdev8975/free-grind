@@ -79,6 +79,7 @@ import { hasCompletedOnboarding, REPLAY_ONBOARDING_EVENT } from "./utils/onboard
 import { getLastSeenAnnouncementVersion, markAnnouncementSeen } from "./utils/announcementStorage";
 import { VERSION_ANNOUNCEMENTS } from "./data/versionAnnouncements";
 import { useRenderPhase } from "./hooks/useRenderPhase";
+import { AppLocationContext } from "./hooks/useAndroidBackToGrid";
 
 function ErrorPage() {
 	const { t } = useTranslation();
@@ -213,6 +214,7 @@ export default function App() {
 	};
 
 	return (
+		<AppLocationContext.Provider value={location}>
 		<AuthProvider>
 			<SplashReadyBridge />
 			<RenderCrashReportBridge />
@@ -383,5 +385,6 @@ export default function App() {
 			</ExploreModeProvider>
 			</PreferencesProvider>
 		</AuthProvider>
+		</AppLocationContext.Provider>
 	);
 }

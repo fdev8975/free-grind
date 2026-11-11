@@ -1,11 +1,19 @@
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { createContext, useContext, useEffect } from "react";
+import { useLocation, useNavigate, type Location } from "react-router-dom";
 import { onBackButtonPress } from "@tauri-apps/api/app";
 import { platform } from "@tauri-apps/plugin-os";
 import { appLog } from "../utils/logger";
 import { isAnyBottomSheetOpen } from "../components/ui/bottom-sheet";
 
 const GRID_PATH = "/";
+
+/**
+ * The app's real location, provided by App. Pages rendered under a
+ * background location (a profile opened over the grid, see App.tsx) see that
+ * background location from useLocation() — the profile itself is on top, so
+ * "are we on the grid" has to be answered from the real one.
+ */
+export const AppLocationContext = createContext<Location | null>(null);
 
 function isAndroid(): boolean {
 	try {
@@ -29,9 +37,10 @@ function isAndroid(): boolean {
  * app) when there's no history left.
  */
 export function useAndroidBackToGrid() {
-	const location = useLocation();
+	const routedLocation = useLocation();
+	const appLocation = useContext(AppLocationContext);
 	const navigate = useNavigate();
-	const isOffGrid = location.pathname !== GRID_PATH;
+	const isOffGrid = (appLocation ?? routedLocation).pathname !== GRID_PATH;
 
 	useEffect(() => {
 		if (!isOffGrid || !isAndroid()) return;

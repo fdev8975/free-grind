@@ -1404,11 +1404,19 @@ export function ProfileDetailsModal({
 		}
 	}, [isOpen]);
 
-	useEffect(() => {
+	// Layout effects: on a swipe to the next profile these must land before the
+	// first paint of the new profile, or it shows for a frame at the previous
+	// one's photo index and scroll position.
+	useLayoutEffect(() => {
 		setSelectedPhotoIndex(null);
 		// While editing, adding or removing a photo keeps your place (clamped below).
 		if (!isEditingOwnProfile) setMobileCarouselPhotoIndex(0);
 	}, [activeProfile?.profileId, activeProfilePhotoHashes.length]);
+
+	useLayoutEffect(() => {
+		const el = scrollContainerRef.current;
+		if (el && el.scrollTop !== 0) el.scrollTop = 0;
+	}, [activeProfile?.profileId]);
 
 	useEffect(() => {
 		const update = () => setIsModalSplit(window.innerWidth >= 900);

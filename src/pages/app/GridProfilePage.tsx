@@ -141,6 +141,25 @@ export function GridProfilePage() {
 	const parsedParams = profileRouteParamsSchema.safeParse(params);
 	const profileId = parsedParams.success ? parsedParams.data.profileId : null;
 
+	// Show what's already cached for this profile in the very first frame, on
+	// open and on a swipe to a neighbour, instead of waiting for the load
+	// effect below: that runs after paint, so the loading placeholder (or the
+	// previous profile) would flash for a frame first. Updating state during
+	// render makes React redo the render before anything is painted.
+	const [shownProfileId, setShownProfileId] = useState<string | null>(null);
+	if (profileId && shownProfileId !== profileId) {
+		setShownProfileId(profileId);
+		const cachedProfile = getCachedProfileDetail(profileId);
+		if (cachedProfile) {
+			setActiveProfile(cachedProfile);
+			setIsSnapshotProfile(false);
+			setActiveProfileError(null);
+			setIsLoadingActiveProfile(false);
+		} else {
+			setIsLoadingActiveProfile(true);
+		}
+	}
+
 	useEffect(() => {
 		if (!profileId) {
 			setIsHidden(false);
