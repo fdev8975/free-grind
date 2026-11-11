@@ -22,11 +22,15 @@ function playable(track: Track): PlayableTrack {
 	let element: HTMLMediaElement | null = null;
 	return {
 		play(container: HTMLElement) {
+			// Only touch our own element: the container is React-rendered and
+			// may hold React children (the camera-off avatar). Wiping it with
+			// replaceChildren() makes React's later removeChild() throw.
+			element?.remove();
 			element = track.attach();
 			element.style.width = "100%";
 			element.style.height = "100%";
 			element.style.objectFit = "cover";
-			container.replaceChildren(element);
+			container.appendChild(element);
 		},
 		get isPlaying() {
 			return !!element && element.isConnected;
