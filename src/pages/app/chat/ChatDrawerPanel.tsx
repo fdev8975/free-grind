@@ -60,6 +60,7 @@ import {
 import { usePreferences } from "../../../contexts/PreferencesContext";
 import { useCanSendExpiringAlbums } from "../../../services/assignmentsStore";
 import { useExpiringAllowanceInfo } from "../../../hooks/queries/useEntitlementQueries";
+import { AllowanceCounter } from "../../../components/ExpiringAllowance";
 import * as chatDb from "../../../services/chatDb";
 import type { StoredDrawerCollection } from "../../../services/chatDb";
 import { appLog } from "../../../utils/logger";
@@ -1002,16 +1003,18 @@ export function ChatDrawerPanel({
 																? t("expiring_allowance.albums_exhausted", { defaultValue: "Expiring album limit reached. Only unlimited shares are possible right now." })
 																: t("expiring_allowance.remaining", { defaultValue: "{{available}} of {{total}} expiring left", available: albumAllowance.allowance.available, total: albumAllowance.allowance.total })
 															: undefined}
-														className="h-full w-full appearance-none rounded-full bg-transparent ps-9 pe-3 text-sm font-semibold text-[var(--text)] focus:outline-none cursor-pointer text-center"
+														className={`h-full w-full appearance-none rounded-full bg-transparent ps-9 ${albumAllowance.limited ? "pe-14" : "pe-3"} text-sm font-semibold text-[var(--text)] focus:outline-none cursor-pointer text-center`}
 													>
 														{EXPIRY_OPTIONS.map((opt) => (
 															<option key={opt} value={opt} disabled={expiringAlbumsBlocked && opt !== "INDEFINITE"}>
-																{opt !== "INDEFINITE" && albumAllowance.limited && albumAllowance.allowance
-																	? `${EXPIRY_LABELS[opt]} (${albumAllowance.allowance.available}/${albumAllowance.allowance.total})`
-																	: EXPIRY_LABELS[opt]}
+																{EXPIRY_LABELS[opt]}
 															</option>
 														))}
 													</select>
+													{/* Same counter as the photo / video expiry pills; the native select can't hold it. */}
+													<span className="pointer-events-none absolute end-3 flex">
+														<AllowanceCounter info={albumAllowance} />
+													</span>
 												</div>
 											)}
 											<button
