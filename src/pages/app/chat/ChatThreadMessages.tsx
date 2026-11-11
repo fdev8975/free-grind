@@ -1410,15 +1410,24 @@ export function ChatThreadMessages({
                         url?: string | null; imageHash?: string | null;
                         previewMessageId?: string; senderId?: number; duration?: number;
                     } | null | undefined;
-                    const replyText = typeof replyPreviewRaw?.text === "string" && replyPreviewRaw.text.trim().length > 0
-                        ? replyPreviewRaw.text.trim()
-                        : null;
                     const replyToMsgRef = message.replyToMessage as { messageId?: string; senderId?: number; type?: string } | null | undefined;
                     const hasReply = !!(replyToMsgRef?.messageId);
                     const replyToMsgId = replyPreviewRaw?.previewMessageId ?? replyToMsgRef?.messageId;
                     const replyToMsg = replyToMsgId
                         ? threadMessages.find(m => m.messageId === replyToMsgId) ?? null
                         : null;
+                    // Without a preview text, a reply to a text message quotes the
+                    // referenced message's own text (loaded or embedded) instead of
+                    // falling through to the media labels below.
+                    const replyText = (() => {
+                        if (typeof replyPreviewRaw?.text === "string" && replyPreviewRaw.text.trim().length > 0) {
+                            return replyPreviewRaw.text.trim();
+                        }
+                        const src = (replyToMsg ?? message.replyToMessage) as { type?: string; body?: unknown } | null | undefined;
+                        if (src?.type !== "Text") return null;
+                        const text = (src.body as Record<string, unknown> | null | undefined)?.text;
+                        return typeof text === "string" && text.trim().length > 0 ? text.trim() : null;
+                    })();
                     const albumOwnerProfileId = message.type === "AlbumContentReply"
                         ? ((message.body as Record<string, unknown> | null | undefined)?.ownerProfileId as number | null | undefined) ?? null
                         : null;
