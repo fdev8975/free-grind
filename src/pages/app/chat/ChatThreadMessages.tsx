@@ -181,7 +181,7 @@ const MISSING_CLICK_WAIT_MS = 120;
 
 function MediaBadge({ icon, label }: { icon: React.ReactNode; label: React.ReactNode }) {
 	return (
-		<div className="pointer-events-none absolute start-2 top-2 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/50 py-1 ps-1.5 pe-2.5 text-[11px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md">
+		<div className="pointer-events-none absolute start-2 top-2 z-20 inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full bg-black/50 ps-1.5 pe-2.5 text-[11px] font-semibold leading-none text-white [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.3)] backdrop-blur-md">
 			{icon}
 			{label}
 		</div>
