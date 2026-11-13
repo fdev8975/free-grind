@@ -1546,6 +1546,7 @@
         "sign_up": {
             "title": "Registreren",
             "subtitle": "Maak een nieuw Grindr-account aan met je e-mailadres en wachtwoord.",
+            "add_profile_subtitle": "Maak een nieuw account aan om het aan deze app toe te voegen.",
             "have_account_label": "Heb je al een account?",
             "have_account_action": "Inloggen",
             "birthday_label": "Geboortedatum",

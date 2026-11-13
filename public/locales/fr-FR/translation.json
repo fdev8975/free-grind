@@ -1555,6 +1555,7 @@
         "sign_up": {
             "title": "Inscription",
             "subtitle": "Créez un nouveau compte Grindr avec votre e-mail et votre mot de passe.",
+            "add_profile_subtitle": "Crée un nouveau compte pour l'ajouter à cette app.",
             "have_account_label": "Déjà un compte ?",
             "have_account_action": "Connectez-vous",
             "birthday_label": "Date de naissance",

@@ -8,7 +8,8 @@ import { useAuth } from "../../contexts/useAuth";
 import { useApi } from "../../hooks/useApi";
 import { isRecaptchaAvailable } from "../../services/recaptcha";
 import { SmsVerificationRequiredError, type SignInRefusal } from "../../contexts/auth-context";
-import { AuthAltAction, AuthSubmitSection, IconInput } from "./auth-form";
+import { AuthAltAction, AuthCancelAction, AuthSubmitSection, IconInput } from "./auth-form";
+import { useAddProfileMode } from "./useAddProfileMode";
 import { SmsVerificationPanel } from "./SmsVerificationPanel";
 import { ServerFooterButton, ServerSelectSheet } from "./ServerSelectSheet";
 import { useServerInfo } from "../../services/serverConfig";
@@ -35,6 +36,7 @@ export function SignUpPage() {
 	const navigate = useNavigate();
 	const { signUp, login, error, clearError } = useAuth();
 	useEffect(() => clearError, [clearError]);
+	const { addProfileMode, cancel: cancelAddProfile, goTo } = useAddProfileMode();
 	const { callMethod } = useApi();
 	// Accounts this app created so far; null until loaded.
 	const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
@@ -66,10 +68,17 @@ export function SignUpPage() {
 	const footer = (
 		<div className="flex flex-wrap items-center justify-center gap-1">
 			<ServerFooterButton onClick={() => setShowServer(true)} />
-			<BugReportButton />
+			{addProfileMode ? null : <BugReportButton />}
 		</div>
 	);
-	const serverSheet = showServer ? <ServerSelectSheet isDesktop={isDesktop} onClose={() => setShowServer(false)} /> : null;
+	const serverSheet = showServer ? (
+		<ServerSelectSheet isDesktop={isDesktop} onClose={() => setShowServer(false)} addProfile={addProfileMode} />
+	) : null;
+	const title = addProfileMode ? t("auth.sign_in.add_profile_title", { defaultValue: "Add Profile" }) : t("auth.sign_up.title");
+	const subtitle = addProfileMode
+		? t("auth.sign_up.add_profile_subtitle", { defaultValue: "Create a new account to add it to this app." })
+		: t("auth.sign_up.subtitle", { defaultValue: "Create a new Grindr account with your email and password." });
+	const cancelAction = addProfileMode ? <AuthCancelAction onClick={() => void cancelAddProfile()} /> : null;
 
 	const maxBirthday = latestAllowedBirthday();
 	const birthdayMillis = birthdayToMillis(birthday);
@@ -115,11 +124,7 @@ export function SignUpPage() {
 	// Elsewhere than on Android the form could never submit.
 	if (!hasRecaptcha) {
 		return (
-			<AuthShell
-				title={t("auth.sign_up.title")}
-				subtitle={t("auth.sign_up.subtitle", { defaultValue: "Create a new Grindr account with your email and password." })}
-				footer={footer}
-			>
+			<AuthShell title={title} subtitle={subtitle} footer={footer}>
 				{serverSheet}
 				<div className="animate-fade-in flex items-start gap-3 native-card rounded-2xl px-3 py-3">
 					<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--accent-contrast)]">
@@ -136,17 +141,14 @@ export function SignUpPage() {
 						</p>
 					</div>
 				</div>
-				<AuthAltAction to="/auth/sign-in" label={t("auth.sign_up.back", { defaultValue: "Back" })} />
+				<AuthAltAction onClick={() => goTo("/auth/sign-in")} label={t("auth.sign_up.back", { defaultValue: "Back" })} />
+				{cancelAction}
 			</AuthShell>
 		);
 	}
 
 	return (
-		<AuthShell
-			title={t("auth.sign_up.title")}
-			subtitle={t("auth.sign_up.subtitle", { defaultValue: "Create a new Grindr account with your email and password." })}
-			footer={footer}
-		>
+		<AuthShell title={title} subtitle={subtitle} footer={footer}>
 			{serverSheet}
 			{isLimitReached ? (
 				<div className="animate-fade-in flex items-start gap-2.5 rounded-2xl bg-red-500/12 px-3 py-3 text-sm text-[var(--text)]">
@@ -224,10 +226,11 @@ export function SignUpPage() {
 				</form>
 			)}
 			<AuthAltAction
-				to="/auth/sign-in"
+				onClick={() => goTo("/auth/sign-in")}
 				icon={<LogIn className="h-4 w-4" />}
 				label={t("auth.sign_up.have_account_action")}
 			/>
+			{cancelAction}
 		</AuthShell>
 	);
 }

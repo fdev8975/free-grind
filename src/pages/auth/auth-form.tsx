@@ -119,3 +119,13 @@ export function AuthAltAction({
 		</div>
 	);
 }
+
+/** Quiet "Cancel" under the alternative action, e.g. to abandon adding an account. */
+export function AuthCancelAction({ onClick }: { onClick: () => void }) {
+	const { t } = useTranslation();
+	return (
+		<Button type="button" variant="ghost" onClick={onClick} className="mt-2 w-full">
+			{t("common.cancel", { defaultValue: "Cancel" })}
+		</Button>
+	);
+}

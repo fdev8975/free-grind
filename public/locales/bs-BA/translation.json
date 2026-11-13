@@ -1555,6 +1555,7 @@
         "sign_up": {
             "title": "Registracija",
             "subtitle": "Napravi novi Grindr račun sa svojim e-mailom i lozinkom.",
+            "add_profile_subtitle": "Napravi novi račun da ga dodaš u ovu aplikaciju.",
             "have_account_label": "Već imaš račun?",
             "have_account_action": "Prijavi se",
             "birthday_label": "Datum rođenja",

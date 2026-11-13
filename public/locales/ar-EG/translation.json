@@ -1574,6 +1574,7 @@
         "sign_up": {
             "title": "إنشاء حساب",
             "subtitle": "أنشئ حساب Grindr جديدًا ببريدك الإلكتروني وكلمة المرور.",
+            "add_profile_subtitle": "اعمل حساب جديد عشان تضيفه للتطبيق ده.",
             "have_account_label": "عندك حساب بالفعل؟",
             "have_account_action": "تسجيل الدخول",
             "birthday_label": "تاريخ الميلاد",

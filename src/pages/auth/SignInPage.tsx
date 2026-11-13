@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/useAuth";
 import { AuthShell } from "../../components/ui/auth-shell";
-import { AuthAltAction, AuthErrorBox, AuthSubmitSection, IconInput } from "./auth-form";
+import { AuthAltAction, AuthCancelAction, AuthErrorBox, AuthSubmitSection, IconInput } from "./auth-form";
+import { useAddProfileMode } from "./useAddProfileMode";
 import { Button } from "../../components/ui/button";
 import { BugReportButton } from "../../components/ui/BugReportButton";
 import type { SignInMethod } from "../../types/auth";
@@ -281,10 +282,7 @@ function TransferSignInSheet({ isDesktop, onClose }: { isDesktop: boolean; onClo
 
 export function SignInPage() {
 	const { t } = useTranslation();
-	const [searchParams] = useSearchParams();
-	const addProfileMode = searchParams.get("mode") === "add-profile";
-	// Set when a server switch while adding an account parked the signed-in one.
-	const restoreProfileId = addProfileMode ? searchParams.get("restore") : null;
+	const { addProfileMode, cancel: cancelAddProfile, goTo } = useAddProfileMode();
 	const [method, setMethod] = useState<SignInMethod>("password");
 
 	const [email, setEmail] = useState("");
@@ -310,25 +308,10 @@ export function SignInPage() {
 	// Set when an email sign-in is refused until the account verifies by SMS.
 	const [verification, setVerification] = useState<{ profileId: string; signIn: SignInRefusal } | null>(null);
 
-	const { userId, login, loginWithGoogle, loginWithGoogleWindow, loginWithFacebook, switchAccount, error: authError, clearError } = useAuth();
+	const { login, loginWithGoogle, loginWithGoogleWindow, loginWithFacebook, error: authError, clearError } = useAuth();
 	const navigate = useNavigate();
 	// While the sheet is open, a failure is the code's and shows there only.
 	const error = showTransfer ? null : authError;
-
-	const cancelAddProfile = async () => {
-		// After a server switch the page was reloaded signed out: back to the
-		// account that was active (switch_account restores its server too).
-		if (userId == null && restoreProfileId) {
-			try {
-				await switchAccount(restoreProfileId);
-				navigate("/", { replace: true });
-			} catch {
-				// switchAccount already surfaced the error.
-			}
-			return;
-		}
-		navigate(-1);
-	};
 
 	// A failure belongs to the method that produced it; also don't carry it to the next page.
 	const changeMethod = (next: SignInMethod) => {
@@ -624,18 +607,12 @@ export function SignInPage() {
 						/>
 					</form>
 				)}
-				{addProfileMode ? (
-					<AuthAltAction
-						onClick={() => void cancelAddProfile()}
-						label={t("common.cancel", { defaultValue: "Cancel" })}
-					/>
-				) : (
-					<AuthAltAction
-						to="/auth/sign-up"
-						icon={<UserPlus className="h-4 w-4" />}
-						label={t("auth.sign_in.no_account_action")}
-					/>
-				)}
+				<AuthAltAction
+					onClick={() => goTo("/auth/sign-up")}
+					icon={<UserPlus className="h-4 w-4" />}
+					label={t("auth.sign_in.no_account_action")}
+				/>
+				{addProfileMode ? <AuthCancelAction onClick={() => void cancelAddProfile()} /> : null}
 			</AuthShell>
 			{showTransfer ? <TransferSignInSheet isDesktop={isDesktop} onClose={() => toggleTransfer(false)} /> : null}
 			{showServer ? <ServerSelectSheet isDesktop={isDesktop} onClose={() => setShowServer(false)} addProfile={addProfileMode} /> : null}
