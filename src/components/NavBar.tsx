@@ -47,7 +47,7 @@ import { getProfilePhotoHash } from "../pages/app/profile-editor/profileEditorUt
 import { useDesktopBreakpoint } from "../hooks/useDesktopBreakpoint";
 import { useSystemNavInset } from "../hooks/useSystemNavInset";
 import { getThumbImageUrl } from "../utils/media";
-import { getSavedAccountProfile } from "../services/savedAccountProfiles";
+import { getSavedAccountProfile, getSavedAccountThumbUrl, useSavedAccountProfiles } from "../services/savedAccountProfiles";
 import { looksLikeMessageUpdate } from "../utils/messageUpdates";
 import { RIGHT_NOW_REQUESTS_CHANGED_EVENT, hasUnseenRightNowRequests, markRightNowRequestsSeen } from "../services/rightNowRequestsSignal";
 
@@ -162,6 +162,7 @@ export function NavBar() {
 	const location = useLocation();
 	const apiFunctions = useApiFunctions();
 	const { userId, savedAccounts, switchAccount } = useAuth();
+	useSavedAccountProfiles();
 	const { data: myProfile } = useMyOwnProfile();
 	const { data: interestData } = useInterestData();
 	const { isExploreActive } = useExploreMode();
@@ -916,7 +917,7 @@ export function NavBar() {
 									>
 										<div className="relative h-10 w-10 shrink-0">
 											<Avatar
-												src={savedProfile.photoHash ? getThumbImageUrl(savedProfile.photoHash, "75x75") : null}
+												src={getSavedAccountThumbUrl(savedProfile)}
 												alt=""
 												className="h-full w-full rounded-full border-0"
 											/>

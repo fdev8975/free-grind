@@ -84,8 +84,7 @@ import { TokenExpiredPromptView } from "../../components/TokenExpiredPrompt";
 import type { AccountStatus, SavedAccountMeta } from "../../contexts/auth-context";
 import { areUpdateChecksEnabled, setUpdateChecksEnabled, subscribeUpdateChecks } from "../../services/updateChecks";
 import { Avatar } from "../../components/ui/avatar";
-import { getThumbImageUrl } from "../../utils/media";
-import { getSavedAccountProfile, removeSavedAccountProfile } from "../../services/savedAccountProfiles";
+import { getSavedAccountProfile, getSavedAccountThumbUrl, removeSavedAccountProfile, useSavedAccountProfiles } from "../../services/savedAccountProfiles";
 import { FREE_GRIND_SERVER_NAME } from "../../services/serverConfig";
 import { isAndroid, isIos } from "../../services/saveMedia";
 import { saveIssueLogsFile } from "../../utils/issueTelemetry";
@@ -361,6 +360,7 @@ function ContributorChannelDialog({
 export function SettingsPage() {
 	const { t } = useTranslation();
 	const { userId, savedAccounts, switchAccount, removeSavedAccount } = useAuth();
+	useSavedAccountProfiles();
 	// A Google/Facebook account's `email` is the vendor's id, often opaque:
 	// without a profile name, the profile id says more.
 	const accountName = (profileId: string, account: SavedAccountMeta | undefined, displayName: string | null | undefined) =>
@@ -886,7 +886,7 @@ export function SettingsPage() {
 												className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3.5 text-start"
 											>
 												<Avatar
-													src={activeProfile?.photoHash ? getThumbImageUrl(activeProfile.photoHash, "75x75") : null}
+													src={activeProfile ? getSavedAccountThumbUrl(activeProfile) : null}
 													alt=""
 													className="h-10 w-10 shrink-0 rounded-2xl border-0 bg-slate-500/15 text-slate-400"
 												/>
@@ -936,7 +936,7 @@ export function SettingsPage() {
 												>
 													<div className="relative h-10 w-10 shrink-0">
 														<Avatar
-															src={savedProfile.photoHash ? getThumbImageUrl(savedProfile.photoHash, "75x75") : null}
+															src={getSavedAccountThumbUrl(savedProfile)}
 															alt=""
 															className="h-full w-full rounded-2xl border-0 bg-slate-500/15 text-slate-400"
 														/>
