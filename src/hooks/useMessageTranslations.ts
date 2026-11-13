@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import { getMessageTranslations, upsertMessageTranslations } from "../services/chatDb";
+import { isCustomServer } from "../services/serverConfig";
+import { useApiFunctions } from "./useApiFunctions";
 import type { StoredMessageTranslation } from "../types/chat-db";
 import type { UiMessage } from "../types/chat-page";
 import { getTranslatableMessageText, isLocalClientMessageId } from "../pages/app/chat/chatUtils";
@@ -12,9 +14,13 @@ import {
 	isAutoTranslateEnabled,
 	isTranslationAvailable,
 	isTranslationKeyError,
+	isTranslationNotConfiguredError,
+	isTranslationPaywallError,
 	isTranslationQuotaError,
 	markTranslationApiKeyValid,
+	providerUsesApiKey,
 	resolveTranslateTargetLanguage,
+	translateMessageOnServer,
 	translateTexts,
 	useAutoTranslateChanged,
 } from "../utils/autoTranslate";
@@ -51,7 +57,8 @@ function normalizeForCompare(text: string): string {
 /**
  * Message translation for one conversation: loads previously stored
  * translations from chatDb, translates incoming text messages via the selected
- * provider (Google Translate, Gemini, ChatGPT or Claude) into the app language — automatically while auto-translate is on
+ * provider (Google Translate, Gemini, ChatGPT, Claude, or the signed-in
+ * server via POST /v5/chat/translate) into the app language — automatically while auto-translate is on
  * for the conversation, or one message at a time on request — and persists
  * every result. Once stored, a translation stays visible (even after
  * auto-translate is turned off) for as long as a working key is set up.
@@ -62,6 +69,7 @@ export function useMessageTranslations(
 	userId: number | null,
 ): MessageTranslations {
 	const { t, i18n } = useTranslation();
+	const { translateChatMessage } = useApiFunctions();
 	const settingsVersion = useAutoTranslateChanged();
 	// Re-read on every render; settingsVersion re-renders on any change.
 	// A working key is what switches translation on — without one nothing is
@@ -136,6 +144,20 @@ export function useMessageTranslations(
 
 	const showTranslationError = useCallback(
 		(error: unknown) => {
+			if (provider === "default") {
+				toast.error(
+					isTranslationPaywallError(error)
+						? isCustomServer()
+							? t("auto_translate.error_server_not_included", { defaultValue: "Translation isn't available for your account on this server." })
+							: t("auto_translate.error_server_paywall", { defaultValue: "Translation requires a subscription." })
+						: isTranslationNotConfiguredError(error)
+							? t("auto_translate.error_server_not_configured", { defaultValue: "Translation isn't set up on this server. Pick another provider in Settings → Translation." })
+							: t("auto_translate.error_generic", { defaultValue: "Translation failed: {{message}}",
+									message: error instanceof Error ? error.message : String(error),
+								}),
+				);
+				return;
+			}
 			toast.error(
 				isTranslationKeyError(error)
 					? t("auto_translate.error_invalid_key", { defaultValue: "Translation failed. Check your API key. ({{message}})",
@@ -150,7 +172,7 @@ export function useMessageTranslations(
 						}),
 			);
 		},
-		[t],
+		[t, provider],
 	);
 
 	// Translates `pending` one request-sized batch at a time, persisting and
@@ -174,12 +196,18 @@ export function useMessageTranslations(
 				for (const batch of batches) {
 					let results;
 					try {
-						results = await translateTexts(
-							batch.map(({ text }) => text),
-							targetLang,
-							provider,
-							apiKey,
-						);
+						results = providerUsesApiKey(provider)
+							? await translateTexts(
+									batch.map(({ text }) => text),
+									targetLang,
+									provider,
+									apiKey,
+								)
+							: await Promise.all(
+									batch.map(({ messageId }) =>
+										translateMessageOnServer(translateChatMessage, conversationId, messageId, targetLang),
+									),
+								);
 					} catch (error) {
 						if (isTranslationKeyError(error)) markTranslationApiKeyValid(provider, false);
 						throw error;
@@ -208,7 +236,7 @@ export function useMessageTranslations(
 				settle(pending);
 			}
 		},
-		[conversationId, storeKey, targetLang, provider, apiKey, applyRows],
+		[conversationId, storeKey, targetLang, provider, apiKey, applyRows, translateChatMessage],
 	);
 
 	useEffect(() => {

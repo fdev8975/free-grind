@@ -3362,6 +3362,15 @@
         "reason_expiring_video": "Limit für ablaufende Videos erreicht. Für mehr verlangt Grindr ein Abo."
     },
     "auto_translate": {
+        "provider_default": "Standard",
+        "provider_default_desc": "Übersetzt vom Server, bei dem du angemeldet bist, ohne API-Key. Kann ein Abo erfordern.",
+        "provider_default_tagline": "Integriert · kein API-Key",
+        "server_info_official": "Nachrichten werden vom Server übersetzt. Das ist eine kostenpflichtige Funktion: Ohne Abo schlägt die Übersetzung fehl.",
+        "server_info_custom": "Nachrichten werden vom Server übersetzt, bei dem du angemeldet bist. Ist dort keine Übersetzung eingerichtet, schlägt sie mit einem Hinweis fehl.",
+        "error_server_paywall": "Übersetzen erfordert ein Abo.",
+        "error_server_not_included": "Übersetzen ist für dein Konto auf diesem Server nicht verfügbar.",
+        "error_server_not_configured": "Auf diesem Server ist keine Übersetzung eingerichtet. Wähle unter Einstellungen → Übersetzung einen anderen Anbieter.",
+        "error_server_failed": "Übersetzung fehlgeschlagen.",
         "api_key_desc": "Wird für alle Chat-Übersetzungen verwendet. Ein Schlüssel für die ganze App, nur auf diesem Gerät gespeichert.",
         "api_key_placeholder": "API-Schlüssel einfügen",
         "show_key": "Schlüssel anzeigen",

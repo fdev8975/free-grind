@@ -54,12 +54,24 @@ export function useAutoTranslateChanged(): number {
 
 // --- PROVIDER & API KEYS ---
 
-export type TranslationProvider = "google" | "gemini" | "openai" | "claude";
+export type TranslationProvider = "google" | "gemini" | "openai" | "claude" | "default";
 
-export const TRANSLATION_PROVIDERS: TranslationProvider[] = ["google", "gemini", "openai", "claude"];
+/**
+ * Providers called directly from this device with the user's own API key.
+ * "default" is the odd one out: the signed-in server translates
+ * (POST /v5/chat/translate) — paid on Grindr's server, Google Translate on a
+ * Free Grind server — so there's no key and it goes per message, by id.
+ */
+export type ApiKeyTranslationProvider = Exclude<TranslationProvider, "default">;
+
+export const TRANSLATION_PROVIDERS: TranslationProvider[] = ["google", "gemini", "openai", "claude", "default"];
+
+export function providerUsesApiKey(provider: TranslationProvider): provider is ApiKeyTranslationProvider {
+	return provider !== "default";
+}
 
 const TRANSLATION_PROVIDER_STORAGE_KEY = "fg-translate-provider";
-const API_KEY_STORAGE_KEYS: Record<TranslationProvider, string> = {
+const API_KEY_STORAGE_KEYS: Record<ApiKeyTranslationProvider, string> = {
 	google: "fg-google-translate-api-key",
 	gemini: "fg-gemini-api-key",
 	openai: "fg-openai-api-key",
@@ -67,7 +79,7 @@ const API_KEY_STORAGE_KEYS: Record<TranslationProvider, string> = {
 };
 // Set once the provider rejected the stored key (on save, or later at
 // runtime); while set, every translate entry point in the chat UI is hidden.
-const API_KEY_INVALID_STORAGE_KEYS: Record<TranslationProvider, string> = {
+const API_KEY_INVALID_STORAGE_KEYS: Record<ApiKeyTranslationProvider, string> = {
 	google: "fg-google-translate-api-key-invalid",
 	gemini: "fg-gemini-api-key-invalid",
 	openai: "fg-openai-api-key-invalid",
@@ -105,10 +117,11 @@ export function setTranslationProvider(provider: TranslationProvider): void {
 }
 
 export function getTranslationApiKey(provider: TranslationProvider = getTranslationProvider()): string {
+	if (!providerUsesApiKey(provider)) return "";
 	return readStorage(API_KEY_STORAGE_KEYS[provider]) ?? "";
 }
 
-export function setTranslationApiKey(provider: TranslationProvider, apiKey: string, valid: boolean): void {
+export function setTranslationApiKey(provider: ApiKeyTranslationProvider, apiKey: string, valid: boolean): void {
 	const trimmed = apiKey.trim();
 	writeStorage(API_KEY_STORAGE_KEYS[provider], trimmed || null);
 	writeStorage(API_KEY_INVALID_STORAGE_KEYS[provider], trimmed && !valid ? "true" : null);
@@ -116,11 +129,13 @@ export function setTranslationApiKey(provider: TranslationProvider, apiKey: stri
 }
 
 export function isTranslationApiKeyInvalid(provider: TranslationProvider = getTranslationProvider()): boolean {
+	if (!providerUsesApiKey(provider)) return false;
 	return readStorage(API_KEY_INVALID_STORAGE_KEYS[provider]) === "true";
 }
 
 /** Records whether the stored key just worked or was rejected; notifies only on change. */
 export function markTranslationApiKeyValid(provider: TranslationProvider, valid: boolean): void {
+	if (!providerUsesApiKey(provider)) return;
 	if (isTranslationApiKeyInvalid(provider) === !valid) return;
 	writeStorage(API_KEY_INVALID_STORAGE_KEYS[provider], valid ? null : "true");
 	notifyAutoTranslateChanged();
@@ -129,11 +144,14 @@ export function markTranslationApiKeyValid(provider: TranslationProvider, valid:
 /**
  * Whether translation is switched on: the selected provider has a key that
  * hasn't been rejected. There's no separate on/off setting — a working key
- * is what enables it. Gates every translation feature in the chat UI (menu
- * toggle, context menu, automatic translation, translations in bubbles).
+ * is what enables it (server translation needs none, picking it is enough).
+ * Gates every translation feature in the chat UI (menu toggle, context menu,
+ * automatic translation, translations in bubbles).
  */
 export function isTranslationAvailable(): boolean {
-	return getTranslationApiKey() !== "" && !isTranslationApiKeyInvalid();
+	const provider = getTranslationProvider();
+	if (!providerUsesApiKey(provider)) return true;
+	return getTranslationApiKey(provider) !== "" && !isTranslationApiKeyInvalid(provider);
 }
 
 export function isAutoTranslateEnabled(conversationId: string): boolean {
@@ -186,6 +204,16 @@ export function isTranslationKeyError(error: unknown): error is TranslationError
 	return error.status === 400 && /api key/i.test(error.message);
 }
 
+/** True when the server refused because the feature or its allowance isn't part of the account's plan (402). */
+export function isTranslationPaywallError(error: unknown): error is TranslationError {
+	return error instanceof TranslationError && error.status === 402;
+}
+
+/** True when the signed-in server has no translation set up (Free Grind server without a Google key). */
+export function isTranslationNotConfiguredError(error: unknown): error is TranslationError {
+	return error instanceof TranslationError && error.status === 503;
+}
+
 /** True when the provider's rate limit or quota (e.g. Gemini's free tier) is used up. */
 export function isTranslationQuotaError(error: unknown): error is TranslationError {
 	return error instanceof TranslationError && error.status === 429;
@@ -200,6 +228,8 @@ const BATCH_LIMITS: Record<TranslationProvider, { maxSegments: number; maxChars:
 	gemini: { maxSegments: 15, maxChars: 3_000 },
 	openai: { maxSegments: 15, maxChars: 3_000 },
 	claude: { maxSegments: 15, maxChars: 3_000 },
+	// One request per message: the server translates by message id.
+	default: { maxSegments: 1, maxChars: Number.POSITIVE_INFINITY },
 };
 
 /** Splits `items` into batches that each fit in a single request to `provider`. */
@@ -558,7 +588,7 @@ async function translateChunkWithClaude(
 }
 
 const CHUNK_TRANSLATORS: Record<
-	TranslationProvider,
+	ApiKeyTranslationProvider,
 	(texts: string[], targetLanguage: string, apiKey: string) => Promise<TranslationResult[]>
 > = {
 	google: translateChunkWithGoogle,
@@ -571,7 +601,7 @@ const CHUNK_TRANSLATORS: Record<
 export async function translateTexts(
 	texts: string[],
 	targetLanguage: string,
-	provider: TranslationProvider,
+	provider: ApiKeyTranslationProvider,
 	apiKey: string,
 ): Promise<TranslationResult[]> {
 	const chunks = batchForTranslation(texts, (text) => text, provider);
@@ -581,4 +611,36 @@ export async function translateTexts(
 		results.push(...(await translateChunk(chunk, targetLanguage, apiKey)));
 	}
 	return results;
+}
+
+// --- Server translation (POST /v5/chat/translate) ---
+
+/**
+ * Translates one message on the signed-in server. `request` is the chat
+ * service's call; its errors (ApiFunctionError-shaped: status + problem body)
+ * are turned into TranslationErrors so the chat UI reports them like the
+ * other providers'.
+ */
+export async function translateMessageOnServer(
+	request: (payload: { conversationId: string; messageId: string; targetLanguageCode: string }) => Promise<string>,
+	conversationId: string,
+	messageId: string,
+	targetLanguage: string,
+): Promise<TranslationResult> {
+	try {
+		const translatedText = await request({ conversationId, messageId, targetLanguageCode: targetLanguage });
+		return { translatedText: translatedText.trim(), detectedSourceLanguage: null };
+	} catch (error) {
+		const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : null;
+		const payload = (error as { payload?: unknown })?.payload as { detail?: unknown; title?: unknown } | null | undefined;
+		const message =
+			typeof payload?.detail === "string" && payload.detail
+				? payload.detail
+				: typeof payload?.title === "string" && payload.title
+					? payload.title
+					: error instanceof Error
+						? error.message
+						: String(error);
+		throw new TranslationError(message, status);
+	}
 }

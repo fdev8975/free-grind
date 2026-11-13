@@ -3445,7 +3445,16 @@
     "key_badge_invalid": "Not working",
     "key_badge_valid": "Active",
     "guide_paste_inline_desc": "Paste the key and tap Save. It's checked right away.",
-    "api_section": "Provider & API key"
+    "api_section": "Provider & API key",
+    "provider_default": "Default",
+    "provider_default_desc": "Translated by the server you're signed in to, no API key needed. May require a subscription.",
+    "provider_default_tagline": "Built in · no API key",
+    "server_info_official": "Messages are translated by the server. This is a paid feature: without a subscription, translating fails.",
+    "server_info_custom": "Messages are translated by the server you're signed in to. If it has no translation set up, translating fails with a notice.",
+    "error_server_paywall": "Translation requires a subscription.",
+    "error_server_not_included": "Translation isn't available for your account on this server.",
+    "error_server_not_configured": "Translation isn't set up on this server. Pick another provider in Settings → Translation.",
+    "error_server_failed": "Translation failed."
   },
   "legal_agreements": {
     "title": "Updated Terms",

@@ -528,6 +528,23 @@ export function createChatService(
 			}
 		},
 
+		/**
+		 * POST /v5/chat/translate: the server translates one message. Paid on
+		 * Grindr's server (402); a Free Grind server answers 503 when it has no
+		 * translation set up.
+		 */
+		async translateChatMessage(payload: { conversationId: string; messageId: string; targetLanguageCode: string }): Promise<string> {
+			const safePayload = chatMessageMutationSchema.extend({ targetLanguageCode: z.string().min(2) }).parse(payload);
+			const response = await fetchRest("/v5/chat/translate", {
+				method: "POST",
+				body: safePayload,
+			});
+			await assertSuccess(response, t("auto_translate.error_server_failed"));
+			const parsed = z.object({ translatedText: z.string() }).safeParse(await parseJsonSafe(response));
+			if (!parsed.success) throw new ApiFunctionError(t("auto_translate.error_server_failed"), response.status, null);
+			return parsed.data.translatedText;
+		},
+
 		async deleteMessage(payload: ChatMessageMutation) {
 			const safePayload = chatMessageMutationSchema.parse(payload);
 			const response = await fetchRest("/v4/chat/message/delete", {
