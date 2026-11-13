@@ -2774,7 +2774,7 @@
       "title": "Temporarily Banned",
       "description": "Grindr has temporarily suspended this account. You can use it again once the suspension ends.",
       "expired_title": "Agreement Required",
-      "expired_description": "Your suspension is over. Review why it happened and agree to Grindr's guidelines to use this account again.",
+      "expired_description": "Review why it happened and agree to Grindr's guidelines to use this account again.",
       "accept": "Accept & Continue",
       "accept_success": "Agreement accepted",
       "accept_failed": "Couldn't accept the agreement",

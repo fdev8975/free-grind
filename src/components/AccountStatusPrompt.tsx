@@ -323,7 +323,7 @@ function contentFor(status: AccountStatus, t: Translate, agreementPending: boole
 					icon: ScrollText,
 					title: t("account_status.timed_ban.expired_title", { defaultValue: "Agreement Required" }),
 					description: t("account_status.timed_ban.expired_description", {
-						defaultValue: "Your suspension is over. Review why it happened and agree to Grindr's guidelines to use this account again.",
+						defaultValue: "Review why it happened and agree to Grindr's guidelines to use this account again.",
 					}),
 					...shared,
 				};
@@ -538,8 +538,9 @@ export function AccountStatusPromptView({
 	const [showBackupSheet, setShowBackupSheet] = useState(false);
 	const [accepting, setAccepting] = useState(false);
 	const [agreed, setAgreed] = useState(false);
-	// banDetails.isAgreementCompleted decides when Grindr says; only without
-	// it does the ban's expiry stand in for it.
+	// banDetails.isAgreementCompleted decides when Grindr says (it can be
+	// accepted while the ban still runs); only without it does the ban's
+	// expiry stand in for it.
 	const agreementCompleted =
 		status?.kind === "restriction" && status.restriction.kind === "timedBan"
 			? status.restriction.agreementCompleted
