@@ -5,7 +5,7 @@ outline: [2, 3]
 
 # Download Free Grind
 
-Never download Free Grind from unofficial sources. The only official source is the [GitHub releases page](https://github.com/fdev8974/free-grind/releases). Free Grind is free: if someone asks you to pay for it, it's a scam.
+Never download Free Grind from unofficial sources. The only official source is the [GitHub releases page](https://github.com/fdev8975/free-grind/releases). Free Grind is free: if someone asks you to pay for it, it's a scam.
 
 ::: warning Free Grind 1.0 is in beta
 New versions are published as **pre-releases**. GitHub's "Latest" badge still points to an old 0.x version, so on the releases page take the release at the top. The buttons below always point to the newest one.
@@ -24,7 +24,7 @@ Requires Android 8.0 or later on a 64-bit ARM device (practically every phone fr
 3. If Google Play Protect warns about an unknown app, tap **More details → Install anyway**.
 
 - **To install updates**, open **Settings → Check for Updates**. New versions are downloaded, verified and installed from inside the app. Allow Free Grind to install apps when asked.
-- **To verify the download**, follow [Reproducibility → Android](https://github.com/fdev8974/free-grind/blob/development/REPRODUCIBILITY.md#android).
+- **To verify the download**, follow [Reproducibility → Android](https://github.com/fdev8975/free-grind/blob/development/REPRODUCIBILITY.md#android).
 - **To uninstall**, uninstall it like any other app. This removes your local chat history too, so [back it up](/guide/features/chat-history#backup) first if you want to keep it.
 
 ## iOS and iPadOS {#ios}
@@ -40,7 +40,7 @@ The IPA is unsigned, so it has to be sideloaded. The [FMHY iOS sideloading list]
 Alternatively, **FlareStore** costs about 3 € and installs the IPA directly on your iPhone or iPad without a computer.
 
 - **To install updates**, download the new IPA and sideload it over the old one with the same tool. Your data stays.
-- **To verify the download**, follow [Reproducibility → iOS](https://github.com/fdev8974/free-grind/blob/development/REPRODUCIBILITY.md#ios).
+- **To verify the download**, follow [Reproducibility → iOS](https://github.com/fdev8975/free-grind/blob/development/REPRODUCIBILITY.md#ios).
 
 ## Windows {#windows}
 
@@ -57,7 +57,7 @@ Requires Windows 10 or 11 (x64).
 The **portable exe** runs without installing. The release also contains `free-grind-client-…` and `free-grind-child-…`: these are the same program under other names, which Free Grind uses to run several instances side by side. You don't need to download them.
 
 - **To install updates**, Free Grind tells you when a new version is out. Download the new installer and run it over the old installation. Smaller interface updates are installed automatically, see [Updates](#updates).
-- **To verify the download**, follow [Reproducibility → Windows](https://github.com/fdev8974/free-grind/blob/development/REPRODUCIBILITY.md#windows).
+- **To verify the download**, follow [Reproducibility → Windows](https://github.com/fdev8975/free-grind/blob/development/REPRODUCIBILITY.md#windows).
 - **To uninstall**, use **Settings → Apps → Installed apps → Free Grind → Uninstall**. To also remove your data, delete the `dev.estopia.free-grind` folders in `%APPDATA%` and `%LOCALAPPDATA%`. The latter also holds downloaded interface updates, which otherwise survive a reinstall.
 
 ## macOS {#macos}
@@ -78,7 +78,7 @@ xattr -dr com.apple.quarantine "/Applications/Free Grind.app"
 ```
 
 - **To install updates**, Free Grind tells you when a new version is out. Download the new zip and replace the app in Applications. Smaller interface updates are installed automatically, see [Updates](#updates).
-- **To verify the download**, follow [Reproducibility → macOS](https://github.com/fdev8974/free-grind/blob/development/REPRODUCIBILITY.md#macos).
+- **To verify the download**, follow [Reproducibility → macOS](https://github.com/fdev8975/free-grind/blob/development/REPRODUCIBILITY.md#macos).
 - **To uninstall**, move the app from Applications to the Trash. To also remove your data, delete the `dev.estopia.free-grind` folders in `~/Library/Application Support`, `~/Library/Caches` and `~/Library/WebKit`, and the Free Grind items in Keychain Access.
 
 ## Linux {#linux}
@@ -137,7 +137,7 @@ sudo zypper install ./free-grind-v*-linux-x64.rpm
 
 ### Verify the download
 
-Follow [Reproducibility → Linux](https://github.com/fdev8974/free-grind/blob/development/REPRODUCIBILITY.md#linux).
+Follow [Reproducibility → Linux](https://github.com/fdev8975/free-grind/blob/development/REPRODUCIBILITY.md#linux).
 
 ### Rendering problems {#rendering-problems}
 
@@ -153,7 +153,7 @@ The window is drawn by WebKitGTK and your graphics driver. With some combination
    WEBKIT_DISABLE_DMABUF_RENDERER=1 ./free-grind-v*-linux-x64.AppImage
    ```
 
-When you [report a rendering problem](https://github.com/fdev8974/free-grind/issues), include your GPU and driver version, your WebKitGTK version, whether you use Wayland or X11, and which settings you tried.
+When you [report a rendering problem](https://github.com/fdev8975/free-grind/issues), include your GPU and driver version, your WebKitGTK version, whether you use Wayland or X11, and which settings you tried.
 
 ## Updates {#updates}
 
@@ -165,4 +165,4 @@ Besides full app updates, Free Grind receives smaller interface updates (OTA) di
 
 ## Build it yourself
 
-Free Grind is open source. To build it from source, follow the [Development guide](https://github.com/fdev8974/free-grind#development) in the README.
+Free Grind is open source. To build it from source, follow the [Development guide](https://github.com/fdev8975/free-grind#development) in the README.

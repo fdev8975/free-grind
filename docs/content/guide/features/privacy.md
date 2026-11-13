@@ -23,4 +23,4 @@ Besides Grindr, Free Grind only contacts GitHub to check for updates. Turn off *
 
 - Using any unofficial client technically violates [Grindr's terms of service](https://www.grindr.com/terms-of-service). The risk is low, but it exists.
 - Never share sign-in codes from **Sign in on another device**. Anyone with the code can sign in to your account.
-- Only download Free Grind from the [official releases page](https://github.com/fdev8974/free-grind/releases).
+- Only download Free Grind from the [official releases page](https://github.com/fdev8975/free-grind/releases).

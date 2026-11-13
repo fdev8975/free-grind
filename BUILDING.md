@@ -20,7 +20,7 @@ Each input is pinned in one place, which both CI and local tools read:
 | Tauri CLI               | —               | `package.json` / `bun.lock`                                        |
 | Cargo dependencies      | —               | [`src-tauri/Cargo.lock`](./src-tauri/Cargo.lock), CI checks it with `--locked` |
 | Patched crates          | —               | `src-tauri/*-patched/`, [`.cargo-patches/`](./.cargo-patches)      |
-| Google OAuth extension  | —               | git submodule commit (`src-tauri/vendor/`)                         |
+| Google OAuth extension  | —               | vendored in [`src-tauri/vendor/`](./src-tauri/vendor)                  |
 | Android SDK platform    | 36              | `src-tauri/gen/android/app/build.gradle.kts`, `ci/build/Dockerfile` |
 | Android build-tools     | 36.0.0          | `src-tauri/gen/android/app/build.gradle.kts`, `ci/build/Dockerfile` |
 | Android NDK             | 29.0.14206865   | `src-tauri/gen/android/app/build.gradle.kts`, `ci/build/Dockerfile` |
@@ -33,13 +33,9 @@ To bump Rust, Bun or Node, change the version in its file. The container build t
 
 ## Getting the source
 
-The desktop and Android builds compile in a git submodule, so clone with submodules:
-
 ```bash
-git clone --recurse-submodules https://github.com/fdev8974/free-grind.git
+git clone https://github.com/fdev8975/free-grind.git
 cd free-grind
-# for an existing checkout, or after switching tags:
-git submodule update --init
 ```
 
 ## Release builds

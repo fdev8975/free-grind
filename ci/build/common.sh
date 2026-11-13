@@ -7,7 +7,6 @@ cd /work
 
 # The mount belongs to the host user; git refuses to read it as root otherwise.
 git config --global --add safe.directory /work
-git config --global --add safe.directory /work/src-tauri/vendor/freegrind-google-oauth-webextension
 
 # Artifact scripts add their own cleanup by setting cleanup_hook to a function.
 cleanup_hook=true
@@ -52,11 +51,6 @@ bun install --frozen-lockfile --backend copyfile
 echo "Building Free Grind $version (channel $FG_CHANNEL, SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH)"
 echo "  node $(node --version), bun $(bun --version)"
 if command -v cargo >/dev/null 2>&1; then
-	# The app builds compile the submodule in; the frontend bundle doesn't need it.
-	if [ ! -f src-tauri/vendor/freegrind-google-oauth-webextension/geckoview/manifest.json ]; then
-		echo "The git submodule is missing; run: git submodule update --init" >&2
-		exit 1
-	fi
 	echo "  $(rustc --version)"
 	# cargo would otherwise quietly re-resolve an outdated Cargo.lock.
 	cargo metadata --locked --format-version 1 --manifest-path src-tauri/Cargo.toml >/dev/null

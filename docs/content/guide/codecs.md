@@ -150,6 +150,6 @@ Plugin details mean the decoder is installed. `No such element or plugin` means 
    ```sh
    gst-inspect-1.0 qtdemux
    ```
-4. [Open an issue](https://github.com/fdev8974/free-grind/issues) with your distribution, its version, and the output of the check above.
+4. [Open an issue](https://github.com/fdev8975/free-grind/issues) with your distribution, its version, and the output of the check above.
 
 _Adapted from the [Open Grind](https://opengrind.org/guides/codecs) guide (MIT)._

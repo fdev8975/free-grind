@@ -8,7 +8,7 @@ title: FAQ
 
 ::: details Where do I download Free Grind?
 
-**Follow the instructions on the [Download](/guide/download) page.** Only download Free Grind from the [official releases page](https://github.com/fdev8974/free-grind/releases), never from anywhere else. If you're a technical user, you can also [build it yourself](https://github.com/fdev8974/free-grind#development).
+**Follow the instructions on the [Download](/guide/download) page.** Only download Free Grind from the [official releases page](https://github.com/fdev8975/free-grind/releases), never from anywhere else. If you're a technical user, you can also [build it yourself](https://github.com/fdev8975/free-grind#development).
 
 :::
 
@@ -16,7 +16,7 @@ title: FAQ
 
 No. **Free Grind is free and always will be.** There's no paid version, no premium features and no paid early access. Anyone who asks you to pay for it is a scammer.
 
-If you want to say thank you to a contributor, [FUNDING.md](https://github.com/fdev8974/free-grind/blob/development/FUNDING.md) lists their donation links. Donations are optional and don't get you anything in the app.
+If you want to say thank you to a contributor, [FUNDING.md](https://github.com/fdev8975/free-grind/blob/development/FUNDING.md) lists their donation links. Donations are optional and don't get you anything in the app.
 
 :::
 
@@ -30,7 +30,7 @@ Free Grind started as a fork of [Open Grind](https://opengrind.org) and has grow
 
 ::: details How do I know a release is safe?
 
-Free Grind is open source, and its releases are **reproducible**: you can build the same version yourself and check that you get exactly the same file. Releases are also signed. See [KEYS.md](https://github.com/fdev8974/free-grind/blob/development/KEYS.md) to check who signed a download, and [REPRODUCIBILITY.md](https://github.com/fdev8974/free-grind/blob/development/REPRODUCIBILITY.md) to check what's inside it.
+Free Grind is open source, and its releases are **reproducible**: you can build the same version yourself and check that you get exactly the same file. Releases are also signed. See [KEYS.md](https://github.com/fdev8975/free-grind/blob/development/KEYS.md) to check who signed a download, and [REPRODUCIBILITY.md](https://github.com/fdev8975/free-grind/blob/development/REPRODUCIBILITY.md) to check what's inside it.
 
 :::
 
@@ -42,7 +42,7 @@ We don't know, and that's on purpose: Free Grind has no analytics, no trackers a
 
 ::: details When does feature X arrive? When is the next update?
 
-Search the [issues](https://github.com/fdev8974/free-grind/issues) for the feature, or use **Settings → Issues & Feature Requests** in the app. New versions are announced on [Telegram](https://t.me/freegrind) and [Discord](https://discord.gg/cJqTaWPMFF).
+Search the [issues](https://github.com/fdev8975/free-grind/issues) for the feature, or use **Settings → Issues & Feature Requests** in the app. New versions are announced on [Telegram](https://t.me/freegrind) and [Discord](https://discord.gg/cJqTaWPMFF).
 
 :::
 
@@ -135,6 +135,6 @@ Make sure you're on the newest version: **Settings → Check for Updates**. If y
 
 ::: details Where do I report a bug?
 
-Use **Settings → Report Bug or Feature**, or [open an issue on GitHub](https://github.com/fdev8974/free-grind/issues) with your device, platform, Free Grind version and what you were doing.
+Use **Settings → Report Bug or Feature**, or [open an issue on GitHub](https://github.com/fdev8975/free-grind/issues) with your device, platform, Free Grind version and what you were doing.
 
 :::

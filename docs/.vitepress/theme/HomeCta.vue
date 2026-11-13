@@ -17,7 +17,7 @@ import { VPButton } from "vitepress/theme";
 					icon='<span class="vp-icon i-download"></span>'
 				/>
 				<VPButton
-					href="https://github.com/fdev8974/free-grind"
+					href="https://github.com/fdev8975/free-grind"
 					text="Star on GitHub"
 					size="big"
 					theme="alt"

@@ -5,7 +5,7 @@
 //! extension hands out for copying, so it goes to `sign_in_with_google`.
 //!
 //! The page scripts come from the Free Grind Google OAuth web extension
-//! (git submodule `src-tauri/vendor/freegrind-google-oauth-webextension`).
+//! (vendored in `src-tauri/vendor/freegrind-google-oauth-webextension`).
 //! On iOS the window is a full-screen WKWebView over the app (tao attaches it
 //! to the main scene). Android runs the same extension in GeckoView instead
 //! (see GoogleOAuthActivity.kt): its System WebView is refused by Google.

@@ -8,7 +8,7 @@ plugins {
 }
 
 /**
- * Copies the Free Grind Google OAuth WebExtension (git submodule) into the
+ * Copies the Free Grind Google OAuth WebExtension (src-tauri/vendor) into the
  * APK's assets as `grindr-google-oauth/`, laid out as GeckoView loads a
  * built-in extension (see GoogleOAuthActivity.kt).
  */

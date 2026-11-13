@@ -11,7 +11,7 @@ import { withBase } from "vitepress";
 			</a>
 			<p>
 				Not affiliated with Grindr in any way. Licensed under the
-				<a href="https://github.com/fdev8974/free-grind/blob/development/LICENSE" target="_blank" rel="noreferrer">MIT License</a>.
+				<a href="https://github.com/fdev8975/free-grind/blob/development/LICENSE" target="_blank" rel="noreferrer">MIT License</a>.
 			</p>
 		</div>
 	</footer>

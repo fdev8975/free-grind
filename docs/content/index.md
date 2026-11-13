@@ -16,5 +16,5 @@ hero:
     - theme: alt
       text: Source code
       icon: '<span class="vp-icon i-github"></span>'
-      link: https://github.com/fdev8974/free-grind
+      link: https://github.com/fdev8975/free-grind
 ---

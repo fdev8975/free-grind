@@ -1,4 +1,4 @@
-export const RELEASES_URL = "https://github.com/fdev8974/free-grind/releases";
+export const RELEASES_URL = "https://github.com/fdev8975/free-grind/releases";
 
 export interface Release {
 	name: string;
@@ -26,7 +26,7 @@ let latest: Promise<Release | null> | undefined;
  */
 export function latestRelease(): Promise<Release | null> {
 	latest ??= fetch(
-		"https://api.github.com/repos/fdev8974/free-grind/releases?per_page=10",
+		"https://api.github.com/repos/fdev8975/free-grind/releases?per_page=10",
 	)
 		.then((response) => (response.ok ? response.json() : []))
 		.then((releases: GitHubRelease[]) => {

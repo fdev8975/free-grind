@@ -125,7 +125,7 @@ function parseReleaseCommit(release: GitHubRelease): string | undefined {
  */
 export async function fetchLatestRelease(signal: AbortSignal, includePrerelease: boolean): Promise<ReleaseInfo> {
     const response = await fetch(
-        "https://api.github.com/repos/fdev8974/free-grind/releases?per_page=30",
+        "https://api.github.com/repos/fdev8975/free-grind/releases?per_page=30",
         {
             headers: {
                 Accept: "application/vnd.github+json",

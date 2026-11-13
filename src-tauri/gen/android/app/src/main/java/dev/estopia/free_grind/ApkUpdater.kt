@@ -54,7 +54,7 @@ object ApkUpdater {
     SELF(
       "app",
       "free-grind-update.apk",
-      "https://github.com/fdev8974/free-grind/releases/download/",
+      "https://github.com/fdev8975/free-grind/releases/download/",
     );
 
     fun packageName(context: Context): String = when (this) {

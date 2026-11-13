@@ -28,8 +28,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # src-tauri/vendor/freegrind-google-oauth-webextension (desktop Google sign-in)
-          submodules: true
           # Full history: ci/build/ios.sh uses the commit count as build number.
           fetch-depth: 0
 

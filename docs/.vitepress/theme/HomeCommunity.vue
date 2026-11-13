@@ -19,7 +19,7 @@ const channels = [
 		name: "GitHub",
 		text: "Read the code, open issues and send pull requests. Everything is public.",
 		action: "View the source",
-		link: "https://github.com/fdev8974/free-grind",
+		link: "https://github.com/fdev8975/free-grind",
 	},
 ];
 </script>

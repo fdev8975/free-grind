@@ -48,9 +48,6 @@ jobs:
       FG_FCM_API_KEY: ${{ vars.FG_FCM_API_KEY || secrets.FG_FCM_API_KEY }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # src-tauri/vendor/freegrind-google-oauth-webextension (desktop Google sign-in)
-          submodules: true
 
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-24.04'
@@ -138,10 +135,6 @@ jobs:
       FG_FCM_API_KEY: ${{ vars.FG_FCM_API_KEY || secrets.FG_FCM_API_KEY }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # src-tauri/vendor/freegrind-google-oauth-webextension (Google sign-in,
-          # bundled into the APK for GoogleOAuthActivity)
-          submodules: true
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0

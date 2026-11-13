@@ -26,11 +26,6 @@ if [ "$xcode" != "Xcode 26.6" ]; then
 	echo "Release builds use Xcode 26.6, this is $xcode; select it with xcode-select -s" >&2
 	exit 1
 fi
-if [ ! -f "$repo/src-tauri/vendor/freegrind-google-oauth-webextension/geckoview/manifest.json" ]; then
-	echo "The git submodule is missing; run: git submodule update --init" >&2
-	exit 1
-fi
-
 export TZ=UTC LC_ALL=C LANG=C
 export FG_REPRODUCIBLE_BUILD=1 VITE_HOTSWAP_CHANNEL="$FG_CHANNEL"
 # Xcode 26's bundled MetalToolchain shadows the Swift back-deployment

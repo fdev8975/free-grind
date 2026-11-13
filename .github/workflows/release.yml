@@ -214,8 +214,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # src-tauri/vendor/freegrind-google-oauth-webextension is compiled in
-          submodules: true
           persist-credentials: false
 
       - name: Free disk space
@@ -410,7 +408,7 @@ jobs:
             echo "SOURCE_DATE_EPOCH: $(git log -1 --pretty=%ct)"
             echo
             echo "Rebuild the reproducible files with:"
-            echo "  git checkout $GITHUB_SHA && git submodule update --init"
+            echo "  git checkout $GITHUB_SHA"
             echo "  FG_CHANNEL=$FG_CHANNEL sh ci/build/run.sh <linux|android|windows|frontend>"
             echo "  FG_CHANNEL=$FG_CHANNEL bash ci/build/<ios|macos>.sh   # on macOS with Xcode 26.6"
             echo "See REPRODUCIBILITY.md for comparing them with this release."

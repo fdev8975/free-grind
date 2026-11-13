@@ -149,7 +149,7 @@ export default defineConfig({
 		},
 
 		socialLinks: [
-			{ icon: "github", link: "https://github.com/fdev8974/free-grind" },
+			{ icon: "github", link: "https://github.com/fdev8975/free-grind" },
 			{ icon: "discord", link: "https://discord.gg/cJqTaWPMFF" },
 			{
 				icon: {
