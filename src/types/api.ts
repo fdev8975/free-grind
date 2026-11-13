@@ -64,8 +64,14 @@ export const methodSchemas = {
 			birthday: z.number().int(),
 			captchaToken: z.string().min(1),
 			pushToken: z.string().min(1).nullable(),
+			/** Free Grind servers only. */
+			inviteCode: z.string().min(1).nullable().optional(),
 		}),
 		response: z.string().min(1),
+	},
+	registration_mode: {
+		request: z.undefined(),
+		response: z.enum(["open", "invite", "closed"]),
 	},
 	forgot_password: {
 		request: z.object({

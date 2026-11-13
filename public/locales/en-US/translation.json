@@ -122,7 +122,26 @@
     "add_account": "Add account",
     "add_account_desc": "Sign in with another account",
     "logout_confirm_title": "Log out?",
-    "logout_other_description": "You'll need to sign in again to use this account on this device."
+    "logout_other_description": "You'll need to sign in again to use this account on this device.",
+    "invites": {
+      "title": "Invites",
+      "create": "Invite someone",
+      "none_left": "No invites left",
+      "summary_unlimited": "{{count}} people joined with your invites",
+      "summary": "{{count}} people joined with your invites · {{remaining}} of {{limit}} invites left",
+      "expires": "Valid until {{date}}",
+      "no_expiry": "Doesn't expire",
+      "share": "Share invite",
+      "revoke": "Withdraw invite",
+      "share_text": "Join me on {{server}}! Use my invite code when you sign up: {{code}}",
+      "copied": "Invite code copied",
+      "copy_failed": "Couldn't copy the code",
+      "share_copied": "Invite text copied",
+      "limit_reached": "You've used all your invites.",
+      "too_many": "Too many requests. Please wait a moment.",
+      "create_failed": "Couldn't create an invite. Please try again.",
+      "revoke_failed": "Couldn't withdraw the invite."
+    }
   },
   "settings_blocked": {
     "title": "Blocked Accounts",
@@ -1578,7 +1597,9 @@
         "invalid_input": "Please check your email address and date of birth. You must be at least 18 years old.",
         "email_taken": "An account with this email address already exists.",
         "password_complexity": "This password isn't strong enough. Choose a longer one with a mix of letters, numbers and symbols.",
-        "failed": "Sign-up failed. Please try again."
+        "failed": "Sign-up failed. Please try again.",
+        "invite_required": "This server only accepts new accounts with an invite code.",
+        "invite_invalid": "This invite code is invalid, expired or already used."
       },
       "have_account_label": "Already have an account?",
       "have_account_action": "Sign in",
@@ -1590,7 +1611,12 @@
       "limit_reached_desc": "This app has already created {{limit}} accounts. To prevent abuse, no further accounts can be created.",
       "android_only_title": "Only available on Android",
       "android_only_desc": "Creating an account needs captcha verification, which is only available on Android.",
-      "back": "Back"
+      "back": "Back",
+      "invite_label_required": "Invite code",
+      "invite_label_optional": "Invite code (optional)",
+      "invite_hint": "This server only accepts new accounts with an invite from an existing member.",
+      "closed_title": "Registration closed",
+      "closed_desc": "This server isn't accepting new accounts right now."
     },
     "sms_verification": {
       "still_required": "Grindr still asks for verification. Check the code or request a new one.",

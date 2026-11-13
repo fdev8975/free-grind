@@ -160,6 +160,12 @@ const SIGN_UP_ERROR_MESSAGES: Record<number, { key: string; defaultValue: string
 		key: "auth.sign_up.errors.password_complexity",
 		defaultValue: "This password isn't strong enough. Choose a longer one with a mix of letters, numbers and symbols.",
 	},
+	// Free Grind server extension (registration invites).
+	901: { key: "auth.sign_up.errors.invite_required", defaultValue: "This server only accepts new accounts with an invite code." },
+	902: {
+		key: "auth.sign_up.errors.invite_invalid",
+		defaultValue: "This invite code is invalid, expired or already used.",
+	},
 };
 
 function describeSignUpError(appError: AppError | null): AuthError {
@@ -571,7 +577,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 	};
 
-	const signUp = async ({ email, password, birthday }: SignUpData) => {
+	const signUp = async ({ email, password, birthday, inviteCode }: SignUpData) => {
 		try {
 			appLog.info("[Auth] signUp: creating email account");
 			dispatch({ type: "SET_LOADING", payload: true });
@@ -586,6 +592,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				birthday,
 				captchaToken,
 				pushToken: cachedPushToken(),
+				inviteCode: inviteCode?.trim() || null,
 			});
 			appLog.info("[Auth] signUp: account created", { profileId });
 			toast.success(i18n.t("auth.toasts.account_created"));

@@ -122,7 +122,26 @@
         "add_account": "Konto hinzufügen",
         "add_account_desc": "Mit einem anderen Konto anmelden",
         "logout_confirm_title": "Abmelden?",
-        "logout_other_description": "Du musst dich erneut anmelden, um dieses Konto auf diesem Gerät zu nutzen."
+        "logout_other_description": "Du musst dich erneut anmelden, um dieses Konto auf diesem Gerät zu nutzen.",
+        "invites": {
+            "title": "Einladungen",
+            "create": "Jemanden einladen",
+            "none_left": "Keine Einladungen mehr übrig",
+            "summary_unlimited": "{{count}} Personen sind über deine Einladungen beigetreten",
+            "summary": "{{count}} Personen sind über deine Einladungen beigetreten · noch {{remaining}} von {{limit}} Einladungen",
+            "expires": "Gültig bis {{date}}",
+            "no_expiry": "Läuft nicht ab",
+            "share": "Einladung teilen",
+            "revoke": "Einladung zurückziehen",
+            "share_text": "Komm zu {{server}}! Nutz bei der Registrierung meinen Einladungscode: {{code}}",
+            "copied": "Einladungscode kopiert",
+            "copy_failed": "Code konnte nicht kopiert werden",
+            "share_copied": "Einladungstext kopiert",
+            "limit_reached": "Du hast alle deine Einladungen verbraucht.",
+            "too_many": "Zu viele Anfragen. Bitte warte kurz.",
+            "create_failed": "Einladung konnte nicht erstellt werden. Bitte versuch es noch einmal.",
+            "revoke_failed": "Einladung konnte nicht zurückgezogen werden."
+        }
     },
     "settings_blocked": {
         "title": "Blockierte Konten",
@@ -1578,7 +1597,9 @@
                 "invalid_input": "Bitte überprüfe deine E-Mail-Adresse und dein Geburtsdatum. Du musst mindestens 18 Jahre alt sein.",
                 "email_taken": "Mit dieser E-Mail-Adresse gibt es bereits ein Konto.",
                 "password_complexity": "Dieses Passwort ist nicht sicher genug. Wähle ein längeres mit Buchstaben, Zahlen und Sonderzeichen.",
-                "failed": "Registrierung fehlgeschlagen. Bitte versuche es erneut."
+                "failed": "Registrierung fehlgeschlagen. Bitte versuche es erneut.",
+                "invite_required": "Dieser Server nimmt neue Accounts nur mit Einladungscode an.",
+                "invite_invalid": "Dieser Einladungscode ist ungültig, abgelaufen oder schon benutzt."
             },
             "have_account_label": "Hast du bereits ein Konto?",
             "have_account_action": "Anmelden",
@@ -1590,7 +1611,12 @@
             "limit_reached_desc": "Diese App hat bereits {{limit}} Konten erstellt. Um Missbrauch zu verhindern, können keine weiteren Konten erstellt werden.",
             "android_only_title": "Nur unter Android verfügbar",
             "android_only_desc": "Zum Erstellen eines Accounts ist eine Captcha-Prüfung nötig, die nur auf Android verfügbar ist.",
-            "back": "Zurück"
+            "back": "Zurück",
+            "invite_label_required": "Einladungscode",
+            "invite_label_optional": "Einladungscode (optional)",
+            "invite_hint": "Dieser Server nimmt neue Accounts nur mit einer Einladung eines bestehenden Mitglieds an.",
+            "closed_title": "Registrierung geschlossen",
+            "closed_desc": "Dieser Server nimmt gerade keine neuen Accounts an."
         },
         "sms_verification": {
             "still_required": "Grindr verlangt weiterhin eine Verifizierung. Prüfe den Code oder fordere einen neuen an.",

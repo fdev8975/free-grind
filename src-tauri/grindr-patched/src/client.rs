@@ -827,6 +827,15 @@ impl GrindrClient {
 	) -> Result<bool, GrindrError> {
 		crate::auth::recaptcha_first_party_enabled(&self.inner).await
 	}
+
+	/// The value the server assigns `key` before sign-in (public
+	/// assignments), e.g. a Free Grind server's `registration_mode`.
+	pub async fn public_assignment(
+		&self,
+		key: &str,
+	) -> Result<Option<String>, GrindrError> {
+		crate::auth::public_assignment(&self.inner, key).await
+	}
 }
 
 #[cfg(test)]

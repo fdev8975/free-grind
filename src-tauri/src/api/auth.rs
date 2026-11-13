@@ -1043,6 +1043,27 @@ pub async fn sign_up_quota() -> Result<SignUpQuota, AppError> {
     })
 }
 
+/// How a Free Grind server lets new accounts in: `"open"`, `"invite"` (an
+/// invite code is required) or `"closed"`. Read from the public assignments
+/// before sign-in; the official servers are always `"open"`.
+#[tauri::command]
+pub async fn registration_mode(state: tauri::State<'_, AppState>) -> Result<String, AppError> {
+    if grindr::server_config().is_official() {
+        return Ok("open".to_owned());
+    }
+    let client = state.client()?;
+    let mode = client
+        .public_assignment("registration_mode")
+        .await
+        .map_err(|e| AppError::from_client_error(e, &client))?;
+    Ok(match mode.as_deref() {
+        Some("invite") => "invite",
+        Some("closed") => "closed",
+        _ => "open",
+    }
+    .to_owned())
+}
+
 /// First-party account creation with email and password. Returns the new
 /// profile id; the response carries no session, so the caller signs in
 /// afterwards with `login` and `keep_device`.
@@ -1054,6 +1075,7 @@ pub async fn create_account(
     birthday: i64,
     captcha_token: String,
     push_token: Option<String>,
+    invite_code: Option<String>,
 ) -> Result<String, AppError> {
     // The local sign-up limit and the reCAPTCHA requirement protect accounts on
     // the official servers. A self-hosted server uses neither (it rate-limits
@@ -1090,6 +1112,11 @@ pub async fn create_account(
             push_token: push_token.as_deref().map(str::trim).unwrap_or(""),
             // Never sign up for Grindr's marketing email.
             opt_in: false,
+            // Free Grind servers only; the official API knows no invites.
+            invite_code: invite_code
+                .as_deref()
+                .map(str::trim)
+                .filter(|code| !official && !code.is_empty()),
         })
         .await
         .map_err(|e| AppError::from_client_error(e, &client))?;

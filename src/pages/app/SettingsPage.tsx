@@ -52,6 +52,7 @@ import {
 import { ToggleRow } from "../../components/ui/toggle-row";
 import { UpdateChannelSheet } from "./UpdateChannelSheet";
 import { TransferAccountSheet } from "./TransferAccountSheet";
+import { InvitesSection } from "./InvitesSection";
 import { NATIVE_SHEET_BG } from "../../components/ui/action-sheet";
 import { ControlledBottomSheet } from "../../components/ui/controlled-sheet";
 import { SHEET_FIELD_CLASS } from "../../components/ui/sheet-section";
@@ -829,6 +830,9 @@ export function SettingsPage() {
 								</button>
 							</div>
 						</div>
+
+						{/* Invites (Free Grind servers, flag `user_invites`) */}
+						<InvitesSection />
 
 						{/* Chat */}
 						<div>

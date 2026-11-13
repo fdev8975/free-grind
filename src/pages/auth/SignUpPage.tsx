@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Mail, Lock, Cake, Eye, EyeOff, LogIn, ShieldAlert, Smartphone } from "lucide-react";
+import { Mail, Lock, Cake, Eye, EyeOff, LogIn, ShieldAlert, Smartphone, Ticket } from "lucide-react";
 import { AuthShell } from "../../components/ui/auth-shell";
 import { BugReportButton } from "../../components/ui/BugReportButton";
 import { useAuth } from "../../contexts/useAuth";
@@ -58,6 +58,29 @@ export function SignUpPage() {
 	const [password, setPassword] = useState("");
 	const [showPassword, setShowPassword] = useState(false);
 	const [birthday, setBirthday] = useState("");
+	// `?invite=` prefills the code (e.g. from a shared invite).
+	const [searchParams] = useSearchParams();
+	const [inviteCode, setInviteCode] = useState(() => searchParams.get("invite") ?? "");
+	// Free Grind servers: "invite" requires a code, "closed" takes no sign-ups.
+	// The official servers are always "open" and never see the field.
+	const [registrationMode, setRegistrationMode] = useState<"open" | "invite" | "closed">("open");
+	useEffect(() => {
+		if (!isCustom) {
+			setRegistrationMode("open");
+			return;
+		}
+		let cancelled = false;
+		void callMethod("registration_mode")
+			.then((mode) => {
+				if (!cancelled) setRegistrationMode(mode);
+			})
+			// Unknown: keep the optional field; the server still decides.
+			.catch(() => undefined);
+		return () => {
+			cancelled = true;
+		};
+	}, [callMethod, isCustom]);
+	const inviteRequired = registrationMode === "invite";
 	const [isLoading, setIsLoading] = useState(false);
 	// Set when the sign-in after creating the account asks for SMS verification.
 	const [verification, setVerification] = useState<{ profileId: string; signIn: SignInRefusal } | null>(null);
@@ -91,14 +114,20 @@ export function SignUpPage() {
 		password.length > 0 &&
 		birthdayMillis !== null &&
 		!isTooYoung &&
-		!isTooOld;
+		!isTooOld &&
+		(!inviteRequired || inviteCode.trim().length > 0);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!isFormValid || birthdayMillis === null) return;
 		setIsLoading(true);
 		try {
-			await signUp({ email: email.trim(), password, birthday: birthdayMillis });
+			await signUp({
+				email: email.trim(),
+				password,
+				birthday: birthdayMillis,
+				inviteCode: isCustom ? inviteCode.trim() || undefined : undefined,
+			});
 			navigate("/");
 		} catch (error) {
 			// AuthContext updates `error`, which is rendered in the form.
@@ -154,7 +183,19 @@ export function SignUpPage() {
 	return (
 		<AuthShell title={title} subtitle={subtitle} footer={footer}>
 			{serverSheet}
-			{isLimitReached ? (
+			{registrationMode === "closed" ? (
+				<div className="animate-fade-in flex items-start gap-2.5 rounded-2xl bg-red-500/12 px-3 py-3 text-sm text-[var(--text)]">
+					<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[#f87171]" />
+					<div className="space-y-1">
+						<p className="font-semibold">
+							{t("auth.sign_up.closed_title", { defaultValue: "Registration closed" })}
+						</p>
+						<p className="leading-relaxed text-[var(--text-muted)]">
+							{t("auth.sign_up.closed_desc", { defaultValue: "This server isn't accepting new accounts right now." })}
+						</p>
+					</div>
+				</div>
+			) : isLimitReached ? (
 				<div className="animate-fade-in flex items-start gap-2.5 rounded-2xl bg-red-500/12 px-3 py-3 text-sm text-[var(--text)]">
 					<ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-[#f87171]" />
 					<div className="space-y-1">
@@ -223,6 +264,32 @@ export function SignUpPage() {
 							<p className="text-xs text-[#f87171]">{t("auth.sign_up.invalid_birthday", { defaultValue: "Please enter a valid date of birth." })}</p>
 						) : null}
 					</div>
+					{isCustom ? (
+						<div className="space-y-1.5">
+							<label htmlFor="sign-up-invite" className="block text-xs font-medium text-[var(--text-muted)]">
+								{inviteRequired
+									? t("auth.sign_up.invite_label_required", { defaultValue: "Invite code" })
+									: t("auth.sign_up.invite_label_optional", { defaultValue: "Invite code (optional)" })}
+							</label>
+							<IconInput
+								id="sign-up-invite"
+								icon={<Ticket className="h-4 w-4" />}
+								value={inviteCode}
+								onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+								required={inviteRequired}
+								autoComplete="off"
+								autoCapitalize="characters"
+								spellCheck={false}
+								maxLength={40}
+								placeholder="XXXXX-XXXXX"
+							/>
+							{inviteRequired ? (
+								<p className="text-xs text-[var(--text-muted)]">
+									{t("auth.sign_up.invite_hint", { defaultValue: "This server only accepts new accounts with an invite from an existing member." })}
+								</p>
+							) : null}
+						</div>
+					) : null}
 					<AuthSubmitSection
 						error={error}
 						loading={isLoading}
