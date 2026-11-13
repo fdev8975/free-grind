@@ -54,6 +54,7 @@ import { AgeVerificationRegionPrompt } from "./components/AgeVerificationRegionP
 import { LocateProfileHost } from "./pages/app/gridpage/hooks/useLocateProfile";
 import { PushNotificationBridge } from "./components/PushNotificationBridge";
 import { ShareTargetBridge } from "./components/ShareTargetBridge";
+import { ShareProfileBridge } from "./components/ShareProfileBridge";
 import { NotificationReplyBridge } from "./components/NotificationReplyBridge";
 import { ChatRealtimeBridge } from "./components/ChatRealtimeBridge";
 import { GridAutoRefreshBridge } from "./components/GridAutoRefreshBridge";
@@ -247,6 +248,7 @@ export default function App() {
 					{renderPhase >= 1 && <KeepScreenOnBridge />}
 					{renderPhase >= 2 && <PushNotificationBridge />}
 					{renderPhase >= 2 && <ShareTargetBridge />}
+					{renderPhase >= 2 && <ShareProfileBridge />}
 					{renderPhase >= 2 && <NotificationReplyBridge />}
 					{renderPhase >= 2 && <ManagedOptionsCacheBridge />}
 					{renderPhase >= 2 && <AssignmentsBridge />}

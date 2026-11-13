@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { Ban, EyeOff, MessageCircle, Pencil, PencilLine, Star, StarOff } from "lucide-react";
+import { Ban, EyeOff, MessageCircle, Pencil, PencilLine, Share2, Star, StarOff } from "lucide-react";
 import { SheetActionList, afterSheetClose } from "../../../../components/ui/action-sheet";
 import { menuTransitionStyle } from "../../../../hooks/usePresence";
 import { LocateFixedFilled } from "../../../../components/icons/FilledIcons";
@@ -24,6 +24,8 @@ type GridTileContextMenuProps = {
 	onEditNickname: () => void;
 	onHide: () => void;
 	onBlock: () => void;
+	/** Only passed where profiles can be shared into chats (our server, see profileShare). */
+	onShare?: () => void;
 	/** Only passed while the optional Locate feature is enabled. */
 	onLocate?: () => void;
 	locateLabel?: string;
@@ -58,6 +60,7 @@ export function GridTileContextMenu({
 	onEditNickname,
 	onHide,
 	onBlock,
+	onShare,
 	onLocate,
 	locateLabel,
 	onEditProfile,
@@ -78,6 +81,14 @@ export function GridTileContextMenu({
 			label: t("profile_details.message"),
 			onClick: onMessage,
 		},
+		...(onShare
+			? [{
+				key: "share",
+				icon: <Share2 className={isDesktop ? "h-4 w-4" : "h-3.5 w-3.5"} />,
+				label: t("chat.share"),
+				onClick: onShare,
+			}]
+			: []),
 		{
 			key: "favorite",
 			icon: isFavorite

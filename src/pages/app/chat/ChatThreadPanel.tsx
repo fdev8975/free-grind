@@ -2162,6 +2162,7 @@ export function ChatThreadPanel(props: ChatThreadPanelProps) {
 						openViewLimitedMedia={openViewLimitedMedia}
 						openAlbumViewerById={openAlbumViewerById}
 						openProfilePhotos={openProfilePhotos}
+						onOpenSharedProfile={(profileId) => openProfile(profileId, getProfileReturnToChatPath(profileId))}
 						onJumpToMessage={onJumpToMessage}
 						highlightedMessageId={highlightedMessageId}
 						selectedThreadMessageMatches={selectedThreadMessageMatches}

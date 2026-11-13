@@ -1,4 +1,4 @@
-import { Archive, BellOff, Check, CheckCheck, CornerUpRight, EyeOff, ListFilter, Loader2, MessageCircle, PencilLine, Pin, Star, Trash2 } from "lucide-react";
+import { Archive, BellOff, Check, CheckCheck, CornerUpRight, EyeOff, ListFilter, Loader2, MessageCircle, PencilLine, Pin, Share2, Star, Trash2 } from "lucide-react";
 import { BellOffFilled, EyeOffFilled, HomeFilled, LocateFixedFilled, Trash2Filled } from "../../../components/icons/FilledIcons";
 import { RightNowIcon } from "../../../components/icons/RightNowIcon";
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactElement, type ReactNode, type RefObject } from "react";
@@ -15,6 +15,7 @@ import { SheetActionList, afterSheetClose } from "../../../components/ui/action-
 import { useLocateProfile } from "../gridpage/hooks/useLocateProfile";
 import { isLocateEnabled } from "../../../utils/optionalFeatures";
 import { usePreferences } from "../../../contexts/PreferencesContext";
+import { requestProfileShare, useCanShareProfiles } from "../../../services/profileShare";
 import { ProfileImage } from "../../../components/ui/profile-image";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import type { ConversationEntry } from "../../../types/messages";
@@ -181,6 +182,8 @@ type ConversationActionHandlers = {
 	/** Only set while the per-chat read-receipts toggle is enabled in Privacy settings. */
 	onToggleReadReceipts?: () => void;
 	onDelete: () => void;
+	/** Only set where profiles can be shared into chats (our server, see profileShare). */
+	onShare?: () => void;
 	/** Only set while the optional Locate feature is enabled. */
 	onLocate?: () => void;
 	locateLabel?: string;
@@ -231,6 +234,14 @@ function buildConversationActions(
 					onSelect: handlers.onToggleReadReceipts,
 				}];
 			})()
+			: []),
+		...(handlers.onShare
+			? [{
+				key: "share",
+				label: t("chat.share"),
+				icon: <Share2 className="h-4 w-4" />,
+				onSelect: handlers.onShare,
+			}]
 			: []),
 		...(handlers.onLocate
 			? [{
@@ -298,6 +309,7 @@ function ConversationContextMenu({
 	onToggleHide,
 	onToggleReadReceipts,
 	onDelete,
+	onShare,
 	onLocate,
 	locateLabel,
 }: {
@@ -313,6 +325,7 @@ function ConversationContextMenu({
 	onToggleHide: () => void;
 	onToggleReadReceipts?: () => void;
 	onDelete: () => void;
+	onShare?: () => void;
 	onLocate?: () => void;
 	locateLabel?: string;
 }) {
@@ -356,6 +369,7 @@ function ConversationContextMenu({
 		onToggleHide,
 		onToggleReadReceipts,
 		onDelete,
+		onShare,
 		onLocate,
 		locateLabel,
 	});
@@ -870,6 +884,21 @@ export function ChatInboxPanel({
 		},
 		...(() => {
 			const otherParticipant = getOtherParticipant(conversation, userId);
+			// An archived chat's profile may well be gone; nothing to share then.
+			if (!canShareProfiles || isArchived || otherParticipant?.profileId == null) return {};
+			return {
+				onShare: () => {
+					close();
+					requestProfileShare({
+						profileId: Number(otherParticipant.profileId),
+						name: conversation.data.name ?? null,
+						mediaHash: otherParticipant.primaryMediaHash ?? null,
+					});
+				},
+			};
+		})(),
+		...(() => {
+			const otherParticipant = getOtherParticipant(conversation, userId);
 			const otherProfileId = otherParticipant?.profileId;
 			// Locate trilaterates from distances, so it's pointless without one.
 			if (!showLocate || !otherProfileId || otherParticipant.distanceMetres == null) return {};
@@ -883,6 +912,7 @@ export function ChatInboxPanel({
 		})(),
 	});
 	const { handleTriangleProfile, locateLabelFor } = useLocateProfile();
+	const canShareProfiles = useCanShareProfiles();
 	// Read on mount like ProfileDetailsModal does; toggled in Optional Features.
 	const [showLocate] = useState(isLocateEnabled);
 	const [deleteConfirmState, setDeleteConfirmState] = useState<{

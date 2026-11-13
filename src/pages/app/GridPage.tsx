@@ -1,6 +1,7 @@
 import { useAuth } from "../../contexts/useAuth";
 import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2 } from "lucide-react";
 import { useFeatureFlag } from "../../services/assignmentsStore";
+import { requestProfileShare, useCanShareProfiles } from "../../services/profileShare";
 import { GridMap, hasCardPosition, type MapCard } from "./gridpage/components/GridMap";
 import { readGridViewMode, writeGridViewMode, type GridViewMode } from "./gridpage/gridViewMode";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
@@ -14,7 +15,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useTranslation } from "react-i18next";
 import { decodeGeohash, encodeGeohash } from "../../utils/geohash";
 import { reverseGeocodeGeohash } from "./gridpage/geocoding";
-import { getThumbImageUrl, validateMediaHash } from "../../utils/media";
+import { extractMediaHashFromUrl, getThumbImageUrl, validateMediaHash } from "../../utils/media";
 import { usePreferences } from "../../contexts/PreferencesContext";
 import { useExploreMode } from "../../contexts/ExploreModeContext";
 import { type BrowseCard, type ProfileDetail } from "./GridPage.types";
@@ -690,6 +691,7 @@ export function GridPage() {
 
 	// Grid map view (flag "browse-maps-v1_5")
 	const isMapFlagOn = false; // useFeatureFlag("browse-maps-v1_5");
+	const canShareProfiles = useCanShareProfiles();
 	const [gridViewMode, setGridViewMode] = useState<GridViewMode>(() => readGridViewMode(userId));
 	useEffect(() => {
 		setGridViewMode(readGridViewMode(userId));
@@ -2293,6 +2295,11 @@ export function GridPage() {
 					onEditNickname={() => setNicknamePromptCard(renderedTileMenu.card)}
 					onHide={() => handleHideProfile(renderedTileMenu.card.profileId)}
 					onBlock={() => void handleBlockProfile(renderedTileMenu.card.profileId)}
+					onShare={canShareProfiles ? () => requestProfileShare({
+						profileId: Number(renderedTileMenu.card.profileId),
+						name: getDisplayName(renderedTileMenu.card) || null,
+						mediaHash: renderedTileMenu.card.primaryImageUrl ? extractMediaHashFromUrl(renderedTileMenu.card.primaryImageUrl) : null,
+					}) : undefined}
 					onLocate={showLocate && renderedTileMenu.card.distanceMeters != null ? () => handleTriangleProfile(String(renderedTileMenu.card.profileId)) : undefined}
 					locateLabel={locateLabelFor(renderedTileMenu.card.profileId)}
 					// Your own tile: editing is the only thing to do with it.

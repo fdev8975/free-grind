@@ -1622,6 +1622,10 @@
             "sent_few": "Poslano u {{count}} razgovora",
             "send_failed": "{{failed}} od {{total}} nije moguće poslati"
         },
+        "share_profile": {
+            "title": "Podijeli profil",
+            "description": "Odaberi chatove u koje želiš poslati ovaj profil"
+        },
         "tabs": {
             "inbox": "Pretinac",
             "albums": "Albumi"
@@ -1811,6 +1815,7 @@
             "sent_gif": "Poslao GIF",
             "sent_gaymoji": "Poslao Gaymoji",
             "shared_album": "Podijelio album",
+            "shared_profile": "Podijelio/la profil",
             "sent_audio": "Poslao glasovnu poruku",
             "reacted_album_content": "Reagirao na sadržaj albuma",
             "tapped_album_photo_yours": "Tapnuo tvoju fotografiju iz albuma",
@@ -3668,6 +3673,7 @@
         "chat_video_notification_body": "Poslao ti je video",
         "chat_album_notification_body": "Podijelio je svoj album",
         "chat_album_content_reaction_notification_body": "Svidio mu se sadržaj tvog albuma",
+        "chat_profile_link_notification_body": "Podijelio/la je profil s tobom",
         "chat_message_reaction_notification_body": "{{arg1}} je reagirao na tvoju poruku",
         "chat_message_reaction_no_name_notification_body": "Reagirao je na tvoju poruku",
         "favorite_online_notification_title": "Tvoj favorit je na mreži…",

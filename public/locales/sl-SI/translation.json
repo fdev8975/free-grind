@@ -1633,6 +1633,10 @@
             "sent_two": "Poslano v {{count}} klepeta",
             "send_failed": "{{failed}} od {{total}} ni bilo mogoče poslati"
         },
+        "share_profile": {
+            "title": "Deli profil",
+            "description": "Izberi klepete, v katere želiš poslati ta profil"
+        },
         "tabs": {
             "inbox": "Prejeto",
             "albums": "Albumi"
@@ -1822,6 +1826,7 @@
             "sent_gif": "Poslal GIF",
             "sent_gaymoji": "Poslal Gaymoji",
             "shared_album": "Delil album",
+            "shared_profile": "Delil/a je profil",
             "sent_audio": "Poslal zvočno sporočilo",
             "reacted_album_content": "Odzval se je na vsebino albuma",
             "tapped_album_photo_yours": "Tapnil tvojo fotografijo iz albuma",
@@ -3699,6 +3704,7 @@
         "chat_video_notification_body": "Ti je poslal video",
         "chat_album_notification_body": "Je delil svoj album",
         "chat_album_content_reaction_notification_body": "Všeč mu je vsebina tvojega albuma",
+        "chat_profile_link_notification_body": "Delil/a je profil s tabo",
         "chat_message_reaction_notification_body": "{{arg1}} se je odzval na tvoje sporočilo",
         "chat_message_reaction_no_name_notification_body": "Se je odzval na tvoje sporočilo",
         "favorite_online_notification_title": "Tvoj priljubljeni je na spletu …",

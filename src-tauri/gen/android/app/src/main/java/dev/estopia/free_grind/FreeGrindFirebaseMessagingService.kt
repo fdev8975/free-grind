@@ -28,6 +28,8 @@ class FreeGrindFirebaseMessagingService : FirebaseMessagingService() {
             "CHAT_VIDEO_NOTIFICATION_BODY" to "Video",
             "CHAT_ALBUM_NOTIFICATION_BODY" to "Album",
             "CHAT_ALBUM_CONTENT_REACTION_NOTIFICATION_BODY" to "AlbumContentReaction",
+            // Free Grind server only: shared profiles (ProfileLink).
+            "CHAT_PROFILE_LINK_NOTIFICATION_BODY" to "ProfileLink",
             "CHAT_MESSAGE_REACTION_NOTIFICATION_BODY" to "MessageReaction",
         )
         // A push's `message` blob type → its text key.

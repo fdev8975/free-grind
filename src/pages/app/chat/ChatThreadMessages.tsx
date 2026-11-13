@@ -1,5 +1,5 @@
 import { MapPinFilled } from "../../../components/icons/FilledIcons";
-import { Album, Ban, CircleAlert, Copy, Download, Eye, History, ImagePlay, Images, Languages, Loader2, Lock, MessageCircleQuestion, MessageSquarePlus, Mic, MoreVertical, PhoneOff, Play, Repeat2, Reply, RotateCw, ShieldCheck, Trash2, Undo2, Video, VideoOff, ImageOff } from "lucide-react";
+import { Album, Ban, CircleAlert, Copy, Download, Eye, History, ImagePlay, Images, Languages, Loader2, Lock, MessageCircleQuestion, MessageSquarePlus, Mic, MoreVertical, PhoneOff, Play, Repeat2, Reply, RotateCw, ShieldCheck, Trash2, Undo2, UserRound, Video, VideoOff, ImageOff } from "lucide-react";
 import { sentMediaEcho } from "./sentMediaEchoes";
 import { TakenOnGrindrBadge } from "./TakenOnGrindrBadge";
 import { createPortal } from "react-dom";
@@ -61,6 +61,7 @@ import {
 	getMediaCaptureTarget,
 	getReplyImageHashTarget,
 	getAlbumContentReplyTarget,
+	getProfileLink,
 	getMessageImageCreatedAt,
 	getGaymojiUrl,
 	getMessageImageUrl,
@@ -110,6 +111,8 @@ type ChatThreadMessagesProps = {
 	openViewLimitedMedia: (message: UiMessage, heroRect?: HeroRect | null) => void | Promise<void>;
 	openAlbumViewerById: (albumId: number, isOwnAlbum?: boolean, targetContentId?: number) => void | Promise<void>;
 	openProfilePhotos: (mediaHash: string, isPartnerProfile: boolean, heroRect?: HeroRect | null) => void;
+	/** Opens the profile a ProfileLink message shares. */
+	onOpenSharedProfile?: (profileId: number) => void;
 	onJumpToMessage: (messageId: string) => void;
 	highlightedMessageId: string | null;
 	selectedThreadMessageMatches: Array<{ messageId: string }>;
@@ -142,6 +145,7 @@ const KNOWN_REPLY_TYPES = new Set([
     "Image", "ExpiringImage", "Giphy", "Video", "PrivateVideo", "NonExpiringVideo",
     "Audio", "Location", "AlbumContentReply", "AlbumContentReaction",
     "Album", "ExpiringAlbum", "ExpiringAlbumV2", "ProfilePhotoReply", "Text", "Gaymoji",
+    "ProfileLink",
 ]);
 
 // Same flags that drive the "from local history" badge — a message that
@@ -368,6 +372,7 @@ export function ChatThreadMessages({
 	openViewLimitedMedia,
 	openAlbumViewerById,
 	openProfilePhotos,
+	onOpenSharedProfile,
 	onJumpToMessage,
 	highlightedMessageId,
 	selectedThreadMessageMatches,
@@ -1541,7 +1546,8 @@ export function ChatThreadMessages({
                             ?? (message.replyToMessage ? getGaymojiUrl(message.replyToMessage as unknown as UiMessage) : null)
                             ?? (replyImageHash ? getGaymojiUrl({ type: "Gaymoji", body: { imageHash: replyImageHash } } as unknown as UiMessage) : null)
                         : null;
-                    const replyThumbUrl = repliesToPhotoReply ? null : replyIsGaymoji ? replyGaymojiUrl : replyAlbumCoverUrl
+                    const replyProfileLink = getProfileLink(replyToMsg ?? (message.replyToMessage as { type?: string; body?: unknown } | null | undefined));
+                    const replyThumbUrl = repliesToPhotoReply ? null : replyIsGaymoji ? replyGaymojiUrl : replyProfileLink ? (replyProfileLink.imageHash ? getThumbImageUrl(replyProfileLink.imageHash, "320x320") : null) : replyAlbumCoverUrl
                         ?? replyImageUrl
                         ?? cachedReplyHashUri
                         ?? (replyImageHash ? getThumbImageUrl(replyImageHash, "320x320") : null)
@@ -1582,6 +1588,8 @@ export function ChatThreadMessages({
                             ? t("chat.thread.album_image")
                             : replyTargetType === "AlbumContentReaction"
                                 ? t("chat.thread.reacted_to_image")
+                                : replyTargetType === "ProfileLink"
+                                    ? replyProfileLink?.name ?? t("chat.preview.shared_profile")
                                 : replyIsAlbum
                                     ? t("chat.preview.shared_album")
                                 : replyIsAudio
@@ -1621,6 +1629,8 @@ export function ChatThreadMessages({
                         message.type === "ExpiringAlbum" ||
                         message.type === "ExpiringAlbumV2");
                     const isAlbumReactionBubble = message.type === "AlbumContentReaction";
+                    const profileLink = isUnsentWithoutContent ? null : getProfileLink(message);
+                    const isProfileLinkBubble = profileLink != null;
                     const msgBody = message.body as any;
                     const isExpiredVideo = !videoUrl && msgBody?._videoExpired === true;
                     const isExpiredImage =
@@ -1653,7 +1663,7 @@ export function ChatThreadMessages({
                     const isViewLimitedUsedUp = viewLimitedViewsLeft === 0;
                     const isMediaOnlyBubble =
                         isViewLimitedLockedMessage ||
-                        isImageOnlyBubble || isVideoOnlyBubble || isAlbumOnlyBubble || isLocationOnlyBubble || isAlbumReactionBubble;
+                        isImageOnlyBubble || isVideoOnlyBubble || isAlbumOnlyBubble || isLocationOnlyBubble || isAlbumReactionBubble || isProfileLinkBubble;
                     const tailCorner = mine ? "rounded-ee-[3px]" : "rounded-es-[3px]";
                     const shouldBlurIncomingMedia =
                         blurIncomingMedia &&
@@ -2201,6 +2211,84 @@ export function ChatThreadMessages({
                                             </div>
                                         </div>
                                     ) : null}
+
+                                    {isProfileLinkBubble && profileLink ? (() => {
+                                        const openSharedProfile = () => onOpenSharedProfile?.(profileLink.profileId);
+                                        const sharedName = profileLink.name ?? t("common.unknown_display_name");
+                                        return (
+                                            <div
+                                                role="button"
+                                                tabIndex={0}
+                                                aria-label={t("chat.view_profile")}
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    if (isDesktop) {
+                                                        openSharedProfile();
+                                                        return;
+                                                    }
+                                                    if (messageLongPressTriggeredRef.current) {
+                                                        messageLongPressTriggeredRef.current = false;
+                                                        return;
+                                                    }
+                                                    scheduleMobileTap(message, openSharedProfile);
+                                                }}
+                                                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") e.currentTarget.click(); }}
+                                                className={`group/media block w-full overflow-hidden rounded-2xl ${tailCorner}`}
+                                            >
+                                                {/* Laid out like the album card: the profile photo as cover, the name where the album name goes. */}
+                                                <div className={`relative isolate h-56 w-64 max-w-full overflow-hidden rounded-2xl ${tailCorner} bg-[var(--surface-2)] [mask-image:radial-gradient(white,black)] sm:w-72`}>
+                                                    <div className="absolute inset-0 transition-transform duration-500 ease-out group-hover/media:scale-[1.06]">
+                                                        <ProfileImage
+                                                            src={profileLink.imageHash ? getProfileImageUrl(profileLink.imageHash) : null}
+                                                            alt={sharedName}
+                                                            placeholder="silhouette"
+                                                            className="object-top"
+                                                        />
+                                                    </div>
+
+                                                    <MediaBadge
+                                                        icon={<UserRound className="h-3.5 w-3.5" />}
+                                                        label={t("chat.profile")}
+                                                    />
+
+                                                    <div className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-1.5 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-3 pb-2 pt-10 text-white">
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-sm font-semibold leading-tight drop-shadow">{sharedName}</p>
+                                                            {profileLink.text ? (
+                                                                <p className="mt-0.5 line-clamp-2 break-words text-xs text-white/85">{profileLink.text}</p>
+                                                            ) : null}
+                                                        </div>
+                                                        <div className="flex items-center justify-between gap-2 text-[11px]">
+                                                            <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-white/20 px-3 text-xs font-semibold text-white ring-1 ring-white/30 backdrop-blur-md transition group-hover/media:bg-white/30">
+                                                                <UserRound className="h-3.5 w-3.5" />
+                                                                {t("chat.view_profile")}
+                                                            </span>
+                                                            <div className="flex shrink-0 items-center gap-2 text-[10px] text-white/80">
+                                                                {pending ? <span>{t("chat.sending")}</span> : null}
+                                                                {failed ? <span>{t("chat.thread.failed")}</span> : null}
+                                                                {localOnly ? (
+                                                                    <span title={t("chat.thread.from_local_history")}><History className="h-3 w-3 opacity-80" /></span>
+                                                                ) : null}
+                                                                <span>{formatMessageTime(message.timestamp, nowTimestamp, t)}</span>
+                                                                {isDesktop && !pending && !isLocalClientMessageId(message.messageId) ? (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(event) => {
+                                                                            event.stopPropagation();
+                                                                            setContextMenuState({ messageId: message.messageId, x: event.clientX, y: event.clientY });
+                                                                        }}
+                                                                        className="rounded-md p-1 hover:bg-white/10"
+                                                                    >
+                                                                        <MoreVertical className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })() : null}
 
                                         {gaymojiUrl ? (
                                             <img

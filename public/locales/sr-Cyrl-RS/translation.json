@@ -1624,6 +1624,10 @@
             "sent_few": "Послато у {{count}} чета",
             "send_failed": "{{failed}} од {{total}} није могуће послати"
         },
+        "share_profile": {
+            "title": "Подели профил",
+            "description": "Изабери ћаскања у која желиш да пошаљеш овај профил"
+        },
         "tabs": {
             "inbox": "Сандуче",
             "albums": "Албуми"
@@ -1815,6 +1819,7 @@
             "sent_gif": "Послат GIF",
             "sent_gaymoji": "Послат Gaymoji",
             "shared_album": "Подељен албум",
+            "shared_profile": "Поделио/ла је профил",
             "sent_audio": "Послата гласовна порука",
             "reacted_album_content": "Реакција на садржај албума",
             "tapped_album_photo_yours": "Тап на вашу фотографију из албума",
@@ -3666,6 +3671,7 @@
         "chat_video_notification_body": "Послао Вам је видео",
         "chat_album_notification_body": "Поделио је свој албум",
         "chat_album_content_reaction_notification_body": "Свидео му се садржај Вашег албума",
+        "chat_profile_link_notification_body": "Поделио/ла је профил са тобом",
         "chat_message_reaction_notification_body": "{{arg1}} је реаговао на Вашу поруку",
         "chat_message_reaction_no_name_notification_body": "Реаговао је на Вашу поруку",
         "favorite_online_notification_title": "Ваш омиљени је на мрежи…",

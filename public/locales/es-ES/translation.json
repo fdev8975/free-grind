@@ -1622,6 +1622,10 @@
             "sent_many": "Enviado a {{count}} chats",
             "send_failed": "No se pudieron enviar {{failed}} de {{total}}"
         },
+        "share_profile": {
+            "title": "Compartir perfil",
+            "description": "Elige los chats a los que quieres enviar este perfil"
+        },
         "tabs": {
             "inbox": "Buzón",
             "albums": "Álbumes"
@@ -1811,6 +1815,7 @@
             "sent_gif": "Envió un GIF",
             "sent_gaymoji": "Envió un Gaymoji",
             "shared_album": "Compartió un álbum",
+            "shared_profile": "Ha compartido un perfil",
             "sent_audio": "Envió un mensaje de audio",
             "reacted_album_content": "Reaccionó a contenido de álbum",
             "tapped_album_photo_yours": "Le gustó tu foto de álbum",
@@ -3668,6 +3673,7 @@
         "chat_video_notification_body": "Te ha enviado un vídeo",
         "chat_album_notification_body": "Ha compartido su álbum",
         "chat_album_content_reaction_notification_body": "Le ha gustado el contenido de tu álbum",
+        "chat_profile_link_notification_body": "Ha compartido un perfil contigo",
         "chat_message_reaction_notification_body": "{{arg1}} ha reaccionado a tu mensaje",
         "chat_message_reaction_no_name_notification_body": "Ha reaccionado a tu mensaje",
         "favorite_online_notification_title": "Tu favorito está en línea…",

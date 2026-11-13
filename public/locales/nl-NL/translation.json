@@ -1611,6 +1611,10 @@
             "sent_other": "Verstuurd naar {{count}} chats",
             "send_failed": "{{failed}} van {{total}} konden niet worden verstuurd"
         },
+        "share_profile": {
+            "title": "Profiel delen",
+            "description": "Kies de chats waarnaar je dit profiel wilt sturen"
+        },
         "tabs": {
             "inbox": "Inbox",
             "albums": "Albums"
@@ -1800,6 +1804,7 @@
             "sent_gif": "Heeft een GIF gestuurd",
             "sent_gaymoji": "Heeft een Gaymoji gestuurd",
             "shared_album": "Heeft een album gedeeld",
+            "shared_profile": "Heeft een profiel gedeeld",
             "sent_audio": "Heeft een audiobericht gestuurd",
             "reacted_album_content": "Heeft gereageerd op albuminhoud",
             "tapped_album_photo_yours": "Heeft je albumfoto getapt",
@@ -3637,6 +3642,7 @@
         "chat_video_notification_body": "Heeft je een video gestuurd",
         "chat_album_notification_body": "Heeft zijn album gedeeld",
         "chat_album_content_reaction_notification_body": "Vindt je albuminhoud leuk",
+        "chat_profile_link_notification_body": "Heeft een profiel met je gedeeld",
         "chat_message_reaction_notification_body": "{{arg1}} heeft op je bericht gereageerd",
         "chat_message_reaction_no_name_notification_body": "Heeft op je bericht gereageerd",
         "favorite_online_notification_title": "Je favoriet is online…",

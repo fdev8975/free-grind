@@ -1655,6 +1655,10 @@
             "sent_zero": "اتبعت",
             "send_failed": "{{failed}} من {{total}} معرفوش يتبعتوا"
         },
+        "share_profile": {
+            "title": "مشاركة الملف الشخصي",
+            "description": "اختر المحادثات التي تريد إرسال هذا الملف الشخصي إليها"
+        },
         "tabs": {
             "inbox": "الرسائل الواردة📩",
             "albums": "الألبومات"
@@ -1844,6 +1848,7 @@
             "sent_gif": "تم ارسال صوره متحركه",
             "sent_gaymoji": "تم ارسال ايموجى",
             "shared_album": "مشاركه هذا الالبوم",
+            "shared_profile": "شارك ملفًا شخصيًا",
             "sent_audio": "تم إرسال رسالة صوتية",
             "reacted_album_content": "ردود الفعل على محتوى الألبوم",
             "tapped_album_photo_yours": "نقرت على صورة ألبومك",
@@ -3761,6 +3766,7 @@
         "chat_video_notification_body": "بعتلك فيديو",
         "chat_album_notification_body": "شارك ألبومه",
         "chat_album_content_reaction_notification_body": "عجبه محتوى ألبومك",
+        "chat_profile_link_notification_body": "شارك معك ملفًا شخصيًا",
         "chat_message_reaction_notification_body": "{{arg1}} عمل رياكت على رسالتك",
         "chat_message_reaction_no_name_notification_body": "عمل رياكت على رسالتك",
         "favorite_online_notification_title": "المفضّل بتاعك أونلاين…",

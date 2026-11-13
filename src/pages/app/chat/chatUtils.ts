@@ -409,6 +409,8 @@ export function getPreviewText(conversation: ConversationEntry, t: TranslateFn, 
 			return t("chat.preview.sent_video");
 		case "Location":
 			return t("chat.preview.sent_location");
+		case "ProfileLink":
+			return t("chat.preview.shared_profile");
 		case "RightNowRequest":
 			return t("chat.preview.right_now_request", { defaultValue: "Right Now request" });
 		case "VideoCall":
@@ -447,6 +449,8 @@ export function getMessagePreviewLabel(message: Message, t: TranslateFn): string
 			return t("chat.preview.sent_video");
 		case "Location":
 			return t("chat.preview.sent_location");
+		case "ProfileLink":
+			return t("chat.preview.shared_profile");
 		case "RightNowRequest":
 			return t("chat.preview.right_now_request", { defaultValue: "Right Now request" });
 		case "VideoCall":
@@ -472,6 +476,8 @@ const NOTIFICATION_BODY_KEYS: Record<string, string> = {
 	ExpiringAlbum: "push_notifications.chat_album_notification_body",
 	ExpiringAlbumV2: "push_notifications.chat_album_notification_body",
 	AlbumContentReaction: "push_notifications.chat_album_content_reaction_notification_body",
+	// Not a 26.21 push text: our server's own key for shared profiles (see profileShare).
+	ProfileLink: "push_notifications.chat_profile_link_notification_body",
 };
 
 // Types that keep their own label even when incoming: the native push has
@@ -552,6 +558,7 @@ const SELF_EXPLANATORY_PREVIEW_TYPES = new Set([
 	"PrivateVideo",
 	"NonExpiringVideo",
 	"Location",
+	"ProfileLink",
 ]);
 
 /**
@@ -616,6 +623,31 @@ export function findPreviewFallbackMessage<T extends Message>(messages: readonly
 	return null;
 }
 
+export type ProfileLinkInfo = {
+	profileId: number;
+	/** The profile photo when it was shared; null without one. */
+	imageHash: string | null;
+	name: string | null;
+	/** Upstream's own ProfileLink messages may carry a text; ours don't. */
+	text: string | null;
+};
+
+/**
+ * A ProfileLink message's shared profile (ProfileLinkBody: profileId,
+ * imageHash, firstName, text, …), or null for any other message — or one
+ * whose body is gone (unsent) or has no usable profile id.
+ */
+export function getProfileLink(message: { type?: string; body?: unknown } | null | undefined): ProfileLinkInfo | null {
+	if (message?.type !== "ProfileLink" || !message.body || typeof message.body !== "object") return null;
+	const body = message.body as Record<string, unknown>;
+	const profileId = Number(body.profileId);
+	if (!Number.isSafeInteger(profileId) || profileId <= 0) return null;
+	const imageHash = typeof body.imageHash === "string" && validateMediaHash(body.imageHash) ? body.imageHash : null;
+	const name = typeof body.firstName === "string" && body.firstName.trim() ? body.firstName.trim() : null;
+	const text = typeof body.text === "string" && body.text.trim() ? body.text.trim() : null;
+	return { profileId, imageHash, name, text };
+}
+
 export function getMessageText(message: UiMessage, t: TranslateFn): string {
 	if (!message.body || typeof message.body !== "object") {
 		if (message.unsent) {
@@ -637,6 +669,10 @@ export function getMessageText(message: UiMessage, t: TranslateFn): string {
 	}
 
 	const body = message.body as Record<string, unknown>;
+	if (message.type === "ProfileLink") {
+		const text = typeof body.text === "string" ? body.text.trim() : "";
+		return text || t("chat.preview.shared_profile");
+	}
 	if (typeof body.text === "string" && body.text.trim().length > 0) {
 		return body.text;
 	}
