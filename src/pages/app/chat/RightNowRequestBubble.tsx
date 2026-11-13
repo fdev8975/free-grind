@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RightNowIcon } from "../../../components/icons/RightNowIcon";
 import { PRIVACY_BLUR_CLASS, PRIVACY_HOVER_REVEAL_CLASS, useMediaBlur } from "../../../hooks/useProfilePhotoPrivacy";
+import { useMySettings } from "../../../hooks/queries/useProfileQueries";
 import { getThumbImageUrl, validateMediaHash } from "../../../utils/media";
 import { cn } from "../../../utils/cn";
 
@@ -39,7 +40,11 @@ export function parseRightNowRequestBody(body: unknown): RightNowRequestBody {
 export function RightNowRequestBubble({ body, mine }: { body: unknown; mine: boolean }) {
 	const { t } = useTranslation();
 	const { rightNow: blurRightNowMedia } = useMediaBlur();
-	const { postStatus, photo } = parseRightNowRequestBody(body);
+	const { data: mySettings } = useMySettings();
+	const { postStatus, photo: rawPhoto } = parseRightNowRequestBody(body);
+	// An explicit photo is not shown at all unless "Explicit Images in Right
+	// Now" is on. "mine" means the photo is from our own post.
+	const photo = rawPhoto && rawPhoto.isNsfw && !mine && mySettings?.viewRightNowNsfw !== true ? null : rawPhoto;
 	const [photoFailed, setPhotoFailed] = useState(false);
 	// postStatus is opaque per the API docs; only the two obvious values are shown.
 	const statusLabel =
@@ -48,7 +53,7 @@ export function RightNowRequestBubble({ body, mine }: { body: unknown; mine: boo
 			: postStatus === "EXPIRED"
 				? t("chat.thread.right_now_post_ended", { defaultValue: "Post has ended" })
 				: null;
-	const shouldBlurPhoto = photo != null && (photo.isNsfw || blurRightNowMedia);
+	const shouldBlurPhoto = photo != null && blurRightNowMedia;
 
 	return (
 		<div

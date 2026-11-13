@@ -38,3 +38,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## NudeNet (moderation model)
+
+The server's upload checks (face and nudity detection, `server/src/media/analysis.ts`)
+run the [NudeNet](https://github.com/notAI-tech/NudeNet) 320n detector
+(ONNX weights, release `v3.4-weights`) locally with
+[ONNX Runtime](https://github.com/microsoft/onnxruntime) (MIT). The weights are not
+part of this repository: `bun run models:fetch` (and the server Docker build)
+downloads them and verifies their SHA-256. NudeNet is licensed under the
+GNU Affero General Public License v3.0.

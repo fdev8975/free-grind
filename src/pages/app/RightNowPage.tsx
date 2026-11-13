@@ -78,7 +78,7 @@ import { useBlurReveal } from "../../hooks/useBlurReveal";
 import { IconTabs, type IconTabConfig } from "../../components/ui/icon-tabs";
 import { ReportProfileDialog } from "../../components/ReportProfileDialog";
 import { useAuth } from "../../contexts/useAuth";
-import { useBlockedProfileIds } from "../../hooks/queries/useProfileQueries";
+import { useBlockedProfileIds, useMySettings } from "../../hooks/queries/useProfileQueries";
 import { useHiddenProfileIds } from "../../hooks/useHiddenProfileIds";
 
 type SortOption = RightNowSortOption;
@@ -1226,16 +1226,28 @@ export function RightNowPage() {
 	// known author to match.
 	const { data: blockedProfileIdsData } = useBlockedProfileIds(!isIncognito);
 	const hiddenProfileIds = useHiddenProfileIds();
+	const { userId } = useAuth();
+	// Explicit photos (server `isNsfw`) are left out entirely unless the account
+	// setting "Explicit Images in Right Now" (viewRightNowNsfw) is on — also
+	// while the setting is still loading. Own posts always keep their photos.
+	const { data: mySettings } = useMySettings(!isIncognito);
+	const showNsfw = mySettings?.viewRightNowNsfw === true;
 	const items = useMemo(() => {
 		const source = rightNowTestMode ? simulateRightNowMapFeed(feedItems, testModeCenter, hostingOnly) : feedItems;
 		const blocked = new Set(blockedProfileIdsData ?? []);
-		return source.filter((item) => {
-			if (item.kind === "discreet") return !favoritesOnly;
-			if (blocked.has(item.profileId) || hiddenProfileIds.has(item.profileId)) return false;
-			// Favorites is filtered here — the feed API has no parameter for it.
-			return !favoritesOnly || item.isFavorite;
-		});
-	}, [rightNowTestMode, feedItems, testModeCenter, hostingOnly, favoritesOnly, blockedProfileIdsData, hiddenProfileIds]);
+		return source
+			.filter((item) => {
+				if (item.kind === "discreet") return !favoritesOnly;
+				if (blocked.has(item.profileId) || hiddenProfileIds.has(item.profileId)) return false;
+				// Favorites is filtered here — the feed API has no parameter for it.
+				return !favoritesOnly || item.isFavorite;
+			})
+			.map((item) => {
+				if (showNsfw || (item.kind === "post" && userId != null && item.profileId === String(userId))) return item;
+				if (!item.media?.some((m) => m.data?.isNsfw === true)) return item;
+				return { ...item, media: item.media.filter((m) => m.data?.isNsfw !== true) };
+			});
+	}, [rightNowTestMode, feedItems, testModeCenter, hostingOnly, favoritesOnly, blockedProfileIdsData, hiddenProfileIds, showNsfw, userId]);
 	const queryClient = useQueryClient();
 	const api = useApiFunctions();
 
@@ -1590,7 +1602,6 @@ export function RightNowPage() {
 	);
 
 	// Reports: not our own post, and only posts the server gave an id.
-	const { userId } = useAuth();
 	const [reportTarget, setReportTarget] = useState<RightNowReportTarget | null>(null);
 	const [isReportOpen, setIsReportOpen] = useState(false);
 	const reportHandlerFor = (item: RightNowFeedEntry): ReportHandler => {
