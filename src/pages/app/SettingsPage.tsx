@@ -21,7 +21,11 @@ import {
 	Terminal,
 	X,
 	QrCode,
+	TriangleAlert,
+	ExternalLink,
 } from "lucide-react";
+import { RELEASES_URL } from "../../config/links-config";
+import { REPO_DISPLAY_NAME, showRepoMovedInSettings, useNewRepoHasRelease } from "../../components/RepoMovedPrompt";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
 import { ArchiveRestoreFilled, BellFilled, BotFilled, BugFilled, ClipboardListFilled, EyeOffFilled, HeartPulseFilled, InfoFilled, MegaphoneFilled, GlobeFilled, PaletteFilled, PuzzleFilled, ShieldFilled, UserPlusFilled, UserXFilled, ZapFilled } from "../../components/icons/FilledIcons";
 import { useState, useEffect, useMemo, useRef, useSyncExternalStore, type CSSProperties } from "react";
@@ -343,6 +347,9 @@ export function SettingsPage() {
 	// The installed app (APK / desktop binary) can lag behind the frontend when an
 	// OTA bundle was applied on top of it, so show both when they differ.
 	const [nativeVersion, setNativeVersion] = useState<string | null>(null);
+	// TEMPORARY (repository move), see RepoMovedPrompt.tsx.
+	// The repository-move hint, only once the new repository has a release to point at.
+	const showRepoMoved = useNewRepoHasRelease(showRepoMovedInSettings(nativeVersion));
 	// Commit of the app binary itself (the frontend's can differ after an OTA
 	// update); null on builds from before the command existed.
 	const [nativeCommitHash, setNativeCommitHash] = useState<string | null>(null);
@@ -1021,6 +1028,32 @@ export function SettingsPage() {
 											version: currentAnnouncement.version,
 										}),
 									)}
+
+								{/* TEMPORARY (repository move), see RepoMovedPrompt.tsx. */}
+								{/* Up to the first release from the new repository: point at its releases. */}
+								{showRepoMoved && (
+								<button
+									type="button"
+									onClick={() => void openExternalUrl(RELEASES_URL)}
+									className="flex w-full items-center gap-3 bg-yellow-400/15 px-4 py-3.5 text-start transition-colors hover:bg-yellow-400/25"
+								>
+									<div className="shrink-0 rounded-2xl bg-yellow-400/25 p-2.5 text-yellow-500">
+										<TriangleAlert className="h-5 w-5" />
+									</div>
+									<div className="min-w-0 flex-1">
+										<p className="text-sm font-semibold leading-snug text-yellow-500">
+											{t("settings.repo_moved", { defaultValue: "Free Grind Has Moved" })}
+										</p>
+										<p className="mt-0.5 break-words text-xs leading-snug text-yellow-500/80">
+											{t("settings.repo_moved_desc", {
+												defaultValue: "New versions are now published at {{repo}}. Tap to open its releases page.",
+												repo: REPO_DISPLAY_NAME,
+											})}
+										</p>
+									</div>
+									<ExternalLink className="h-4 w-4 shrink-0 text-yellow-500 opacity-70" />
+								</button>
+								)}
 
 								{/* The whole row checks; a spinner replaces the chevron while it runs. */}
 								<button

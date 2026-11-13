@@ -31,3 +31,6 @@ yarn.lock
 # Release builds (ci/build/run.sh)
 /out
 /.bun-cache
+
+# Free Grind server: kept locally, not part of this repository
+/server

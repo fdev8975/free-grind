@@ -43,6 +43,8 @@ import { SexualHealthPage } from "./pages/app/sexual-health/SexualHealthPage.tsx
 import { PermissionsOnboarding } from "./components/PermissionsOnboarding";
 import { VersionAnnouncement } from "./components/VersionAnnouncement";
 import { OutdatedVersionGate } from "./components/OutdatedVersionPrompt";
+// TEMPORARY (repository move), see RepoMovedPrompt.tsx.
+import { RepoMovedGate } from "./components/RepoMovedPrompt";
 import { OtaUpdateGate } from "./components/OtaUpdatePrompt";
 import { TestReminderGate } from "./components/TestReminderPrompt";
 import { TokenExpiredGate } from "./components/TokenExpiredPrompt";
@@ -243,7 +245,7 @@ export default function App() {
 								onClose={handleAnnouncementClose}
 							/>
 						</div>
-					) : (<UnsupportedVersionGate><AccountStatusGate><TokenExpiredGate><EmailVerificationGate><OutdatedVersionGate><TestReminderGate>
+					) : (<UnsupportedVersionGate><AccountStatusGate><TokenExpiredGate><EmailVerificationGate><RepoMovedGate><OutdatedVersionGate><TestReminderGate>
 					{renderPhase >= 1 && <ManagerModeRedirect />}
 					{renderPhase >= 1 && <KeepScreenOnBridge />}
 					{renderPhase >= 2 && <PushNotificationBridge />}
@@ -390,7 +392,7 @@ export default function App() {
 							/>
 						</Routes>
 					)}
-					</TestReminderGate></OutdatedVersionGate></EmailVerificationGate></TokenExpiredGate></AccountStatusGate></UnsupportedVersionGate>)}
+					</TestReminderGate></OutdatedVersionGate></RepoMovedGate></EmailVerificationGate></TokenExpiredGate></AccountStatusGate></UnsupportedVersionGate>)}
 					</OtaUpdateGate>
 				</SmoothScroll>
 			</ExploreModeProvider>

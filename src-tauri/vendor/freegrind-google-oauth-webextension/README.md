@@ -1,7 +1,7 @@
 # Free Grind Google OAuth WebExtension
 
 > [!NOTE]
-> On Android, use the [Free Grind Google OAuth app](https://github.com/fdev8974/free-grind-oauth-app) instead. It bundles this extension and hands the token straight to [Free Grind](https://github.com/fdev8975/free-grind).
+> On Android, use the [Free Grind Google OAuth app](https://github.com/fdev8975/free-grind-oauth-app) instead. It bundles this extension and hands the token straight to [Free Grind](https://github.com/fdev8975/free-grind).
 
 WebExtension that gets an OAuth access token via Google Identity Services (GIS) for signing in to Free Grind. Made possible by the fact that GIS refuses to run in embedded app WebViews, and GeckoView forbids the host app from injecting JS into pages. Based on [Open Grind's Grindr Google OAuth WebExtension](https://git.opengrind.org/open-grind/grindr-google-oauth-webextension).
 

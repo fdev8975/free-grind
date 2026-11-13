@@ -26,6 +26,7 @@ export function FullscreenPrompt({
 	children,
 	footer,
 	overlay = false,
+	iconTileClass = fullscreenIconTileClass,
 }: {
 	icon: LucideIcon;
 	title: string;
@@ -33,6 +34,8 @@ export function FullscreenPrompt({
 	children?: ReactNode;
 	footer: ReactNode;
 	overlay?: boolean;
+	/** Replaces the accent-coloured icon tile, e.g. yellow for a warning. */
+	iconTileClass?: string;
 }) {
 	return (
 		<div className="fs-card-outer fs-card-overlay z-[110] no-touch-callout">
@@ -50,7 +53,7 @@ export function FullscreenPrompt({
 					{/* my-auto rather than justify-center: centers short content, but
 					    content taller than the screen still scrolls from its top. */}
 					<div className="my-auto flex w-full flex-col items-center">
-						<div className={`mb-6 ${fullscreenIconTileClass}`}>
+						<div className={`mb-6 ${iconTileClass}`}>
 							<Icon className="h-9 w-9" />
 						</div>
 						<h1 className="text-2xl font-bold text-[var(--text)]">{title}</h1>
