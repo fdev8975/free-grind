@@ -115,7 +115,7 @@ export function ServerSelectSheet({
 	);
 }
 
-/** Footer button for the auth screens; names the Free Grind server when it's active. */
+/** Footer button for the auth screens; names the server that's active. */
 export function ServerFooterButton({ onClick }: { onClick: () => void }) {
 	const { t } = useTranslation();
 	const info = useServerInfo();
@@ -125,10 +125,11 @@ export function ServerFooterButton({ onClick }: { onClick: () => void }) {
 		<button
 			type="button"
 			onClick={onClick}
+			title={t("auth.server.change", { defaultValue: "Change server" })}
 			className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-[var(--text-muted)] transition-colors hover-fill hover:text-[var(--text)]"
 		>
 			<Server className="h-3.5 w-3.5" />
-			{info.kind === "freeGrind" ? FREE_GRIND_SERVER_NAME : t("auth.server.change", { defaultValue: "Change server" })}
+			{info.kind === "freeGrind" ? FREE_GRIND_SERVER_NAME : t("auth.server.official", { defaultValue: "Official servers" })}
 		</button>
 	);
 }

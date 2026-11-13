@@ -1556,6 +1556,13 @@
             "title": "Inscription",
             "subtitle": "Créez un nouveau compte Grindr avec votre e-mail et votre mot de passe.",
             "add_profile_subtitle": "Crée un nouveau compte pour l'ajouter à cette app.",
+            "invalid_birthday": "Saisis une date de naissance valide.",
+            "errors": {
+                "invalid_input": "Vérifie ton adresse e-mail et ta date de naissance. Tu dois avoir au moins 18 ans.",
+                "email_taken": "Un compte existe déjà avec cette adresse e-mail.",
+                "password_complexity": "Ce mot de passe n'est pas assez sécurisé. Choisis-en un plus long, avec des lettres, des chiffres et des symboles.",
+                "failed": "L'inscription a échoué. Réessaie."
+            },
             "have_account_label": "Déjà un compte ?",
             "have_account_action": "Connectez-vous",
             "birthday_label": "Date de naissance",

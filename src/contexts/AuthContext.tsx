@@ -148,6 +148,28 @@ function describeLoginError(
 	return { message: appError?.prettyMessage || fallback };
 }
 
+// Account creation refusals (POST /v8/users) that have a known meaning, shown
+// without the raw "Error <code>: ..." text.
+const SIGN_UP_ERROR_MESSAGES: Record<number, { key: string; defaultValue: string }> = {
+	[INVALID_INPUT_PARAMETERS_CODE]: {
+		key: "auth.sign_up.errors.invalid_input",
+		defaultValue: "Please check your email address and date of birth. You must be at least 18 years old.",
+	},
+	6: { key: "auth.sign_up.errors.email_taken", defaultValue: "An account with this email address already exists." },
+	17: {
+		key: "auth.sign_up.errors.password_complexity",
+		defaultValue: "This password isn't strong enough. Choose a longer one with a mix of letters, numbers and symbols.",
+	},
+};
+
+function describeSignUpError(appError: AppError | null): AuthError {
+	const code = appError?.kind === "Api" && typeof appError.message === "object" ? appError.message.code : null;
+	const known = code != null ? SIGN_UP_ERROR_MESSAGES[code] : undefined;
+	if (known) return { message: i18n.t(known.key, { defaultValue: known.defaultValue }) };
+	const fallback = i18n.t("auth.sign_up.errors.failed", { defaultValue: "Sign-up failed. Please try again." });
+	return describeLoginError(appError, fallback, fallback);
+}
+
 function isInvalidCredentials(appError: AppError | null): boolean {
 	if (appError?.kind === "Unauthorized") return true;
 	return (
@@ -577,7 +599,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 				throw error;
 			}
 			const appError = asAppError(error);
-			const message = describeLoginError(appError, "Sign-up failed. Please try again.", "Sign-up failed. Please try again.");
+			const message = describeSignUpError(appError);
 			appLog.error("[Auth] signUp failed", { kind: appError?.kind, message });
 			dispatch({ type: "SET_ERROR", payload: message });
 			throw error;

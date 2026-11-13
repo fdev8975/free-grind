@@ -1547,6 +1547,13 @@
             "title": "Registreren",
             "subtitle": "Maak een nieuw Grindr-account aan met je e-mailadres en wachtwoord.",
             "add_profile_subtitle": "Maak een nieuw account aan om het aan deze app toe te voegen.",
+            "invalid_birthday": "Vul een geldige geboortedatum in.",
+            "errors": {
+                "invalid_input": "Controleer je e-mailadres en geboortedatum. Je moet minstens 18 jaar oud zijn.",
+                "email_taken": "Er bestaat al een account met dit e-mailadres.",
+                "password_complexity": "Dit wachtwoord is niet sterk genoeg. Kies een langer wachtwoord met letters, cijfers en symbolen.",
+                "failed": "Registreren mislukt. Probeer het opnieuw."
+            },
             "have_account_label": "Heb je al een account?",
             "have_account_action": "Inloggen",
             "birthday_label": "Geboortedatum",

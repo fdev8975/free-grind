@@ -424,8 +424,28 @@ fn extract_api_error(bytes: &[u8], http_status: u16) -> (i32, String) {
 		if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
 			return (code, msg.to_owned());
 		}
+		if let Some(msg) = problem_message(&json) {
+			return (code, msg);
+		}
 	}
 	(http_status as i32, summarize_error_body(bytes))
+}
+
+/// RFC-7807 problem bodies (`{"type":"urn:gr:err:...","title":...,"detail":...}`)
+/// carry no `message`: their title, plus the detail when there is one,
+/// instead of the raw JSON.
+fn problem_message(json: &serde_json::Value) -> Option<String> {
+	let text = |key: &str| {
+		json.get(key)
+			.and_then(|v| v.as_str())
+			.map(str::trim)
+			.filter(|v| !v.is_empty())
+	};
+	let title = text("title")?;
+	Some(match text("detail") {
+		Some(detail) => format!("{title}: {detail}"),
+		None => title.to_owned(),
+	})
 }
 
 fn summarize_error_body(bytes: &[u8]) -> String {
@@ -607,6 +627,18 @@ mod tests {
 		);
 		assert!(
 			matches!(err, GrindrError::Api { code: 4, ref message } if message == "Media not allowed"),
+			"got {err:?}"
+		);
+	}
+
+	#[test]
+	fn from_response_reads_problem_bodies_without_message() {
+		let err = GrindrError::from_response(
+			403,
+			br#"{"type":"urn:gr:err:unauthorized_action","title":"Unauthorized action","status":403,"detail":"registration closed"}"#,
+		);
+		assert!(
+			matches!(err, GrindrError::Api { code: 403, ref message } if message == "Unauthorized action: registration closed"),
 			"got {err:?}"
 		);
 	}

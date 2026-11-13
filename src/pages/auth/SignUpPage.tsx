@@ -16,6 +16,8 @@ import { useServerInfo } from "../../services/serverConfig";
 import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
 
 const MIN_AGE = 18;
+// Earliest date of birth the Free Grind server accepts; anything before is a typo.
+const MIN_BIRTHDAY = "1900-01-01";
 
 /** Latest birthday (YYYY-MM-DD) that is MIN_AGE today, for the date input's max. */
 function latestAllowedBirthday(): string {
@@ -83,11 +85,13 @@ export function SignUpPage() {
 	const maxBirthday = latestAllowedBirthday();
 	const birthdayMillis = birthdayToMillis(birthday);
 	const isTooYoung = birthday !== "" && birthday > maxBirthday;
+	const isTooOld = birthday !== "" && birthday < MIN_BIRTHDAY;
 	const isFormValid =
 		email.trim().length > 0 &&
 		password.length > 0 &&
 		birthdayMillis !== null &&
-		!isTooYoung;
+		!isTooYoung &&
+		!isTooOld;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -209,11 +213,14 @@ export function SignUpPage() {
 							value={birthday}
 							onChange={(e) => setBirthday(e.target.value)}
 							required
+							min={MIN_BIRTHDAY}
 							max={maxBirthday}
 							autoComplete="bday"
 						/>
 						{isTooYoung ? (
 							<p className="text-xs text-[#f87171]">{t("auth.sign_up.too_young", { age: MIN_AGE, defaultValue: "You must be at least {{age}} years old." })}</p>
+						) : isTooOld ? (
+							<p className="text-xs text-[#f87171]">{t("auth.sign_up.invalid_birthday", { defaultValue: "Please enter a valid date of birth." })}</p>
 						) : null}
 					</div>
 					<AuthSubmitSection

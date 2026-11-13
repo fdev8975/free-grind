@@ -1570,6 +1570,13 @@
       "title": "Sign Up",
       "subtitle": "Create a new Grindr account with your email and password.",
       "add_profile_subtitle": "Create a new account to add it to this app.",
+      "invalid_birthday": "Please enter a valid date of birth.",
+      "errors": {
+        "invalid_input": "Please check your email address and date of birth. You must be at least 18 years old.",
+        "email_taken": "An account with this email address already exists.",
+        "password_complexity": "This password isn't strong enough. Choose a longer one with a mix of letters, numbers and symbols.",
+        "failed": "Sign-up failed. Please try again."
+      },
       "have_account_label": "Already have an account?",
       "have_account_action": "Sign in",
       "birthday_label": "Date of birth",

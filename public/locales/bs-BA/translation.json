@@ -1556,6 +1556,13 @@
             "title": "Registracija",
             "subtitle": "Napravi novi Grindr račun sa svojim e-mailom i lozinkom.",
             "add_profile_subtitle": "Napravi novi račun da ga dodaš u ovu aplikaciju.",
+            "invalid_birthday": "Unesi ispravan datum rođenja.",
+            "errors": {
+                "invalid_input": "Provjeri svoju e-mail adresu i datum rođenja. Moraš imati najmanje 18 godina.",
+                "email_taken": "Račun s ovom e-mail adresom već postoji.",
+                "password_complexity": "Ova lozinka nije dovoljno jaka. Odaberi dužu s kombinacijom slova, brojeva i simbola.",
+                "failed": "Registracija nije uspjela. Pokušaj ponovo."
+            },
             "have_account_label": "Već imaš račun?",
             "have_account_action": "Prijavi se",
             "birthday_label": "Datum rođenja",

@@ -1570,6 +1570,13 @@
             "title": "Registrieren",
             "subtitle": "Erstelle ein neues Grindr-Konto mit deiner E-Mail und deinem Passwort.",
             "add_profile_subtitle": "Erstelle ein neues Konto, um es in dieser App hinzuzufügen.",
+            "invalid_birthday": "Bitte gib ein gültiges Geburtsdatum ein.",
+            "errors": {
+                "invalid_input": "Bitte überprüfe deine E-Mail-Adresse und dein Geburtsdatum. Du musst mindestens 18 Jahre alt sein.",
+                "email_taken": "Mit dieser E-Mail-Adresse gibt es bereits ein Konto.",
+                "password_complexity": "Dieses Passwort ist nicht sicher genug. Wähle ein längeres mit Buchstaben, Zahlen und Sonderzeichen.",
+                "failed": "Registrierung fehlgeschlagen. Bitte versuche es erneut."
+            },
             "have_account_label": "Hast du bereits ein Konto?",
             "have_account_action": "Anmelden",
             "birthday_label": "Geburtsdatum",
