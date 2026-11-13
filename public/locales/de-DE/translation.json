@@ -3367,6 +3367,7 @@
         "provider_default_tagline": "Integriert · kein API-Key",
         "server_info_official": "Nachrichten werden vom Server übersetzt. Das ist eine kostenpflichtige Funktion: Ohne Abo schlägt die Übersetzung fehl.",
         "server_info_custom": "Nachrichten werden vom Server übersetzt, bei dem du angemeldet bist. Ist dort keine Übersetzung eingerichtet, schlägt sie mit einem Hinweis fehl.",
+        "error_server_limit": "Du hast dein Übersetzungslimit erreicht. Versuch es später nochmal.",
         "error_server_paywall": "Übersetzen erfordert ein Abo.",
         "error_server_not_included": "Übersetzen ist für dein Konto auf diesem Server nicht verfügbar.",
         "error_server_not_configured": "Auf diesem Server ist keine Übersetzung eingerichtet. Wähle unter Einstellungen → Übersetzung einen anderen Anbieter.",

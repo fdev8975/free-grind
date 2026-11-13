@@ -3451,6 +3451,7 @@
     "provider_default_tagline": "Built in · no API key",
     "server_info_official": "Messages are translated by the server. This is a paid feature: without a subscription, translating fails.",
     "server_info_custom": "Messages are translated by the server you're signed in to. If it has no translation set up, translating fails with a notice.",
+    "error_server_limit": "You've reached your translation limit. Try again later.",
     "error_server_paywall": "Translation requires a subscription.",
     "error_server_not_included": "Translation isn't available for your account on this server.",
     "error_server_not_configured": "Translation isn't set up on this server. Pick another provider in Settings → Translation.",

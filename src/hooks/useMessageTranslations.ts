@@ -14,6 +14,7 @@ import {
 	isAutoTranslateEnabled,
 	isTranslationAvailable,
 	isTranslationKeyError,
+	isTranslationLimitError,
 	isTranslationNotConfiguredError,
 	isTranslationPaywallError,
 	isTranslationQuotaError,
@@ -146,7 +147,9 @@ export function useMessageTranslations(
 		(error: unknown) => {
 			if (provider === "default") {
 				toast.error(
-					isTranslationPaywallError(error)
+					isTranslationLimitError(error)
+						? t("auto_translate.error_server_limit", { defaultValue: "You've reached your translation limit. Try again later." })
+						: isTranslationPaywallError(error)
 						? isCustomServer()
 							? t("auto_translate.error_server_not_included", { defaultValue: "Translation isn't available for your account on this server." })
 							: t("auto_translate.error_server_paywall", { defaultValue: "Translation requires a subscription." })

@@ -189,11 +189,14 @@ export type TranslationResult = {
 
 export class TranslationError extends Error {
 	readonly status: number | null;
+	/** Problem type of a server error, e.g. "urn:gr:err:entitlement_limit". */
+	readonly problemType: string | null;
 
-	constructor(message: string, status: number | null) {
+	constructor(message: string, status: number | null, problemType: string | null = null) {
 		super(message);
 		this.name = "TranslationError";
 		this.status = status;
+		this.problemType = problemType;
 	}
 }
 
@@ -207,6 +210,11 @@ export function isTranslationKeyError(error: unknown): error is TranslationError
 /** True when the server refused because the feature or its allowance isn't part of the account's plan (402). */
 export function isTranslationPaywallError(error: unknown): error is TranslationError {
 	return error instanceof TranslationError && error.status === 402;
+}
+
+/** True when the account's translation allowance (e.g. per day) is used up, as opposed to the feature being off. */
+export function isTranslationLimitError(error: unknown): error is TranslationError {
+	return isTranslationPaywallError(error) && error.problemType === "urn:gr:err:entitlement_limit";
 }
 
 /** True when the signed-in server has no translation set up (Free Grind server without a Google key). */
@@ -632,7 +640,7 @@ export async function translateMessageOnServer(
 		return { translatedText: translatedText.trim(), detectedSourceLanguage: null };
 	} catch (error) {
 		const status = typeof (error as { status?: unknown })?.status === "number" ? (error as { status: number }).status : null;
-		const payload = (error as { payload?: unknown })?.payload as { detail?: unknown; title?: unknown } | null | undefined;
+		const payload = (error as { payload?: unknown })?.payload as { detail?: unknown; title?: unknown; type?: unknown } | null | undefined;
 		const message =
 			typeof payload?.detail === "string" && payload.detail
 				? payload.detail
@@ -641,6 +649,6 @@ export async function translateMessageOnServer(
 					: error instanceof Error
 						? error.message
 						: String(error);
-		throw new TranslationError(message, status);
+		throw new TranslationError(message, status, typeof payload?.type === "string" ? payload.type : null);
 	}
 }
