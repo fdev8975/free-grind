@@ -2284,6 +2284,7 @@
         "profile_id": "ID profila",
         "profile_id_copied": "ID profila kopiran v odložišče",
         "estimated_joined": "Pridružen {{date}} (ocena)",
+        "joined": "Pridružen {{date}}",
         "last_updated": "Profil posodobljen: {{date}}",
         "snapshot_banner": {
             "title": "Prikazan je shranjen profil",

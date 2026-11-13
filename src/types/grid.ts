@@ -90,6 +90,9 @@ export const profileDetailItemSchema = z.object({
 	lastViewed: z.number().nullable().optional(),
 	lastChatTimestamp: z.number().nullable().optional(),
 	isNew: z.boolean().optional(),
+	// Account creation (ms). Only the Free Grind server sends it, and only with
+	// the account-creation-date flag; Grindr's doesn't.
+	created: z.number().nullable().optional(),
 	lastUpdatedTime: z.number().nullable().optional(),
 	distance: z.number().nullable().optional(),
 	approximateDistance: z.boolean().optional(),

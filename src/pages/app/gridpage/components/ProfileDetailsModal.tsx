@@ -55,7 +55,6 @@ import { formatRelativeTime } from "../../../../utils/relativeTime";
 import { useInterestData } from "../../../../hooks/queries/useInterestQueries";
 import { getTapEmoji } from "../../interest/interestUtils";
 import {
-	formatEstimatedAccountCreation,
 	formatDistance,
 	formatEnumArray,
 	formatEnumValue,
@@ -67,6 +66,7 @@ import {
 	shouldHideField,
 } from "../utils";
 import { ProfileDetailsContent } from "./ProfileDetailsContent";
+import { useAccountCreationLabel } from "../hooks/useAccountCreationLabel";
 import { OwnProfileEditPanel, type OwnPhotoControls } from "../../profile-editor/OwnProfileEditPanel";
 import { useCarouselSwipe } from "./useCarouselSwipe";
 import { ConfirmDialog } from "../../../../components/ui/confirm-dialog";
@@ -669,7 +669,8 @@ export function ProfileDetailsModal({
 		profileOnlineUntil,
 	);
 	const { label: profileStatusLabel, level: profileStatusLevel } = getProfileStatusDisplay(profileStatusMeta, t, showOnlineTimeLeft);
-	const estimatedCreatedAt = formatEstimatedAccountCreation(activeProfile?.profileId, t);
+	const accountCreationLabel = useAccountCreationLabel();
+	const accountCreatedLabel = accountCreationLabel(activeProfile);
 	const { data: travelPlans } = useTravelPlans(activeProfile?.profileId);
 	const visualStateValue = typeof tapVisualState === "string" ? tapVisualState : tapVisualState.state;
 	const effectiveTapVisualState = isTappingProfile ? "single" : visualStateValue;
@@ -2557,7 +2558,7 @@ export function ProfileDetailsModal({
 				mobileCarouselPhotoIndex={0}
 				openPhotoViewer={() => {}}
 				activeProfileName={detail.displayName?.trim() || t("common.unknown_display_name")}
-				estimatedCreatedAt={formatEstimatedAccountCreation(detail.profileId, t)}
+				accountCreatedLabel={accountCreationLabel(detail)}
 				travelPlans={queryClient.getQueryData<TravelPlan[]>(["travel-plans", String(detail.profileId)])}
 				profileStatusLabel={status.label}
 				profileStatusLevel={status.level}
@@ -2846,7 +2847,7 @@ export function ProfileDetailsModal({
 							mobileCarouselPhotoIndex={mobileCarouselPhotoIndex}
 							openPhotoViewer={openPhotoViewer}
 							activeProfileName={activeProfileName}
-							estimatedCreatedAt={estimatedCreatedAt}
+							accountCreatedLabel={accountCreatedLabel}
 							travelPlans={travelPlans}
 							profileStatusLabel={profileStatusLabel}
 							profileStatusLevel={profileStatusLevel}
@@ -3219,7 +3220,7 @@ export function ProfileDetailsModal({
 											mobileCarouselPhotoIndex={mobileCarouselPhotoIndex}
 											openPhotoViewer={openPhotoViewer}
 											activeProfileName={activeProfileName}
-											estimatedCreatedAt={estimatedCreatedAt}
+											accountCreatedLabel={accountCreatedLabel}
 											travelPlans={travelPlans}
 											profileStatusLabel={profileStatusLabel}
 											profileStatusLevel={profileStatusLevel}

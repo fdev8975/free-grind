@@ -2268,6 +2268,7 @@
         "profile_id": "ID профила",
         "profile_id_copied": "ID профила је копиран у привремену меморију",
         "estimated_joined": "Придружио се {{date}} (процена)",
+        "joined": "Придружио се {{date}}",
         "last_updated": "Профил ажуриран: {{date}}",
         "snapshot_banner": {
             "title": "Приказ сачуваног профила",

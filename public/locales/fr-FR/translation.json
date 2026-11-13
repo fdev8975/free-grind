@@ -2266,6 +2266,7 @@
         "profile_id": "ID de profil",
         "profile_id_copied": "ID de profil copié dans le presse-papiers",
         "estimated_joined": "A rejoint le {{date}} (estimation)",
+        "joined": "A rejoint le {{date}}",
         "last_updated": "Profil mis à jour : {{date}}",
         "snapshot_banner": {
             "title": "Profil enregistré affiché",

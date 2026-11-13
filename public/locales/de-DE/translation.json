@@ -2299,6 +2299,7 @@
         "profile_id": "Profil-ID",
         "profile_id_copied": "Profil-ID in die Zwischenablage kopiert",
         "estimated_joined": "Beigetreten {{date}} (geschätzt)",
+        "joined": "Beigetreten {{date}}",
         "last_updated": "Profil aktualisiert: {{date}}",
         "snapshot_banner": {
             "title": "Gespeichertes Profil wird angezeigt",

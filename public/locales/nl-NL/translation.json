@@ -2248,6 +2248,7 @@
         "profile_id": "Profiel-ID",
         "profile_id_copied": "Profiel-ID gekopieerd naar klembord",
         "estimated_joined": "Lid sinds {{date}} (geschat)",
+        "joined": "Lid sinds {{date}}",
         "last_updated": "Profiel bijgewerkt: {{date}}",
         "snapshot_banner": {
             "title": "Opgeslagen profiel wordt getoond",

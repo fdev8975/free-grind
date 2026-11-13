@@ -2320,6 +2320,7 @@
         "profile_id": "البروفايل",
         "profile_id_copied": "تم نسخ معرّف البروفايل إلى الحافظة",
         "estimated_joined": "انضم {{date}} (تقريبًا)",
+        "joined": "انضم {{date}}",
         "last_updated": "البروفايل اتحدّث: {{date}}",
         "snapshot_banner": {
             "title": "عرض بروفايل محفوظ",

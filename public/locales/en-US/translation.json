@@ -2299,6 +2299,7 @@
     "profile_id": "Profile ID",
     "profile_id_copied": "Profile ID copied to clipboard",
     "estimated_joined": "Joined {{date}} (estimated)",
+    "joined": "Joined {{date}}",
     "last_updated": "Profile updated {{date}}",
     "snapshot_banner": {
       "title": "Showing saved profile",

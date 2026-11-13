@@ -101,15 +101,7 @@ function getDateTimeFormatter(lng: string, options: Intl.DateTimeFormatOptions) 
 	return dateTimeFormatterCache.get(key)!;
 }
 
-export function formatEstimatedAccountCreation(
-	profileId: string | number | null | undefined,
-	t?: (key: string, options?: any) => string,
-): string {
-	const timestamp = estimateAccountCreationTimestamp(profileId);
-	if (timestamp == null) {
-		return t ? t("browse_page.unknown") : "Unknown";
-	}
-
+export function formatAccountCreationDate(timestamp: number): string {
 	const formatter = getDateTimeFormatter(i18n.language, {
 		year: "numeric",
 		month: "short",

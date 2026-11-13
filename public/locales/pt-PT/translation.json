@@ -2266,6 +2266,7 @@
         "profile_id": "ID do perfil",
         "profile_id_copied": "ID do perfil copiado para a área de transferência",
         "estimated_joined": "Entrou em {{date}} (estimado)",
+        "joined": "Entrou em {{date}}",
         "last_updated": "Perfil atualizado: {{date}}",
         "snapshot_banner": {
             "title": "A mostrar perfil guardado",

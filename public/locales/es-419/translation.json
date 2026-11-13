@@ -2266,6 +2266,7 @@
         "profile_id": "ID de Perfil",
         "profile_id_copied": "ID del perfil copiado en portapapeles",
         "estimated_joined": "Se unió el {{date}} (estimado)",
+        "joined": "Se unió el {{date}}",
         "last_updated": "Perfil actualizado: {{date}}",
         "snapshot_banner": {
             "title": "Mostrando perfil guardado",

@@ -140,7 +140,8 @@ type ProfileDetailsContentProps = {
 	onPhotoIndexChange?: (index: number) => void;
 	openPhotoViewer: (index: number) => void;
 	activeProfileName: string;
-	estimatedCreatedAt: string;
+	/** "Joined …" line (real or estimated date); null hides it. */
+	accountCreatedLabel: string | null;
 	travelPlans?: TravelPlan[];
 	profileStatusLabel: string;
 	profileStatusLevel: "online" | "ending_soon" | "recent" | "offline";
@@ -194,7 +195,7 @@ export function ProfileDetailsContent({
 	onPhotoIndexChange,
 	openPhotoViewer,
 	activeProfileName,
-	estimatedCreatedAt,
+	accountCreatedLabel,
 	travelPlans,
 	profileStatusLabel,
 	profileStatusLevel,
@@ -935,10 +936,12 @@ export function ProfileDetailsContent({
 						<Hash className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
 						<p className="text-sm text-[var(--text-muted)] select-text">{activeProfile.profileId}</p>
 					</button>
-					<div className="flex items-center gap-2.5">
-						<Calendar className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
-						<p className="text-sm text-[var(--text-muted)]">{t("profile_details.estimated_joined", { date: estimatedCreatedAt })}</p>
-					</div>
+					{accountCreatedLabel && (
+						<div className="flex items-center gap-2.5">
+							<Calendar className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+							<p className="text-sm text-[var(--text-muted)]">{accountCreatedLabel}</p>
+						</div>
+					)}
 					{typeof activeProfile.lastUpdatedTime === "number" && activeProfile.lastUpdatedTime > 0 && (
 						<div className="flex items-center gap-2.5">
 							<Pencil className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
