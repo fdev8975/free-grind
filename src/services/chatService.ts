@@ -501,18 +501,31 @@ export function createChatService(
 
 		async unsendMessage(payload: ChatMessageMutation) {
 			const safePayload = chatMessageMutationSchema.parse(payload);
-			await withEntitlementBypass(
-				t("entitlement_bypass.reason_unsend", {
-					defaultValue: "Unsending a message requires a Grindr subscription.",
-				}),
-				async () => {
-					const response = await fetchRest("/v4/chat/message/unsend", {
-						method: "POST",
-						body: safePayload,
-					});
-					await assertSuccess(response, t("chat.errors.unsend_failed"));
-				},
-			);
+			try {
+				await withEntitlementBypass(
+					t("entitlement_bypass.reason_unsend", {
+						defaultValue: "Unsending a message requires a Grindr subscription.",
+					}),
+					async () => {
+						const response = await fetchRest("/v4/chat/message/unsend", {
+							method: "POST",
+							body: safePayload,
+						});
+						await assertSuccess(response, t("chat.errors.unsend_failed"));
+					},
+				);
+			} catch (error) {
+				// The upstream 402 bodies carry no message, so they'd surface as
+				// the generic "Failed to unsend". Name the actual reason instead:
+				// TieredFeatureProblemResponse (featureValue UnsentMessage) or
+				// EntitlementLimitProblemResponse (daily allowance used up).
+				if (error instanceof ApiFunctionError && isPaywallError(error)) {
+					const type = (error.payload as { type?: unknown }).type;
+					const key = type === "urn:gr:err:entitlement_limit" ? "chat.errors.unsend_daily_limit" : "chat.errors.unsend_not_available";
+					throw new ApiFunctionError(t(key), error.status, error.payload);
+				}
+				throw error;
+			}
 		},
 
 		async deleteMessage(payload: ChatMessageMutation) {

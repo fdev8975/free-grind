@@ -2027,6 +2027,8 @@
       "video_not_sendable": "This device can't convert this video (MKV/WebM) to MP4, so it can't be sent. Convert it to MP4 first.",
       "react_failed": "Failed to react",
       "unsend_failed": "Failed to unsend",
+      "unsend_not_available": "Unsending messages isn't available for your account.",
+      "unsend_daily_limit": "You've reached today's limit for unsending messages.",
       "delete_failed": "Failed to delete",
       "album_remove_failed": "Failed to remove album",
       "album_share_missing_recipient": "Unable to determine recipient for album share",

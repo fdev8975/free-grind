@@ -1992,6 +1992,8 @@
             "video_not_sendable": "Ovaj uređaj ne može konvertirati ovaj video (MKV/WebM) u MP4, pa se ne može poslati. Prvo ga konvertiraj u MP4.",
             "react_failed": "Reagiranje nije uspjelo",
             "unsend_failed": "Povlačenje nije uspjelo",
+            "unsend_not_available": "Povlačenje poruka nije dostupno za tvoj račun.",
+            "unsend_daily_limit": "Dosegnuo/la si današnje ograničenje za povlačenje poruka.",
             "delete_failed": "Brisanje nije uspjelo",
             "album_remove_failed": "Uklanjanje albuma nije uspjelo",
             "album_share_missing_recipient": "Nije moguće odrediti primatelja za dijeljenje albuma",

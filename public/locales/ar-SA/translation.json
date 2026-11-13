@@ -2037,6 +2037,8 @@
             "video_not_sendable": "الجهاز ده مش بيعرف يحوّل الفيديو ده (MKV/WebM) لـ MP4، فمينفعش يتبعت. حوّله لـ MP4 الأول.",
             "react_failed": "فشل الاستجابة",
             "unsend_failed": "فشل إلغاء الإرسال",
+            "unsend_not_available": "سحب الرسائل غير متاح لحسابك.",
+            "unsend_daily_limit": "لقد وصلت إلى الحد اليومي لسحب الرسائل.",
             "delete_failed": "فشل الحذف",
             "album_remove_failed": "فشل حذف الألبوم",
             "album_share_missing_recipient": "تعذر تحديد المستلم لمشاركة الألبوم",

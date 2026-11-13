@@ -1977,6 +1977,8 @@
             "video_not_sendable": "Dit apparaat kan deze video (MKV/WebM) niet naar MP4 converteren, dus hij kan niet worden verstuurd. Converteer hem eerst naar MP4.",
             "react_failed": "Reageren mislukt",
             "unsend_failed": "Intrekken mislukt",
+            "unsend_not_available": "Berichten intrekken is niet beschikbaar voor je account.",
+            "unsend_daily_limit": "Je hebt de daglimiet voor het intrekken van berichten bereikt.",
             "delete_failed": "Verwijderen mislukt",
             "album_remove_failed": "Album verwijderen mislukt",
             "album_share_missing_recipient": "Kan ontvanger voor het delen van album niet bepalen",

@@ -2027,6 +2027,8 @@
             "video_not_sendable": "Dieses Gerät kann das Video (MKV/WebM) nicht in MP4 umwandeln, deshalb kann es nicht gesendet werden. Wandle es vorher in MP4 um.",
             "react_failed": "Reaktion fehlgeschlagen",
             "unsend_failed": "Zurückziehen fehlgeschlagen",
+            "unsend_not_available": "Nachrichten zurückziehen ist für deinen Account nicht verfügbar.",
+            "unsend_daily_limit": "Du hast das heutige Limit zum Zurückziehen von Nachrichten erreicht.",
             "delete_failed": "Löschen fehlgeschlagen",
             "album_remove_failed": "Album konnte nicht entfernt werden",
             "album_share_missing_recipient": "Empfänger für Album-Freigabe konnte nicht ermittelt werden",

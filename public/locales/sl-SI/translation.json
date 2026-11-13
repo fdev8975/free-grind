@@ -2007,6 +2007,8 @@
             "video_not_sendable": "Ta naprava tega videoposnetka (MKV/WebM) ne more pretvoriti v MP4, zato ga ni mogoče poslati. Najprej ga pretvori v MP4.",
             "react_failed": "Odziv ni uspel",
             "unsend_failed": "Preklic pošiljanja ni uspel",
+            "unsend_not_available": "Preklic sporočil za tvoj račun ni na voljo.",
+            "unsend_daily_limit": "Dosegel/la si današnjo omejitev preklica sporočil.",
             "delete_failed": "Brisanje ni uspelo",
             "album_remove_failed": "Odstranitev albuma ni uspela",
             "album_share_missing_recipient": "Prejemnika za deljenje albuma ni mogoče določiti",

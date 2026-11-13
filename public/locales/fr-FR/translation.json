@@ -1992,6 +1992,8 @@
             "video_not_sendable": "Cet appareil ne peut pas convertir cette vidéo (MKV/WebM) en MP4, elle ne peut donc pas être envoyée. Convertissez-la d'abord en MP4.",
             "react_failed": "Échec de la réaction",
             "unsend_failed": "Échec de l'annulation de l'envoi",
+            "unsend_not_available": "Le retrait de messages n'est pas disponible pour ton compte.",
+            "unsend_daily_limit": "Tu as atteint la limite du jour pour retirer des messages.",
             "delete_failed": "Échec de la suppression",
             "album_remove_failed": "Échec de la suppression de l'album",
             "album_share_missing_recipient": "Impossible de déterminer le destinataire pour le partage d'album",
