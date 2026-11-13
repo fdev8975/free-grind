@@ -1,6 +1,6 @@
 import { useAuth } from "../../contexts/useAuth";
 import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2, Settings2 } from "lucide-react";
-import { useFeatureFlag } from "../../services/assignmentsStore";
+import { useIsBrowseMapEnabled } from "../../services/assignmentsStore";
 import { requestProfileShare, useCanShareProfiles } from "../../services/profileShare";
 import { MapVisibilityControls, useDistanceMode } from "./MapPrivacySettings";
 import { GridMap, hasCardPosition, type MapCard } from "./gridpage/components/GridMap";
@@ -631,8 +631,8 @@ export function GridPage() {
 		[browseRequestFilters, getBrowseCardsWithTimeout],
 	);
 
-	// Grid map view (flag "browse-maps-v1_5")
-	const isMapFlagOn = useFeatureFlag("browse-maps-v1_5");
+	// Grid map view (experiment "cascade-browse": treatment / treatment-2)
+	const isMapFlagOn = useIsBrowseMapEnabled();
 	const canShareProfiles = useCanShareProfiles();
 	const [gridViewMode, setGridViewMode] = useState<GridViewMode>(() => readGridViewMode(userId));
 	useEffect(() => {

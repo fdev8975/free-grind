@@ -212,6 +212,15 @@ export function useCanSendExpiringAlbums(): boolean {
 	return !useIsFreeTier();
 }
 
+/**
+ * Whether the browse grid has its map view: the `cascade-browse` experiment's
+ * treatment arms (the server only sends map positions for those).
+ */
+export function useIsBrowseMapEnabled(): boolean {
+	const variant = useAssignment("cascade-browse")?.value;
+	return variant === "treatment" || variant === "treatment-2";
+}
+
 /** Reactive feature check: false while unknown, so gated UI stays hidden by default. */
 export function useFeatureFlag(key: string): boolean {
 	const assignment = useAssignment(key);
