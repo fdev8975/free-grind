@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { RestoreStatusEntry } from "../../components/RestoreStatus";
 import { useLogoutToNextAccount } from "../../hooks/useLogoutToNextAccount";
 import { getVersion } from "@tauri-apps/api/app";
-import { RELEASES_URL } from "../../config/links-config";
 import { invoke } from "@tauri-apps/api/core";
 import { PageHeaderBackground } from "../../components/ui/PageHeaderBackground";
 import { FeedScrollContainer } from "../../components/ui/FeedScrollContainer";
@@ -11,30 +10,20 @@ import {
 	AlertCircle,
 	CheckCircle2,
 	ChevronRight,
-	Download,
 	GitBranch,
 	Globe,
 	Languages,
 	Loader2,
 	LogOut,
 	History,
-	Radar,
-	RotateCcw,
 	RefreshCcw,
 	Search,
 	Terminal,
-	Cable,
 	X,
-	ScrollText,
-	Share2,
 	QrCode,
-	Ban,
-	Clock,
-	Pointer,
-	KeyRound,
 } from "lucide-react";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
-import { ArchiveRestoreFilled, BellFilled, BotFilled, BugFilled, ClipboardListFilled, EyeFilled, EyeOffFilled, FileUpFilled, FlaskConicalFilled, GhostFilled, HeartPulseFilled, ImagesFilled, InfoFilled, MegaphoneFilled, GlobeFilled, PaletteFilled, PuzzleFilled, ShieldFilled, TriangleAlertFilled, UserPlusFilled, UserXFilled, ZapFilled } from "../../components/icons/FilledIcons";
+import { ArchiveRestoreFilled, BellFilled, BotFilled, BugFilled, ClipboardListFilled, EyeOffFilled, HeartPulseFilled, InfoFilled, MegaphoneFilled, GlobeFilled, PaletteFilled, PuzzleFilled, ShieldFilled, UserPlusFilled, UserXFilled, ZapFilled } from "../../components/icons/FilledIcons";
 import { useState, useEffect, useMemo, useRef, useSyncExternalStore, type CSSProperties } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -61,49 +50,27 @@ import {
 	type HotswapChannel,
 } from "../../services/hotswap";
 import { ToggleRow } from "../../components/ui/toggle-row";
-import { hasDemoProfileImages, isDemoProfileImagesEnabled, setDemoProfileImagesEnabled } from "../../utils/demoProfileImages";
-import { setChatArchiveEnabled, useChatArchiveEnabled } from "../../services/chatArchiveMode";
 import { UpdateChannelSheet } from "./UpdateChannelSheet";
 import { TransferAccountSheet } from "./TransferAccountSheet";
-import { FingerprintCheckSheet } from "./settings-dev/DiagnosticsSheets";
-import { SeasonalOverlaysSheet } from "./settings-dev/SeasonalOverlaysSheet";
-import { NATIVE_SHEET_BG, SheetActionList, afterSheetClose } from "../../components/ui/action-sheet";
+import { NATIVE_SHEET_BG } from "../../components/ui/action-sheet";
 import { ControlledBottomSheet } from "../../components/ui/controlled-sheet";
 import { SHEET_FIELD_CLASS } from "../../components/ui/sheet-section";
 import { cn } from "../../utils/cn";
 import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
 import { ConfirmDialog } from "../../components/ui/confirm-dialog";
-import { useFingerprintCheck } from "../../components/FingerprintCheckButton";
 import { VersionAnnouncement } from "../../components/VersionAnnouncement";
 import { FullscreenPortal } from "../../components/FullscreenPrompt";
 import { VERSION_ANNOUNCEMENTS } from "../../data/versionAnnouncements";
 import { OutdatedVersionPromptView, fetchLatestRelease, isOlderVersion, type ReleaseInfo } from "../../components/OutdatedVersionPrompt";
-import { AccountStatusPromptView } from "../../components/AccountStatusPrompt";
-import { TestReminderPromptView } from "../../components/TestReminderPrompt";
-import { TokenExpiredPromptView } from "../../components/TokenExpiredPrompt";
-import type { AccountStatus, SavedAccountMeta } from "../../contexts/auth-context";
+import type { SavedAccountMeta } from "../../contexts/auth-context";
 import { areUpdateChecksEnabled, setUpdateChecksEnabled, subscribeUpdateChecks } from "../../services/updateChecks";
 import { Avatar } from "../../components/ui/avatar";
 import { getSavedAccountProfile, getSavedAccountThumbUrl, removeSavedAccountProfile, useSavedAccountProfiles } from "../../services/savedAccountProfiles";
 import { FREE_GRIND_SERVER_NAME } from "../../services/serverConfig";
-import { isAndroid, isIos } from "../../services/saveMedia";
-import { saveIssueLogsFile } from "../../utils/issueTelemetry";
 import { useSettingsSearchIndex } from "../../data/settingsSearchIndex";
 import { isSexualHealthEnabled } from "../../utils/optionalFeatures";
-import { replayOnboarding } from "../../utils/onboardingStorage";
-import { resetGridGesturesIntro } from "./gridpage/components/GridGesturesIntro";
-import { resetInterestOnboarding } from "./interest/InterestOnboardingModal";
-import { replayRestoreOffer } from "../../utils/restoreOfferStorage";
-import { showLegalAgreementsPrompt } from "../../utils/legalAgreementsDebug";
-import { showAccountWarningsPrompt } from "../../utils/accountWarningsDebug";
-import { showSharePickerDebug } from "../../utils/sharePickerDebug";
-import { showLgbtqRiskCountryWarning } from "../../utils/lgbtqRiskCountryDebug";
 import { GITHUB_ISSUES_URL, GITHUB_NEW_ISSUE_URL, openExternalUrl } from "../../utils/githubIssues";
 import { SheetClose, SheetCloseButton, SHEET_FOOTER_CLASS, sheetButtonClass } from "../../components/ui/bottom-sheet";
-
-// Always previews whichever entry was added/edited most recently, regardless
-// of whether it matches the app's current running version yet.
-const LATEST_ANNOUNCEMENT = VERSION_ANNOUNCEMENTS[VERSION_ANNOUNCEMENTS.length - 1] ?? null;
 
 /**
  * "What's new" for the running version: its own entry (a pre-release shares
@@ -121,53 +88,6 @@ function findCurrentAnnouncement(appVersion: string) {
 		)[0] ?? null
 	);
 }
-const PREVIEW_RELEASE_INFO = {
-	latestVersion: "9.9.9",
-	releasesUrl: RELEASES_URL,
-	commit: "development",
-	releases: [
-		{ version: "9.9.9", publishedAt: new Date(Date.now() - 2 * 86_400_000).toISOString() },
-		{ version: "9.9.8", publishedAt: new Date(Date.now() - 12 * 86_400_000).toISOString() },
-		{ version: import.meta.env.VITE_APP_VERSION, publishedAt: new Date(Date.now() - 30 * 86_400_000).toISOString() },
-	],
-};
-const PREVIEW_BAN_STATUS: AccountStatus = {
-	kind: "banned",
-	info: { kind: "profile", code: 27, message: "Profile is banned", subReason: "DRUG_SALES", automated: true },
-	profileId: null,
-};
-const PREVIEW_DEVICE_BAN_STATUS: AccountStatus = {
-	kind: "banned",
-	info: { kind: "device", code: 28, message: "Account banned" },
-	profileId: null,
-};
-const PREVIEW_NETWORK_BAN_STATUS: AccountStatus = {
-	kind: "banned",
-	info: { kind: "network", code: 31, message: "Suspicious network" },
-	profileId: null,
-};
-const PREVIEW_UNDERAGE_BAN_STATUS: AccountStatus = {
-	kind: "banned",
-	info: { kind: "underage", code: 35, message: "Underage", subReason: "UNDERAGE_ACCESS", automated: false },
-	profileId: null,
-};
-// Built on selection so the expiry is relative to now: still running, or
-// already over with the ban agreement waiting to be accepted.
-function previewTimedBanStatus(expired: boolean): AccountStatus {
-	return {
-		kind: "restriction",
-		restriction: {
-			kind: "timedBan",
-			// BOT_ACTIVITY is one of the timed bans that offer an appeal.
-			reason: expired ? null : "HARASSMENT",
-			subReason: expired ? "BOT_ACTIVITY" : "MILD_INSULTS",
-			automated: true,
-			expiresAt: Math.floor(Date.now() / 1000) + (expired ? -60 * 60 : 2 * 24 * 60 * 60),
-			agreementCompleted: expired ? false : null,
-		},
-	};
-}
-
 function getErrorMessage(error: unknown, fallback: string): string {
 	if (error instanceof Error && error.message) {
 		return error.message;
@@ -394,35 +314,13 @@ export function SettingsPage() {
 	const [logoutConfirmTarget, setLogoutConfirmTarget] = useState<"active" | string | null>(null);
 	const navigate = useNavigate();
 	const logoutToNextAccount = useLogoutToNextAccount();
-	const { developerMode, showDebugInfo, setPreferences } = usePreferences();
-	const handleExportLogs = async () => {
-		try {
-			const fileName = await saveIssueLogsFile();
-			toast.success(
-				isAndroid() || !isIos()
-					? `Saved to Downloads/FreeGrind/${fileName}`
-					: `Saved to Files → On My iPhone/iPad → Free Grind/${fileName}`,
-			);
-		} catch (error) {
-			toast.error(error instanceof Error ? error.message : "Export failed");
-		}
-	};
-	const [previewAnnouncement, setPreviewAnnouncement] = useState(false);
-	const [previewOutdatedPrompt, setPreviewOutdatedPrompt] = useState(false);
-	const [previewAccountStatus, setPreviewAccountStatus] = useState<AccountStatus>(null);
-	const [previewTestReminder, setPreviewTestReminder] = useState(false);
-	const [previewTokenExpired, setPreviewTokenExpired] = useState(false);
+	const { developerMode } = usePreferences();
 	const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
 	// App release found by a manual check — shown as the APK update prompt.
 	const [appUpdateRelease, setAppUpdateRelease] = useState<ReleaseInfo | null>(null);
 	const updateChecksEnabled = useSyncExternalStore(subscribeUpdateChecks, areUpdateChecksEnabled);
 	const [isSwitchingChannel, setIsSwitchingChannel] = useState(false);
 	const hotswapAutoUpdate = useSyncExternalStore(subscribeHotswapAutoUpdate, isHotswapAutoUpdateEnabled);
-	const fingerprintCheck = useFingerprintCheck();
-	const [isFingerprintSheetOpen, setIsFingerprintSheetOpen] = useState(false);
-	const [isPreviewsSheetOpen, setIsPreviewsSheetOpen] = useState(false);
-	const [isSeasonalSheetOpen, setIsSeasonalSheetOpen] = useState(false);
-	const isChatArchiveEnabled = useChatArchiveEnabled();
 	const [isChannelSheetOpen, setIsChannelSheetOpen] = useState(false);
 	const [isTransferSheetOpen, setIsTransferSheetOpen] = useState(false);
 	const isDesktop = useDesktopBreakpoint();
@@ -662,18 +560,6 @@ export function SettingsPage() {
 		);
 	};
 
-	if (previewAnnouncement && LATEST_ANNOUNCEMENT) {
-		return (
-			<FullscreenPortal className="z-[300]">
-				<VersionAnnouncement
-					announcement={LATEST_ANNOUNCEMENT}
-					buttonLabel={t("common.close", { defaultValue: "Close" })}
-					onClose={() => setPreviewAnnouncement(false)}
-				/>
-			</FullscreenPortal>
-		);
-	}
-
 	if (showCurrentAnnouncement && currentAnnouncement) {
 		return (
 			<FullscreenPortal className="z-[300]">
@@ -697,50 +583,6 @@ export function SettingsPage() {
 					releaseInfo={appUpdateRelease}
 					onDismiss={() => setAppUpdateRelease(null)}
 					manual
-				/>
-			</FullscreenPortal>
-		);
-	}
-
-	if (previewAccountStatus) {
-		return (
-			<FullscreenPortal className="z-[110]">
-				<AccountStatusPromptView
-					status={previewAccountStatus}
-					backupProfileId={userId}
-					onSignOut={() => setPreviewAccountStatus(null)}
-					onAcceptBanAgreement={async () => setPreviewAccountStatus(null)}
-				/>
-			</FullscreenPortal>
-		);
-	}
-
-	if (previewTokenExpired) {
-		return (
-			<FullscreenPortal className="z-[110]">
-				<TokenExpiredPromptView onSignOut={() => setPreviewTokenExpired(false)} />
-			</FullscreenPortal>
-		);
-	}
-
-	if (previewTestReminder) {
-		return (
-			<FullscreenPortal className="z-[110]">
-				<TestReminderPromptView
-					onSave={() => setPreviewTestReminder(false)}
-					onSkip={() => setPreviewTestReminder(false)}
-				/>
-			</FullscreenPortal>
-		);
-	}
-
-	if (previewOutdatedPrompt) {
-		return (
-			<FullscreenPortal className="z-[110]">
-				<OutdatedVersionPromptView
-					appVersion={import.meta.env.VITE_APP_VERSION}
-					releaseInfo={PREVIEW_RELEASE_INFO}
-					onDismiss={() => setPreviewOutdatedPrompt(false)}
 				/>
 			</FullscreenPortal>
 		);
@@ -1260,94 +1102,17 @@ export function SettingsPage() {
 							</div>
 						</div>
 
-						{/* Dev tools */}
+						{/* Dev tools — all on their own page, see DeveloperPage. */}
 						{developerMode ? (
 							<div>
 								<p className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Developer</p>
 								<div className="native-group">
-									<ToggleRow
-										checked={showDebugInfo}
-										onChange={(checked) => void setPreferences({ showDebugInfo: checked })}
-										icon={<BugFilled className="h-5 w-5" />}
-										iconClass="bg-slate-500/15 text-slate-400"
-										label="Show Debug Overlays"
-										description="Displays source (cache/network) info in the grid."
-									/>
-									<ToggleRow
-										checked={isChatArchiveEnabled}
-										onChange={setChatArchiveEnabled}
-										icon={<ArchiveRestoreFilled className="h-5 w-5" />}
-										iconClass="bg-slate-500/15 text-slate-400"
-										label="Archive Mode"
-										description={isChatArchiveEnabled
-											? "Expiring photos, videos and albums stay viewable after they expire, and unsent messages keep their content."
-											: "Expiring photos, videos and albums expire as sent and use a view only when opened. Unsent messages show as unsent."}
-									/>
 									{navRow(
-										() => setIsSeasonalSheetOpen(true),
-										<GhostFilled className="h-5 w-5" />,
-										"bg-slate-500/15 text-slate-400",
-										"Seasonal Overlays",
-										"Force seasonal themes on outside their dates, or turn them off.",
-									)}
-									{hasDemoProfileImages() && (
-										<ToggleRow
-											checked={isDemoProfileImagesEnabled()}
-											onChange={setDemoProfileImagesEnabled}
-											icon={<ImagesFilled className="h-5 w-5" />}
-											iconClass="bg-slate-500/15 text-slate-400"
-											label="Demo Profile Pictures"
-											description="Replaces every profile photo with a bundled demo picture, for screenshots. Reloads the app."
-										/>
-									)}
-									{navRow(
-										() => navigate("/settings/api-inspector"),
+										() => navigate("/settings/developer"),
 										<Terminal className="h-5 w-5" />,
 										"bg-slate-500/15 text-slate-400",
-										t("settings.api_inspector"),
-										t("settings.api_inspector_desc"),
-									)}
-									{navRow(
-										() => navigate("/settings/ws-explorer"),
-										<Cable className="h-5 w-5" />,
-										"bg-slate-500/15 text-slate-400",
-										"WebSocket Explorer",
-										"Every realtime frame sent and received, live. Send your own commands too.",
-									)}
-									{navRow(
-										() => void handleExportLogs(),
-										<ScrollText className="h-5 w-5" />,
-										"bg-slate-500/15 text-slate-400",
-										"Export Logs",
-										"Saves recent warnings and errors as a JSON file to attach to a bug report.",
-									)}
-									{navRow(
-										() => navigate("/settings/assignments"),
-										<FlaskConicalFilled className="h-5 w-5" />,
-										"bg-slate-500/15 text-slate-400",
-										"Assignments & Feature Flags",
-										"Server-side flags and A/B experiments assigned to this account.",
-									)}
-									{isAndroid() && navRow(
-										() => navigate("/settings/push-inspector"),
-										<BellFilled className="h-5 w-5" />,
-										"bg-slate-500/15 text-slate-400",
-										"Push Inspector (FCM)",
-										"Every push and notification tap with its full payload, plus the device push token.",
-									)}
-									{navRow(
-										() => setIsFingerprintSheetOpen(true),
-										<Radar className="h-5 w-5" />,
-										"bg-slate-500/15 text-slate-400",
-										"Fingerprint Check",
-										"Verify your HTTP/TLS fingerprint matches OkHttp.",
-									)}
-									{navRow(
-										() => setIsPreviewsSheetOpen(true),
-										<EyeFilled className="h-5 w-5" />,
-										"bg-slate-500/15 text-slate-400",
-										"UI Previews",
-										"Open onboarding, prompts and other one-off screens on demand.",
+										"Developer Options",
+										"Debug toggles, inspectors, diagnostics and UI previews.",
 									)}
 								</div>
 							</div>
@@ -1425,85 +1190,6 @@ export function SettingsPage() {
 					onAddContributor={() => setIsContributorDialogOpen(true)}
 					onClose={() => setIsChannelSheetOpen(false)}
 				/>
-			)}
-
-			{isPreviewsSheetOpen && (
-				<SheetActionList
-					title="UI Previews"
-					onClose={() => setIsPreviewsSheetOpen(false)}
-					isDesktop={isDesktop}
-					expandable
-					// Each preview opens after this sheet has closed (and popped its history entry).
-					actions={[
-						{ key: "onboarding", icon: RotateCcw, label: "Replay Onboarding", description: "The first-launch setup flow.", onSelect: () => afterSheetClose(replayOnboarding) },
-						{
-							key: "grid-gestures",
-							icon: Pointer,
-							label: "Grid Gestures Intro",
-							description: "The one-time tile gestures intro, shown on the grid once profiles load.",
-							onSelect: () => afterSheetClose(() => {
-								resetGridGesturesIntro();
-								navigate("/");
-							}),
-						},
-						{
-							key: "profile-views-intro",
-							icon: EyeFilled,
-							label: "Profile Views Intro",
-							description: "The one-time intro on the Interest page's Views tab.",
-							onSelect: () => afterSheetClose(() => {
-								resetInterestOnboarding();
-								navigate("/interest?tab=views");
-							}),
-						},
-						{ key: "restore", icon: FileUpFilled, label: "Restore Offer", description: "The first-login backup restore dialog.", onSelect: () => afterSheetClose(replayRestoreOffer) },
-						{ key: "legal", icon: ScrollText, label: "Legal Agreements", description: "Terms of Service / Privacy Policy, even if already accepted.", onSelect: () => afterSheetClose(showLegalAgreementsPrompt) },
-						{ key: "ban", icon: Ban, label: "Ban Screen", description: "A permanent profile ban (DRUG_SALES) with its explanation.", onSelect: () => afterSheetClose(() => setPreviewAccountStatus(PREVIEW_BAN_STATUS)) },
-						{ key: "device-ban", icon: Ban, label: "Device Ban Screen", description: "Code 28, often a refused fingerprint rather than a real ban.", onSelect: () => afterSheetClose(() => setPreviewAccountStatus(PREVIEW_DEVICE_BAN_STATUS)) },
-						{ key: "network-ban", icon: Globe, label: "Network Ban Screen", description: "Code 31 (SUSPICIOUS_NETWORK), e.g. a VPN.", onSelect: () => afterSheetClose(() => setPreviewAccountStatus(PREVIEW_NETWORK_BAN_STATUS)) },
-						{ key: "underage-ban", icon: Ban, label: "Underage Ban Screen", description: "Code 35, banned as under 18 by a moderator.", onSelect: () => afterSheetClose(() => setPreviewAccountStatus(PREVIEW_UNDERAGE_BAN_STATUS)) },
-						{ key: "timed-ban", icon: Clock, label: "Timed Ban Screen", description: "A temporary ban (MILD_INSULTS) that ends in two days.", onSelect: () => afterSheetClose(() => setPreviewAccountStatus(previewTimedBanStatus(false))) },
-						{ key: "timed-ban-expired", icon: ScrollText, label: "Ban Agreement Screen", description: "An expired temporary ban (BOT_ACTIVITY, appealable) waiting for its ban agreement.", onSelect: () => afterSheetClose(() => setPreviewAccountStatus(previewTimedBanStatus(true))) },
-						{ key: "token-expired", icon: KeyRound, label: "Token Expired Screen", description: "The \"session expired\" prompt asking to sign in again.", onSelect: () => afterSheetClose(() => setPreviewTokenExpired(true)) },
-						{ key: "test-reminder", icon: HeartPulseFilled, label: "Test Reminder", description: "The HIV test check-up reminder; saving here doesn't touch your profile.", onSelect: () => afterSheetClose(() => setPreviewTestReminder(true)) },
-						{ key: "warnings", icon: TriangleAlertFilled, label: "Account Warnings", description: "The community-guidelines warnings prompt with sample warnings.", onSelect: () => afterSheetClose(showAccountWarningsPrompt) },
-						{ key: "risk-country", icon: ShieldFilled, label: "Risk Country Warning", description: "The safety warning for a location in a dangerous country (Egypt); not remembered.", onSelect: () => afterSheetClose(showLgbtqRiskCountryWarning) },
-						{ key: "share", icon: Share2, label: "Share Picker", description: "The \"Send to…\" chat picker with sample images.", onSelect: () => afterSheetClose(() => void showSharePickerDebug()) },
-						{
-							key: "announcement",
-							icon: MegaphoneFilled,
-							label: "Version Announcement",
-							description: LATEST_ANNOUNCEMENT
-								? LATEST_ANNOUNCEMENT.tagline ? `"${LATEST_ANNOUNCEMENT.tagline}" (v${LATEST_ANNOUNCEMENT.version}).` : `v${LATEST_ANNOUNCEMENT.version}.`
-								: "No version announcement configured yet.",
-							disabled: !LATEST_ANNOUNCEMENT,
-							onSelect: () => afterSheetClose(() => setPreviewAnnouncement(true)),
-						},
-						{ key: "outdated", icon: Download, label: "Outdated Update Prompt", description: "The \"Update Available\" screen for outdated apps.", onSelect: () => afterSheetClose(() => setPreviewOutdatedPrompt(true)) },
-						{
-							key: "ota",
-							icon: RefreshCcw,
-							label: "OTA Update Prompt",
-							description: "The frontend \"Update Available\" screen, with a simulated download.",
-							onSelect: () =>
-								afterSheetClose(() =>
-									showHotswapUpdatePrompt({
-										version: `${frontendVersion}-ota.${getCurrentHotswapChannel()}.${Math.floor(Date.now() / 1000)}`,
-										notes: null,
-										// Any ref works for the diff link; the default branch always has one.
-										commit: "development",
-										preview: true,
-									}),
-								),
-						},
-					]}
-				/>
-			)}
-
-			{isSeasonalSheetOpen && <SeasonalOverlaysSheet onClose={() => setIsSeasonalSheetOpen(false)} />}
-
-			{isFingerprintSheetOpen && (
-				<FingerprintCheckSheet check={fingerprintCheck} onClose={() => setIsFingerprintSheetOpen(false)} />
 			)}
 
 			<ContributorChannelDialog

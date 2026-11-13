@@ -29,6 +29,7 @@ import { ApiInspectorPage } from "./pages/app/ApiInspectorPage.tsx";
 import { PushInspectorPage } from "./pages/app/PushInspectorPage.tsx";
 import { AssignmentsPage } from "./pages/app/AssignmentsPage.tsx";
 import { WebSocketExplorerPage } from "./pages/app/WebSocketExplorerPage.tsx";
+import { DeveloperPage } from "./pages/app/DeveloperPage.tsx";
 import { CustomizabilityPage } from "./pages/app/CustomizabilityPage.tsx";
 import { BehaviorPage } from "./pages/app/BehaviorPage.tsx";
 import { OptionalFeaturesPage } from "./pages/app/OptionalFeaturesPage.tsx";
@@ -300,6 +301,14 @@ export default function App() {
 								<Route path="/settings/transfer-account" element={<Navigate to="/settings#transfer-account" replace />} />
 								<Route path="/settings/block-history" element={<SettingsBlockHistoryPage />} />
 								<Route path="/settings/sexual-health" element={<SexualHealthPage />} />
+								<Route
+									path="/settings/developer"
+									element={
+										<DeveloperModeRoute>
+											<DeveloperPage />
+										</DeveloperModeRoute>
+									}
+								/>
 								<Route
 									path="/settings/api-inspector"
 									element={
