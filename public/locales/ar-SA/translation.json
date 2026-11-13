@@ -2525,7 +2525,8 @@
                 "CHAT_MESSAGE": "رسالة دردشة",
                 "ALBUM": "ألبوم",
                 "RIGHT_NOW_PHOTO": "صورة Right Now",
-                "RIGHT_NOW_TEXT": "نص Right Now"
+                "RIGHT_NOW_TEXT": "نص Right Now",
+                "STORY": "قصة"
             }
         },
         "pause_video": "وقّف",

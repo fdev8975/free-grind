@@ -2471,7 +2471,8 @@
                 "CHAT_MESSAGE": "Mensagem de chat",
                 "ALBUM": "Álbum",
                 "RIGHT_NOW_PHOTO": "Imagem do Right Now",
-                "RIGHT_NOW_TEXT": "Texto do Right Now"
+                "RIGHT_NOW_TEXT": "Texto do Right Now",
+                "STORY": "Story"
             }
         },
         "pause_video": "Pausar",

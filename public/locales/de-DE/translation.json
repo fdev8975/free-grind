@@ -441,6 +441,7 @@
         "request_sent_toast": "Anfrage gesendet",
         "request_error": "Anfrage konnte nicht gesendet werden",
         "request_already_sent": "Du hast für diesen Post schon eine Anfrage gesendet",
+        "report_post": "Post melden",
         "request_post_gone": "Dieser Post ist nicht mehr verfügbar",
         "request_limit": "Du hast dein Limit für Anfragen erreicht. Versuch es später noch mal.",
         "request_answer_post_gone": "Dein Post ist beendet, die Anfrage kann nicht mehr beantwortet werden",
@@ -2486,6 +2487,10 @@
             "submitted_message": "Grindr wird dieses Profil überprüfen.",
             "block_hint": "Du kannst dieses Profil blockieren, damit du es nicht mehr siehst.",
             "done": "Fertig",
+            "post_title": "Post melden",
+            "post_message": "Sende eine Meldung zu diesem Right-Now-Post an Grindr. Wähle den passendsten Grund.",
+            "post_submitted_message": "Grindr wird diesen Post überprüfen.",
+            "already_reported_title": "Bereits gemeldet",
             "reasons": {
                 "SPAM": "Spam / Betrug",
                 "HARASSMENT_BULLYING": "Belästigung oder Mobbing",
@@ -2503,7 +2508,8 @@
                 "CHAT_MESSAGE": "Chatnachricht",
                 "ALBUM": "Album",
                 "RIGHT_NOW_PHOTO": "Right-Now-Bild",
-                "RIGHT_NOW_TEXT": "Right-Now-Text"
+                "RIGHT_NOW_TEXT": "Right-Now-Text",
+                "STORY": "Story"
             }
         },
         "quick_message_placeholder": "Nachricht...",

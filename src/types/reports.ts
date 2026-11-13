@@ -18,6 +18,7 @@ export const REPORT_LOCATIONS = [
 	"ALBUM",
 	"RIGHT_NOW_PHOTO",
 	"RIGHT_NOW_TEXT",
+	"STORY",
 ] as const;
 export type ReportLocation = (typeof REPORT_LOCATIONS)[number];
 
@@ -25,6 +26,17 @@ export interface ProfileReportRequest {
 	reason: ReportReason;
 	comment: string;
 	locations: ReportLocation[];
+	/** The reported Right Now post, when the report is about one. */
+	rightNowInfo?: { postId: number };
+}
+
+/** What a Right Now post report can point at. */
+export const RIGHT_NOW_REPORT_LOCATIONS = ["RIGHT_NOW_PHOTO", "RIGHT_NOW_TEXT"] as const satisfies readonly ReportLocation[];
+
+/** A report you already filed (GET /v3.1|v4/flags/{profileId}, GET /v1/flags/right-now/{postId}). */
+export interface SubmittedReport {
+	status: string | null;
+	createTime: number | null;
 }
 
 /** Spam reports carry no details — the official client always files them against chat. */

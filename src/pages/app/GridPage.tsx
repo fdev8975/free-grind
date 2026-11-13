@@ -77,7 +77,8 @@ import { useIsRightNowLive } from "../../hooks/useIsRightNowLive";
 import type { BrowseFiltersDraft } from "./browse-filters-storage";
 import { SKIP_BLOCK_CONFIRM_KEY, isBlockConfirmSkipped } from "../../utils/blockConfirm";
 import * as chatDb from "../../services/chatDb";
-import { hideProfile as hideProfileLocally, unhideProfile as unhideProfileLocally, GRID_HIDE_STATE_EVENT, type GridHideStateChangeDetail } from "../../services/profileHide";
+import { hideProfile as hideProfileLocally, unhideProfile as unhideProfileLocally } from "../../services/profileHide";
+import { useHiddenProfileIds } from "../../hooks/useHiddenProfileIds";
 import { usePresence } from "../../hooks/usePresence";
 import {
 	acknowledgeNicknameRename,
@@ -307,38 +308,7 @@ export function GridPage() {
 
 	const blockedProfileIds = useMemo(() => new Set(blockedProfileIdsData ?? []), [blockedProfileIdsData]);
 
-	// Local-only, like the chat inbox's hidden-conversation flag — reloaded
-	// whenever the active account's chatDb becomes ready (settingsReady), so
-	// switching accounts also switches which profiles are hidden instead of
-	// leaking the previous account's hidden set into the newly active one.
-	const [hiddenProfileIds, setHiddenProfileIds] = useState<Set<string>>(new Set());
-
-	useEffect(() => {
-		if (!settingsReady) return;
-		void chatDb.listHiddenProfileIds().then((ids) => {
-			setHiddenProfileIds(new Set(ids));
-		});
-	}, [userId, settingsReady]);
-
-	useEffect(() => {
-		const onHideStateChange = (event: Event) => {
-			const detail = (event as CustomEvent<GridHideStateChangeDetail>).detail;
-			if (!detail) return;
-			setHiddenProfileIds((previous) => {
-				const alreadyMatches = previous.has(detail.profileId) === detail.hidden;
-				if (alreadyMatches) return previous;
-				const next = new Set(previous);
-				if (detail.hidden) {
-					next.add(detail.profileId);
-				} else {
-					next.delete(detail.profileId);
-				}
-				return next;
-			});
-		};
-		window.addEventListener(GRID_HIDE_STATE_EVENT, onHideStateChange as EventListener);
-		return () => window.removeEventListener(GRID_HIDE_STATE_EVENT, onHideStateChange as EventListener);
-	}, []);
+	const hiddenProfileIds = useHiddenProfileIds();
 
 	const [mutatingFavoriteProfileId, setMutatingFavoriteProfileId] = useState<string | null>(
 		null,

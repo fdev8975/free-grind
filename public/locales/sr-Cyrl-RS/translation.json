@@ -2473,7 +2473,8 @@
                 "CHAT_MESSAGE": "Порука у чету",
                 "ALBUM": "Албум",
                 "RIGHT_NOW_PHOTO": "Right Now слика",
-                "RIGHT_NOW_TEXT": "Right Now текст"
+                "RIGHT_NOW_TEXT": "Right Now текст",
+                "STORY": "Прича"
             }
         },
         "pause_video": "Пауза",

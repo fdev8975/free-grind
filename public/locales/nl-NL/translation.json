@@ -2453,7 +2453,8 @@
                 "CHAT_MESSAGE": "Chatbericht",
                 "ALBUM": "Album",
                 "RIGHT_NOW_PHOTO": "Right Now-afbeelding",
-                "RIGHT_NOW_TEXT": "Right Now-tekst"
+                "RIGHT_NOW_TEXT": "Right Now-tekst",
+                "STORY": "Verhaal"
             }
         },
         "pause_video": "Pauzeren",

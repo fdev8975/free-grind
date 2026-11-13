@@ -17,7 +17,7 @@ import type { VisitingMode } from "../../types/visiting";
 import { isVisitingMode } from "../../types/visiting";
 import { travelPlansResponseSchema, type TravelPlan, type TravelPlanPayload } from "../../types/travel";
 import { homeLocationSchema, type HomeLocation } from "../../types/home-location";
-import type { ProfileReportRequest } from "../../types/reports";
+import type { ProfileReportRequest, SubmittedReport } from "../../types/reports";
 import { invoke } from "@tauri-apps/api/core";
 import { uploadStagedVideo, type UploadProgress } from "../stagedVideoUpload";
 import { uploadProgressReporter } from "../videoReencode";
@@ -123,6 +123,36 @@ export function createProfileMethods(fetchRest: RestFetcher, t: (key: string, op
 			);
 			await assertSuccess(response, t("profile_details.report.failed"));
 			return { ok: true };
+		},
+
+		/**
+		 * Reports a Right Now post whose author is unknown (a discreet post).
+		 * When the author is known, reportProfile with `rightNowInfo` is used
+		 * instead, like the official client. No reCAPTCHA token here.
+		 */
+		async reportRightNowPost(postId: number, report: ProfileReportRequest): Promise<{ ok: true }> {
+			const body = { reason: report.reason, comment: report.comment, locations: report.locations };
+			const response = await fetchRest(
+				`/v1/flags/right-now/${encodeURIComponent(String(postId))}`,
+				{ method: "POST", body },
+			);
+			await assertSuccess(response, t("profile_details.report.failed"));
+			return { ok: true };
+		},
+
+		/** Our earlier report on a discreet Right Now post, or null when there is none (404). */
+		async getRightNowPostReport(postId: number): Promise<SubmittedReport | null> {
+			const response = await fetchRest(`/v1/flags/right-now/${encodeURIComponent(String(postId))}`);
+			if (response.status === 404) return null;
+			await assertSuccess(response, t("profile_details.report.failed"));
+			const payload = await parseJsonSafe(response);
+			const report = typeof payload === "object" && payload !== null ? (payload as { flagReport?: unknown }).flagReport : null;
+			if (typeof report !== "object" || report === null) return null;
+			const { status, createTime } = report as { status?: unknown; createTime?: unknown };
+			return {
+				status: typeof status === "string" ? status : null,
+				createTime: typeof createTime === "number" ? createTime : null,
+			};
 		},
 
 		async getManagedGenders(): Promise<ManagedGender[]> {

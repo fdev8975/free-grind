@@ -441,6 +441,7 @@
     "request_sent_toast": "Request sent",
     "request_error": "Could not send the request",
     "request_already_sent": "You already sent a request for this post",
+    "report_post": "Report post",
     "request_post_gone": "This post is no longer available",
     "request_limit": "You've reached your limit for requests. Try again later.",
     "request_answer_post_gone": "Your post has ended, so this request can't be answered anymore",
@@ -2486,6 +2487,10 @@
       "submitted_message": "Grindr will review this profile.",
       "block_hint": "You can block this profile so you stop seeing it.",
       "done": "Done",
+      "post_title": "Report post",
+      "post_message": "Send a report about this Right Now post to Grindr. Pick the reason that fits best.",
+      "post_submitted_message": "Grindr will review this post.",
+      "already_reported_title": "Already reported",
       "reasons": {
         "SPAM": "Spam / Scam",
         "HARASSMENT_BULLYING": "Harassment or bullying",
@@ -2503,7 +2508,8 @@
         "CHAT_MESSAGE": "Chat message",
         "ALBUM": "Album",
         "RIGHT_NOW_PHOTO": "Right Now image",
-        "RIGHT_NOW_TEXT": "Right Now text"
+        "RIGHT_NOW_TEXT": "Right Now text",
+        "STORY": "Story"
       }
     },
     "pause_video": "Pause",

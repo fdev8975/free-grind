@@ -2489,7 +2489,8 @@
                 "CHAT_MESSAGE": "Sporočilo v klepetu",
                 "ALBUM": "Album",
                 "RIGHT_NOW_PHOTO": "Slika Right Now",
-                "RIGHT_NOW_TEXT": "Besedilo Right Now"
+                "RIGHT_NOW_TEXT": "Besedilo Right Now",
+                "STORY": "Zgodba"
             }
         },
         "pause_video": "Premor",
