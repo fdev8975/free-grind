@@ -22,6 +22,10 @@ jobs:
   # The bundle is built twice, on separate runners, in the pinned container
   # (ci/build); only a bundle both builds agree on gets signed and published.
   build:
+    # `[skip ota]` in the pushed commit message keeps the current OTA bundle on
+    # surge.sh (it holds only one version per channel), e.g. for a release that
+    # should ship as binaries only.
+    if: ${{ !contains(github.event.head_commit.message, '[skip ota]') }}
     strategy:
       fail-fast: true
       matrix:

@@ -18,7 +18,8 @@ jobs:
   # main releases on every push. development only releases when a push changes
   # the version to a pre-release (`bun run set-version beta`) AND native code
   # changed since the last binary. Frontend-only versions reach every installed
-  # app over OTA (ota-branches.yml), so a new APK would add nothing.
+  # app over OTA (ota-branches.yml), so a new APK would add nothing — unless the
+  # commit says `[skip ota]`: then there's no OTA, and the release carries it all.
   check:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -33,6 +34,7 @@ jobs:
         id: decide
         env:
           BEFORE: ${{ github.event.before }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           version=$(jq -r '.version' package.json)
           if [[ "$GITHUB_EVENT_NAME" != "push" || "$GITHUB_REF_NAME" == "main" ]]; then
@@ -51,7 +53,10 @@ jobs:
               # Same rule as the OTA manifest: if the oldest compatible binary is
               # older than this version, existing apps get it over OTA.
               min_binary=$(node scripts/min-binary-version.mjs)
-              if [[ "$min_binary" == "$version" ]]; then
+              if [[ "$HEAD_MESSAGE" == *"[skip ota]"* ]]; then
+                echo "[skip ota]: no OTA for this version, releasing binaries instead"
+                should_release=true
+              elif [[ "$min_binary" == "$version" ]]; then
                 echo "Native code changed since the last binary, releasing"
                 should_release=true
               else
@@ -122,7 +127,9 @@ jobs:
     needs: [create-release, verify]
     # Pushes to other branches already publish their OTA via ota-branches.yml;
     # a second deploy of the same commit would just race it.
-    if: github.ref_name == 'main'
+    # `[skip ota]` in the pushed commit message leaves surge.sh untouched
+    # (see ota-branches.yml); the release then ships without the OTA bundle.
+    if: github.ref_name == 'main' && !contains(github.event.head_commit.message, '[skip ota]')
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
