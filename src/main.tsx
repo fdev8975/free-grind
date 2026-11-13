@@ -23,6 +23,7 @@ import { installAppLocaleSync } from "./services/appLocaleBridge";
 import { applySystemLanguage } from "./services/systemLanguage";
 import { installApiLocaleSync } from "./services/apiLocale";
 import { installDocumentDirectionSync } from "./services/documentDirection";
+import { installScreenCaptureProtection } from "./services/screenCaptureProtection";
 import "./index.css";
 
 installGlobalCrashHandlers();
@@ -61,6 +62,8 @@ void (async () => {
 		}
 
 		if (isTauri()) {
+			// Before the first render, so no frame reaches a capture unprotected.
+			installScreenCaptureProtection();
 			// Media URLs and the paywall bypass depend on the backend (official
 			// or self-hosted): know it before the first render.
 			await loadServerConfig().catch((err) => {

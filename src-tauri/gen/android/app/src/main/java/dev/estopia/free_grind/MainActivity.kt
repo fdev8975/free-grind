@@ -233,6 +233,10 @@ class MainActivity : TauriActivity() {
       window.isNavigationBarContrastEnforced = false
     }
     super.onCreate(savedInstanceState)
+    // Screenshot protection is on until the frontend says otherwise
+    // (setScreenCaptureProtection, a dev option), so the splash and the
+    // Recents card are covered before any JavaScript runs.
+    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
     // Resolved once up front: both the splash icon below and the Recents
     // (task switcher) card need to match whichever disguise is currently
     // active, since neither otherwise picks that up on their own (see
@@ -425,6 +429,18 @@ class MainActivity : TauriActivity() {
     @JavascriptInterface
     fun markTapSeen(senderId: String?) {
       NotificationPoster.normalizeNullableString(senderId)?.let(NotificationPoster::markTapSeenInForeground)
+    }
+
+    /**
+     * FLAG_SECURE on/off: screenshots and recordings come out black and the
+     * Recents card is blank while it's set (screenCaptureProtection.ts).
+     */
+    @JavascriptInterface
+    fun setScreenCaptureProtection(enabled: Boolean) {
+      runOnUiThread {
+        if (enabled) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+      }
     }
 
     @JavascriptInterface

@@ -14,6 +14,7 @@ import {
 	HeartPulseFilled,
 	ImagesFilled,
 	MegaphoneFilled,
+	ShieldCheckFilled,
 	ShieldFilled,
 	TriangleAlertFilled,
 } from "../../components/icons/FilledIcons";
@@ -33,6 +34,11 @@ import type { AccountStatus } from "../../contexts/auth-context";
 import { VERSION_ANNOUNCEMENTS } from "../../data/versionAnnouncements";
 import { getCurrentHotswapChannel, showHotswapUpdatePrompt } from "../../services/hotswap";
 import { setChatArchiveEnabled, useChatArchiveEnabled } from "../../services/chatArchiveMode";
+import {
+	isScreenCaptureProtectionSupported,
+	setScreenCaptureProtectionEnabled,
+	useScreenCaptureProtectionEnabled,
+} from "../../services/screenCaptureProtection";
 import { isAndroid, isIos } from "../../services/saveMedia";
 import { hasDemoProfileImages, isDemoProfileImagesEnabled, setDemoProfileImagesEnabled } from "../../utils/demoProfileImages";
 import { saveIssueLogsFile } from "../../utils/issueTelemetry";
@@ -144,6 +150,7 @@ export function DeveloperPage() {
 	const { userId } = useAuth();
 	const { showDebugInfo, setPreferences } = usePreferences();
 	const isChatArchiveEnabled = useChatArchiveEnabled();
+	const isScreenCaptureProtected = useScreenCaptureProtectionEnabled();
 	const fingerprintCheck = useFingerprintCheck();
 	const frontendVersion = import.meta.env.VITE_APP_VERSION;
 
@@ -256,6 +263,18 @@ export function DeveloperPage() {
 							iconClass={DEV_ICON_CLASS}
 							label="Demo Profile Pictures"
 							description="Replaces every profile photo with a bundled demo picture, for screenshots. Reloads the app."
+						/>
+					)}
+					{isScreenCaptureProtectionSupported() && (
+						<ToggleRow
+							checked={isScreenCaptureProtected}
+							onChange={setScreenCaptureProtectionEnabled}
+							icon={<ShieldCheckFilled className="h-5 w-5" />}
+							iconClass={DEV_ICON_CLASS}
+							label="Screenshot Protection"
+							description={isScreenCaptureProtected
+								? "Screenshots, screen recordings and screen sharing show the app blank."
+								: "Off: the app can be captured in screenshots, recordings and screen sharing."}
 						/>
 					)}
 				</Section>
