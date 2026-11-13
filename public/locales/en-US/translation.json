@@ -661,6 +661,7 @@
     "view_map": "Map",
     "view_list": "Grid",
     "map_empty": "Nobody nearby shares their location on the map.",
+    "location_preferences": "Location Preferences",
     "share_distance": {
       "title": "Share Distance",
       "description": "Choose how your distance appears to others.",
@@ -1175,6 +1176,7 @@
     "logout_description": "You will be signed out of your account on this device."
   },
   "privacy": {
+    "distance_map": "Distance & Map",
     "map": "Map",
     "grid_visibility": "Grid Visibility",
     "incognito_mode": "Incognito Mode",

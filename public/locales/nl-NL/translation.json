@@ -649,6 +649,7 @@
         }
     },
     "browse_page": {
+        "location_preferences": "Locatievoorkeuren",
         "share_distance": {
             "title": "Afstand delen",
             "description": "Kies hoe anderen je afstand zien.",
@@ -1162,6 +1163,7 @@
         "logout_description": "Je wordt op dit apparaat uitgelogd van je account."
     },
     "privacy": {
+        "distance_map": "Afstand & kaart",
         "map": "Kaart",
         "grid_visibility": "Zichtbaarheid in Grid",
         "incognito_mode": "Incognitomodus",

@@ -661,6 +661,7 @@
         }
     },
     "browse_page": {
+        "location_preferences": "Nastavitve lokacije",
         "share_distance": {
             "title": "Deli razdaljo",
             "description": "Izberi, kako drugi vidijo tvojo razdaljo.",
@@ -1180,6 +1181,7 @@
         "tags_count_few": "{{count}} oznake"
     },
     "privacy": {
+        "distance_map": "Razdalja in zemljevid",
         "map": "Zemljevid",
         "grid_visibility": "Vidnost v mreži",
         "incognito_mode": "Način brez beleženja",

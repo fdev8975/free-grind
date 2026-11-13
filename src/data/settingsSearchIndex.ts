@@ -716,6 +716,16 @@ export function useSettingsSearchIndex(): SettingsSearchEntry[] {
 			iconClass: "bg-sky-500/15 text-sky-400",
 		},
 		{
+			id: "privacy-share-distance",
+			route: "/settings/privacy",
+			anchor: "privacy-share-distance",
+			label: t("browse_page.share_distance.title", { defaultValue: "Share Distance" }),
+			description: t("browse_page.share_distance.description", { defaultValue: "Choose how your distance appears to others." }),
+			section: t("settings.search_sections.privacy"),
+			icon: LocateFixed,
+			iconClass: "accent-tint-15 text-[var(--accent)]",
+		},
+		{
 			id: "privacy-show-on-map",
 			route: "/settings/privacy",
 			anchor: "privacy-show-on-map",

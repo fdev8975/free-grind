@@ -673,6 +673,7 @@
         }
     },
     "browse_page": {
+        "location_preferences": "تفضيلات الموقع",
         "share_distance": {
             "title": "مشاركة المسافة",
             "description": "اختار المسافة بتاعتك تظهر للناس إزاي.",
@@ -1190,6 +1191,7 @@
         "logout_description": "هيتعملك تسجيل خروج من حسابك على الجهاز ده."
     },
     "privacy": {
+        "distance_map": "المسافة والخريطة",
         "map": "الخريطة",
         "grid_visibility": "ظهور الشبكة",
         "incognito_mode": "وضع التخفي",

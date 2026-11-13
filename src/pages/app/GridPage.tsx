@@ -1,11 +1,12 @@
 import { useAuth } from "../../contexts/useAuth";
-import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2 } from "lucide-react";
+import { Navigation, ArrowUpDown, Search, RefreshCw, X, UserSearch, ChevronRight, Loader2, Settings2 } from "lucide-react";
 import { useFeatureFlag } from "../../services/assignmentsStore";
 import { requestProfileShare, useCanShareProfiles } from "../../services/profileShare";
+import { MapVisibilityControls, useDistanceMode } from "./MapPrivacySettings";
 import { GridMap, hasCardPosition, type MapCard } from "./gridpage/components/GridMap";
 import { readGridViewMode, writeGridViewMode, type GridViewMode } from "./gridpage/gridViewMode";
 import { SlidersHorizontal as PhosphorSlidersHorizontal } from "@phosphor-icons/react";
-import { EyeOffFilled, LayoutGridFilled, LocateApproximateFilled, LocateFixedFilled, MapFilled, MapPinFilled, UserFilled, UserSearchFilled } from "../../components/icons/FilledIcons";
+import { LayoutGridFilled, MapFilled, MapPinFilled, UserFilled, UserSearchFilled } from "../../components/icons/FilledIcons";
 import { IconTabs, type IconTabConfig } from "../../components/ui/icon-tabs";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -43,7 +44,7 @@ import {
 import { PullToRefreshContainer } from "./components/PullToRefreshContainer";
 import { PageHeaderBackground } from "../../components/ui/PageHeaderBackground";
 import { FilterPill } from "../../components/ui/FilterPill";
-import { SelectSheet, type SelectSheetOption } from "../../components/ui/select-sheet";
+import { SelectSheet, SELECT_SHEET_SECTION_LABEL_CLASS } from "../../components/ui/select-sheet";
 import { useBrowseFilters } from "./gridpage/hooks/useBrowseFilters";
 import { sanitizeQuickFilters, useGridQuickFilterDefs } from "../../components/quick-filters/quickFilterDefs";
 import { GRID_QUICK_FILTER_KEYS } from "../../config/quick-filters";
@@ -54,8 +55,7 @@ import { useLocateProfile } from "./gridpage/hooks/useLocateProfile";
 import { isLocateEnabled } from "../../utils/optionalFeatures";
 import { useDesktopBreakpoint } from "../../hooks/useDesktopBreakpoint";
 import { useManagedGenders, useManagedPronouns, useBlockedProfileIds, useBlockProfile, useUnblockProfile, useMyOwnProfile } from "../../hooks/queries/useProfileQueries";
-import { useQueryClient } from "@tanstack/react-query";
-import { getProfilePhotoHash, unwrapOwnProfile } from "./profile-editor/profileEditorUtils";
+import { getProfilePhotoHash } from "./profile-editor/profileEditorUtils";
 import {
 	getChatContactIndexForProfiles,
 	getLocalNicknamesForProfiles,
@@ -113,7 +113,6 @@ function readStoredExploreLocation(userId: number | null | undefined): ExploreLo
 // keep auto-pagination running indefinitely trying to find more matches.
 const NICKNAME_FILTER_MAX_PAGES = 7;
 
-type DistanceMode = "precise" | "approximate" | "hidden";
 
 // Overrides for the grid while a public Right Now session is live (see GridPage's root).
 const RIGHT_NOW_LIVE_VARS = {
@@ -274,17 +273,10 @@ export function GridPage() {
 	const { mutateAsync: blockProfileMutation, isPending: isBlockingProfile } = useBlockProfile();
 	const { mutateAsync: unblockProfileMutation, isPending: isUnblockingProfile } = useUnblockProfile();
 	const { data: myProfile } = useMyOwnProfile();
-	const queryClient = useQueryClient();
 
 	const profileImageHash = useMemo(() => getProfilePhotoHash(myProfile), [myProfile]);
 	const ownDisplayName = myProfile?.displayName ?? null;
-	// Same three modes as the official app's "Distance & Visibility" screen.
-	const distanceMode: DistanceMode = !(myProfile?.showDistance ?? true)
-		? "hidden"
-		: myProfile?.approximateDistance
-			? "approximate"
-			: "precise";
-	const DistanceModeIcon = distanceMode === "approximate" ? LocateApproximateFilled : LocateFixedFilled;
+	const { distanceMode, selectDistanceMode, distanceOptions } = useDistanceMode();
 
 	const genderOptions = useMemo(() => {
 		return managedGenders?.map((item) => ({
@@ -566,56 +558,6 @@ export function GridPage() {
 		setSavedAccountDisplayName(String(userId), ownDisplayName);
 	}, [userId, myProfile, profileImageHash, ownDisplayName]);
 
-	// Mirrors the official app: the mode goes onto the profile
-	// (showDistance + approximateDistance), and approximateDistance is also
-	// written to the account settings. Rejects on failure so the sheet stays open.
-	// The profile write has to be the full PUT /v3.1/me/profile — PATCH /v4
-	// ignores approximateDistance — so the current profile is fetched fresh and
-	// sent back whole with just these two fields changed.
-	const handleSelectDistanceMode = useCallback(async (mode: DistanceMode) => {
-		const fields = {
-			showDistance: mode !== "hidden",
-			approximateDistance: mode === "approximate",
-		};
-		const previous = queryClient.getQueryData<typeof myProfile>(["my-own-profile"]);
-		queryClient.setQueryData(["my-own-profile"], (current: typeof myProfile) =>
-			current ? { ...current, ...fields } : current,
-		);
-		try {
-			const current = unwrapOwnProfile(await apiFunctions.getMyOwnProfile());
-			if (!current) throw new Error("Own profile unavailable");
-			await apiFunctions.replaceMyProfile({ ...current, ...fields });
-			await apiFunctions.updateMySettings({ approximateDistance: fields.approximateDistance });
-		} catch (error) {
-			queryClient.setQueryData(["my-own-profile"], previous);
-			toast.error(t("browse_page.errors.toggle_distance_failed", { defaultValue: "Could not update distance setting." }));
-			throw error;
-		}
-	}, [apiFunctions, queryClient, t]);
-
-	const distanceOptions = useMemo<SelectSheetOption<DistanceMode>[]>(() => [
-		{
-			value: "precise",
-			icon: LocateFixedFilled,
-			iconClassName: "accent-tint-15 text-[var(--accent)]",
-			label: t("browse_page.share_distance.precise", { defaultValue: "Precise" }),
-			description: t("browse_page.share_distance.precise_desc", { defaultValue: "Exact distance, e.g. \"250 m away\"." }),
-		},
-		{
-			value: "approximate",
-			icon: LocateApproximateFilled,
-			iconClassName: "bg-sky-500/15 text-sky-400",
-			label: t("browse_page.share_distance.approximate", { defaultValue: "Approximate" }),
-			description: t("browse_page.share_distance.approximate_desc", { defaultValue: "Rounded, e.g. \"< 5 km away\"." }),
-		},
-		{
-			value: "hidden",
-			icon: EyeOffFilled,
-			label: t("browse_page.share_distance.hidden", { defaultValue: "Hidden" }),
-			description: t("browse_page.share_distance.hidden_desc", { defaultValue: "No distance shown. Your position in others' grid still hints at roughly how far away you are." }),
-		},
-	], [t]);
-
 	const browseCacheKey = useMemo(() => {
 		if (!geohash) {
 			return "";
@@ -690,7 +632,7 @@ export function GridPage() {
 	);
 
 	// Grid map view (flag "browse-maps-v1_5")
-	const isMapFlagOn = false; // useFeatureFlag("browse-maps-v1_5");
+	const isMapFlagOn = useFeatureFlag("browse-maps-v1_5");
 	const canShareProfiles = useCanShareProfiles();
 	const [gridViewMode, setGridViewMode] = useState<GridViewMode>(() => readGridViewMode(userId));
 	useEffect(() => {
@@ -1895,31 +1837,18 @@ export function GridPage() {
 									<button
 										type="button"
 										onClick={(e) => { e.stopPropagation(); setIsDistanceSheetOpen(true); }}
-										title={t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
-										aria-label={t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
+										title={isMapFlagOn ? t("browse_page.location_preferences", { defaultValue: "Location Preferences" }) : t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
+										aria-label={isMapFlagOn ? t("browse_page.location_preferences", { defaultValue: "Location Preferences" }) : t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
 										className="group flex h-full shrink-0 items-center justify-center ps-3 pe-4 transition active:scale-90"
 									>
-										{distanceMode === "hidden"
-											? <EyeOffFilled
-													className={cn(
-														"h-4 w-4 transition-colors text-[var(--text-muted)]",
-														exploreLocation ? "group-hover:text-[var(--explore)]" : "group-hover:text-[var(--accent)]",
-													)}
-												/>
-											: <DistanceModeIcon className={`h-4 w-4 transition-colors ${exploreLocation ? "text-[var(--explore)]" : "text-[var(--accent)]"}`} />
-										}
+										<Settings2
+											className={cn(
+												"h-4 w-4 transition-colors",
+												exploreLocation ? "text-[var(--explore)]" : "text-[var(--accent)]",
+											)}
+										/>
 									</button>
 								</div>
-								{isMapFlagOn ? (
-									// Same segmented control as Right Now's list/map toggle.
-									<div className="shrink-0">
-										<IconTabs
-											activeTab={showGridMap ? "map" : "list"}
-											tabs={gridViewModeTabs}
-											onTabClick={changeGridViewMode}
-										/>
-									</div>
-								) : null}
 								<button
 									type="button"
 									// Don't steal focus from the name input: its onBlur would close
@@ -2026,6 +1955,18 @@ export function GridPage() {
 								className="pointer-events-none -mx-[var(--app-px)] -mb-15 overflow-x-auto pb-16 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rail:col-start-1 rail:row-start-2 rail:me-0"
 							>
 								<div className="pointer-events-auto flex min-w-max items-center gap-2 px-[var(--app-px)] ms-auto rail:pe-0">
+									{isMapFlagOn && (
+										// Leading, like Right Now's list/map toggle.
+										<IconTabs
+											activeTab={showGridMap ? "map" : "list"}
+											tabs={gridViewModeTabs}
+											onTabClick={changeGridViewMode}
+											color={exploreLocation ? "var(--explore)" : undefined}
+											contrastColor={exploreLocation ? "#fff" : undefined}
+										/>
+									)}
+									{/* Order only matters in the grid; the map shows everyone at once. */}
+									{!showGridMap && (
 									<button
 										type="button"
 										onClick={() => setIsSortSheetOpen(true)}
@@ -2046,6 +1987,7 @@ export function GridPage() {
 										</span>
 										{!isDefaultSort && (sortOptions.find((option) => option.value === sortBy)?.label ?? sortOptions[0].label)}
 									</button>
+									)}
 
 									<button
 										type="button"
@@ -2408,14 +2350,26 @@ export function GridPage() {
 
 			{isDistanceSheetOpen && (
 				<SelectSheet
-					title={t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
-					description={t("browse_page.share_distance.description", { defaultValue: "Choose how your distance appears to others." })}
-					value={myProfile ? distanceMode : null}
+					title={isMapFlagOn
+						? t("browse_page.location_preferences", { defaultValue: "Location Preferences" })
+						: t("browse_page.share_distance.title", { defaultValue: "Share Distance" })}
+					optionsLabel={isMapFlagOn ? t("browse_page.share_distance.title", { defaultValue: "Share Distance" }) : undefined}
+					description={isMapFlagOn ? undefined : t("browse_page.share_distance.description", { defaultValue: "Choose how your distance appears to others." })}
+					value={distanceMode}
 					options={distanceOptions}
-					onSelect={handleSelectDistanceMode}
+					onSelect={selectDistanceMode}
 					onClose={() => setIsDistanceSheetOpen(false)}
 					isDesktop={isDesktop}
 					disabled={!myProfile}
+					footer={isMapFlagOn ? (
+						// Second section, headed and aligned like the distance options above.
+						<div className="-mx-1 pb-2 pt-2">
+							<p className={SELECT_SHEET_SECTION_LABEL_CLASS}>
+								{t("privacy.map", { defaultValue: "Map" })}
+							</p>
+							<MapVisibilityControls variant="sheet" />
+						</div>
+					) : undefined}
 					accentColor={exploreLocation ? "var(--explore)" : undefined}
 					accentContrast={exploreLocation ? "#fff" : undefined}
 				/>

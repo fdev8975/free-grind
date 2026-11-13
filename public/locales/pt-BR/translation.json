@@ -655,6 +655,7 @@
         }
     },
     "browse_page": {
+        "location_preferences": "Preferências de localização",
         "share_distance": {
             "title": "Compartilhar distância",
             "description": "Escolha como sua distância aparece para os outros.",
@@ -1171,6 +1172,7 @@
         "tags_count_many": "{{count}} tags"
     },
     "privacy": {
+        "distance_map": "Distância e mapa",
         "map": "Mapa",
         "grid_visibility": "Visibilidade da grade",
         "incognito_mode": "Modo anônimo",

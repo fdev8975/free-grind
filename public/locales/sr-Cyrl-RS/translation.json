@@ -656,6 +656,7 @@
         }
     },
     "browse_page": {
+        "location_preferences": "Подешавања локације",
         "share_distance": {
             "title": "Дели удаљеност",
             "description": "Изаберите како други виде вашу удаљеност.",
@@ -1173,6 +1174,7 @@
         "logout_description": "Бићете одјављени са свог налога на овом уређају."
     },
     "privacy": {
+        "distance_map": "Удаљеност и мапа",
         "map": "Мапа",
         "grid_visibility": "Видљивост у мрежи",
         "incognito_mode": "Инкогнито режим",

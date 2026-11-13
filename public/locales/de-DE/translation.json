@@ -661,6 +661,7 @@
         "view_map": "Karte",
         "view_list": "Raster",
         "map_empty": "In der Nähe teilt niemand seinen Standort auf der Karte.",
+        "location_preferences": "Standorteinstellungen",
         "share_distance": {
             "title": "Entfernung teilen",
             "description": "Wähle, wie deine Entfernung für andere angezeigt wird.",
@@ -1175,6 +1176,7 @@
         "logout_description": "Du wirst auf diesem Gerät von deinem Konto abgemeldet."
     },
     "privacy": {
+        "distance_map": "Distanz & Karte",
         "map": "Karte",
         "grid_visibility": "Grid-Sichtbarkeit",
         "incognito_mode": "Inkognito-Modus",

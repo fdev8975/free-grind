@@ -36,6 +36,9 @@ interface SelectSheetProps<T extends string> {
 	accentColor?: string;
 	/** Text color on top of `accentColor`. */
 	accentContrast?: string;
+	/** Small section header above the options, for sheets with more than one
+	 * section (e.g. a `footer` with its own header). */
+	optionsLabel?: string;
 	/** Below the list, e.g. a loading or error note. */
 	footer?: ReactNode;
 	/** Adds a footer button that closes the sheet without picking, like the
@@ -47,6 +50,9 @@ interface SelectSheetProps<T extends string> {
 	/** Starting height of an `expandable` sheet, as a fraction of the viewport. */
 	mediumDetent?: number;
 }
+
+/** Section header inside a SelectSheet (`optionsLabel`, or a footer section's own header). */
+export const SELECT_SHEET_SECTION_LABEL_CLASS = "px-3 pb-1 pt-1 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]";
 
 /**
  * Single-choice picker sheet in the app's native sheet style (same bg, header
@@ -80,6 +86,7 @@ function SelectSheetContent<T extends string>({
 	accentContrast = "var(--accent-contrast)",
 	footer,
 	closeLabel,
+	optionsLabel,
 }: Omit<SelectSheetProps<T>, "onClose" | "isDesktop" | "zIndex">) {
 	const close = useBottomSheetClose();
 	const [pending, setPending] = useState<T | null>(null);
@@ -119,6 +126,7 @@ function SelectSheetContent<T extends string>({
 				className="-mx-1 min-h-0 flex-1 overflow-y-auto pb-2"
 				data-lenis-prevent
 			>
+				{optionsLabel && <p className={SELECT_SHEET_SECTION_LABEL_CLASS}>{optionsLabel}</p>}
 				{options.map((option) => {
 					const selected = option.value === value;
 					const Icon = option.icon;
