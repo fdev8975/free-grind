@@ -6,7 +6,7 @@ import { cn } from "../../../utils/cn";
 import { DESKTOP_GRID_TEMPLATE, mobileGridTemplate } from "../gridpage/components/BrowseGrid";
 import { useGridRowMetrics } from "../gridpage/hooks/useGridRowMetrics";
 import type { BrowseCard } from "../GridPage.types";
-import { InterestViewTile } from "./InterestComponents";
+import { InterestViewTile, type InterestOpenMenu } from "./InterestComponents";
 import type { InterestItem, InterestTab } from "./interestUtils";
 
 export function useViewsGridLayout() {
@@ -32,6 +32,7 @@ export function InterestViewsGrid({
 	scrollContainerRef,
 	mode = "views",
 	sentTapTypeById,
+	onOpenMenu,
 }: {
 	items: InterestItem[];
 	browseCardsById: Map<string, BrowseCard>;
@@ -43,6 +44,7 @@ export function InterestViewsGrid({
 	mode?: InterestTab;
 	/** Your sent tap type per profile, for the mutual-tap pair. */
 	sentTapTypeById?: Map<string, number | null>;
+	onOpenMenu?: InterestOpenMenu;
 }) {
 	const { isDesktop, mobileGridColumns, gridTemplateColumns, gridClassName } = useViewsGridLayout();
 	const { rowMetrics, probeRef } = useGridRowMetrics(
@@ -119,6 +121,7 @@ export function InterestViewsGrid({
 								isDesktop={isDesktop}
 								mode={mode}
 								myTapType={sentTapTypeById?.get(item.profileId)}
+								onOpenMenu={onOpenMenu}
 							/>
 						))}
 					</div>

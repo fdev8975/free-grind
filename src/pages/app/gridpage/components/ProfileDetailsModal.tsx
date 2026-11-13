@@ -1,6 +1,6 @@
 import { TapFlyBurst, tapFlyBurstDuration, createTapFlyBurst, mutualTapIdFor, tapEmoji, tapGlow, type TapFlyBurstState } from "../../../../components/TapFlyBurst";
 import { isChatArchiveEnabled } from "../../../../services/chatArchiveMode";
-import { Album, AlertTriangle, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleUserRound, Clock, EllipsisVertical, Flag, Flame, Images, Loader2, LockKeyhole, MessageCircle, Pencil, Phone, Plus, ShieldCheck, Star, Trash2, X } from "lucide-react";
+import { Album, AlertTriangle, Ban, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, CircleUserRound, Clock, EllipsisVertical, Flag, Flame, Images, Loader2, LockKeyhole, MessageCircle, Pencil, Phone, Plus, Share2, ShieldCheck, Star, Trash2, X } from "lucide-react";
 import { BananaFilled, EyeFilled, HomeFilled, MapPinFilled, StickyNoteFilled, EyeOffFilled, LocateFixedFilled, PencilLineFilled, SendHorizontalFilled } from "../../../../components/icons/FilledIcons";
 import { RightNowIcon } from "../../../../components/icons/RightNowIcon";
 import toast from "react-hot-toast";
@@ -41,6 +41,7 @@ import {
 import { getProfileImageUrl, validateMediaHash } from "../../../../utils/media";
 import { proxyMediaUrl } from "../../../../utils/mediaProxy";
 import { resolveAvatarSrc } from "../../../../services/avatarStore";
+import { requestProfileShare, useCanShareProfiles } from "../../../../services/profileShare";
 import { getForbiddenWords, setForbiddenWords } from "../../../../utils/autoblock";
 import { ProfileImage } from "../../../../components/ui/profile-image";
 import { useProfilePhotoPrivacy } from "../../../../hooks/useProfilePhotoPrivacy";
@@ -626,6 +627,7 @@ export function ProfileDetailsModal({
 
 	const messageProfileId = activeProfile?.profileId ?? selectedBrowseCard?.profileId ?? null;
 	const isOwnProfile = userId != null && messageProfileId != null && String(userId) === String(messageProfileId);
+	const canShareProfiles = useCanShareProfiles();
 
 	const finishOwnProfileEdit = useCallback(() => {
 		setIsEditingOwnProfile(false);
@@ -2073,6 +2075,27 @@ export function ProfileDetailsModal({
 		</button>
 	) : null;
 
+	// Into chats as a ProfileLink (our server only, see profileShare). Not a saved
+	// snapshot or a blocked profile: the server refuses those anyway.
+	const shareMenuItem =
+		canShareProfiles && activeProfile && messageProfileId != null && !isSnapshotProfile && !isBlocked && !isBlockedByOther ? (
+			<button
+				type="button"
+				onClick={() => {
+					setIsActionsMenuOpen(false);
+					requestProfileShare({
+						profileId: Number(messageProfileId),
+						name: activeProfile.displayName?.trim() || null,
+						mediaHash: activeProfile.profileImageMediaHash ?? null,
+					});
+				}}
+				className="flex items-center rounded-sm px-2 py-2 text-start text-sm text-[var(--text)] transition hover-fill"
+			>
+				<Share2 className="me-2 h-4 w-4 opacity-70" />
+				{t("chat.share")}
+			</button>
+		) : null;
+
 	const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 	const closeReportDialog = useCallback(() => setIsReportDialogOpen(false), []);
 
@@ -2676,6 +2699,7 @@ export function ProfileDetailsModal({
 								{actionsMenuPresence.rendered && (
 									<div data-lenis-prevent style={menuTransitionStyle(actionsMenuPresence.visible)} className="absolute end-0 top-full z-50 mt-1 flex max-h-[calc(100dvh-8rem)] min-w-[190px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2">
 										<div className="flex flex-col gap-1 px-2">
+										{shareMenuItem}
 										{showLocate && (
 										<button
 											type="button"
@@ -3146,6 +3170,7 @@ export function ProfileDetailsModal({
 												{actionsMenuPresence.rendered && (
 													<div data-lenis-prevent style={menuTransitionStyle(actionsMenuPresence.visible)} className="absolute end-0 top-full z-50 mt-1 flex max-h-[calc(100dvh-8rem)] min-w-[190px] flex-col gap-2 overflow-y-auto overscroll-contain rounded-lg menu-surface py-2">
 														<div className="flex flex-col gap-1 px-2">
+														{shareMenuItem}
 														{showLocate && (
 														<button type="button" disabled={isTriangleDisabled}
 															onClick={() => { setIsActionsMenuOpen(false); if (messageProfileId) onTriangleProfile?.(String(messageProfileId)); }}

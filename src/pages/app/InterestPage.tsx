@@ -16,6 +16,7 @@ import {
 } from "./interest/interestUtils";
 import { InterestTabs, InterestRow, type InterestTabConfig } from "./interest/InterestComponents";
 import { InterestViewsGrid, useViewsGridLayout } from "./interest/InterestViewsGrid";
+import { InterestProfileMenu, type InterestMenuTarget } from "./interest/InterestProfileMenu";
 import { getAllCachedBrowseCardsById } from "./gridpage/cache";
 import { INTEREST_ONBOARDING_SEEN_KEY, InterestOnboardingModal } from "./interest/InterestOnboardingModal";
 import {
@@ -187,10 +188,30 @@ export function InterestPage() {
 	// cache for anyone we've seen there. Re-read whenever the data refreshes.
 	const browseCardsById = useMemo(() => getAllCachedBrowseCardsById(), [data]);
 
-	const itemsByTab = useMemo(
-		() => ({ views, taps, sent: sentTaps }) satisfies Record<InterestTab, InterestItem[]>,
-		[views, taps, sentTaps],
-	);
+	// Favorites toggled from the tile menu: the views' own flag stays stale until the next fetch.
+	const [favoriteOverrides, setFavoriteOverrides] = useState<ReadonlyMap<string, boolean>>(() => new Map());
+	useEffect(() => setFavoriteOverrides(new Map()), [data]);
+
+	const itemsByTab = useMemo(() => {
+		const withOverrides = (items: InterestItem[]) =>
+			favoriteOverrides.size === 0
+				? items
+				: items.map((item) => (favoriteOverrides.has(item.profileId) ? { ...item, isFavorite: favoriteOverrides.get(item.profileId) } : item));
+		return { views: withOverrides(views), taps: withOverrides(taps), sent: withOverrides(sentTaps) } satisfies Record<InterestTab, InterestItem[]>;
+	}, [views, taps, sentTaps, favoriteOverrides]);
+
+	// Long press / right-click on a tile or row: the browse grid's tile menu.
+	const [menuTarget, setMenuTarget] = useState<InterestMenuTarget | null>(null);
+	const browseCardsByIdRef = useRef(browseCardsById);
+	browseCardsByIdRef.current = browseCardsById;
+	const handleOpenMenu = useCallback((item: InterestItem, x: number, y: number) => {
+		const isFavorite = (item.isFavorite ?? browseCardsByIdRef.current.get(item.profileId)?.favorite) === true;
+		setMenuTarget({ item, isFavorite, x, y });
+	}, []);
+	const handleCloseMenu = useCallback(() => setMenuTarget(null), []);
+	const handleFavoriteChanged = useCallback((profileId: string, favorite: boolean) => {
+		setFavoriteOverrides((previous) => new Map(previous).set(profileId, favorite));
+	}, []);
 
 	const viewedCount = demoMode !== 0 ? demoAddedViews.length : (data?.viewedCount ?? 0);
 
@@ -735,6 +756,7 @@ export function InterestPage() {
 											scrollContainerRef={feedContainerRef}
 											mode={activeTab}
 											sentTapTypeById={sentTapTypeById}
+											onOpenMenu={handleOpenMenu}
 										/>
 									) : displayedItems.map((item) => (
 										<InterestRow
@@ -746,6 +768,7 @@ export function InterestPage() {
 											isBlocked={isProfileBlocked(item.profileId)}
 											canOpenWhileBlocked={hasProfileSnapshot(item.profileId)}
 											myTapType={sentTapTypeById.get(item.profileId)}
+											onOpenMenu={handleOpenMenu}
 										/>
 									))}
 
@@ -769,6 +792,12 @@ export function InterestPage() {
 				</div>
 			</FeedScrollContainer>
 		</PullToRefreshContainer>
+		<InterestProfileMenu
+			target={menuTarget}
+			isDesktop={isDesktop}
+			onClose={handleCloseMenu}
+			onFavoriteChanged={handleFavoriteChanged}
+		/>
 		{showOnboarding && activeTab === "views" && (
 			<InterestOnboardingModal onConfirm={handleAcknowledgeOnboarding} />
 		)}

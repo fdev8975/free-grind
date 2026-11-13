@@ -21,24 +21,12 @@ import { TileFlameBurst } from "./TileFlameBurst";
 import { OfflineDot } from "./OfflineDot";
 import type { GridTapStatus } from "../hooks/useGridTapStatus";
 import { getUnreadBeyondLocalRead } from "../../../../utils/privacy";
+import { useTileMenuPress } from "../hooks/useTileMenuPress";
 
-const LONG_PRESS_MS = 450;
-const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 // A second tap within this window counts as a double tap (flame); a single
 // tap only opens the profile once the window has passed.
 const DOUBLE_TAP_MS = 250;
 const FLAME_BURST_MS = 1200;
-// A touch that lands while the grid is still scrolling (momentum after a
-// fling) just stops the scroll — holding that finger still must not count as
-// a long press on whatever tile ended up underneath.
-const SCROLL_SETTLE_MS = 120;
-
-// Last time anything scrolled. Scroll events don't bubble, so listen in the
-// capture phase to catch the grid's inner scroll container too.
-let lastScrollAt = 0;
-if (typeof window !== "undefined") {
-	window.addEventListener("scroll", () => { lastScrollAt = performance.now(); }, { capture: true, passive: true });
-}
 
 type BrowseCardTileProps = {
 	card: BrowseCard;
@@ -99,63 +87,11 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 	const hasSentTap = tapStatus?.sent != null;
 	const hasReceivedTap = tapStatus?.received != null;
 
-	// Long press on touch, right-click on mouse. The press is cancelled as
-	// soon as the finger drifts (i.e. the user is scrolling the grid), and
-	// the click that follows a fired long press is swallowed so the profile
-	// doesn't open underneath the menu.
-	const pressRef = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
-	const longPressTriggeredRef = useRef(false);
-	// Defaults to "mouse" so keyboard-triggered context menus still work.
-	const lastPointerTypeRef = useRef<string>("mouse");
+	// Long press on touch, right-click on mouse (see useTileMenuPress).
 	const canOpenMenu = Boolean(onOpenContextMenu) && !isDemoCard;
-
-	const cancelPress = () => {
-		if (pressRef.current) {
-			clearTimeout(pressRef.current.timer);
-			pressRef.current = null;
-		}
-	};
-
-	const handlePointerDown = (event: React.PointerEvent) => {
-		longPressTriggeredRef.current = false;
-		lastPointerTypeRef.current = event.pointerType;
-		cancelPress();
-		if (!canOpenMenu || event.pointerType === "mouse") return;
-		const startedAt = performance.now();
-		if (startedAt - lastScrollAt < SCROLL_SETTLE_MS) return;
-		const { clientX: x, clientY: y } = event;
-		pressRef.current = {
-			x,
-			y,
-			timer: setTimeout(() => {
-				pressRef.current = null;
-				// The grid scrolled during the hold (the browser doesn't always
-				// send pointercancel/pointermove for it) — this was a scroll.
-				if (lastScrollAt >= startedAt) return;
-				longPressTriggeredRef.current = true;
-				haptic(15);
-				onOpenContextMenu?.(card, x, y);
-			}, LONG_PRESS_MS),
-		};
-	};
-
-	const handlePointerMove = (event: React.PointerEvent) => {
-		const press = pressRef.current;
-		if (!press) return;
-		if (Math.hypot(event.clientX - press.x, event.clientY - press.y) > LONG_PRESS_MOVE_TOLERANCE_PX) {
-			cancelPress();
-		}
-	};
-
-	const handleContextMenu = (event: React.MouseEvent) => {
-		event.preventDefault();
-		// Android WebViews also fire contextmenu on a touch long press — the
-		// timer above owns that case.
-		// Checking the pointer type (not just pressRef) matters: a press skipped
-		// because the grid was still scrolling has no pressRef either.
-		if (!canOpenMenu || lastPointerTypeRef.current !== "mouse" || pressRef.current || longPressTriggeredRef.current) return;
-		onOpenContextMenu?.(card, event.clientX, event.clientY);
-	};
+	const { pressHandlers, consumeLongPress } = useTileMenuPress(
+		canOpenMenu ? (x, y) => onOpenContextMenu?.(card, x, y) : null,
+	);
 
 	const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [flameBurst, setFlameBurst] = useState<{ key: number; tapId: number; theirTapId: number | null } | null>(null);
@@ -171,10 +107,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 	}, []);
 
 	const handleClick = () => {
-		if (longPressTriggeredRef.current) {
-			longPressTriggeredRef.current = false;
-			return;
-		}
+		if (consumeLongPress()) return;
 		if (isDemoCard) return;
 		// Without double tap there's nothing to wait for, so open right away.
 		if (!onDoubleTapProfile || doubleTapTapType === null) {
@@ -211,12 +144,7 @@ export const BrowseCardTile = memo(function BrowseCardTile({
 				type="button"
 				key={card.profileId}
 				onClick={handleClick}
-				onPointerDown={handlePointerDown}
-				onPointerMove={handlePointerMove}
-				onPointerUp={cancelPress}
-				onPointerCancel={cancelPress}
-				onPointerLeave={cancelPress}
-				onContextMenu={handleContextMenu}
+				{...pressHandlers}
 				className={cn(
 					"no-touch-callout touch-manipulation surface-card-grid overflow-hidden text-start transition-transform w-full block relative",
 					// Hovering unblurs the photo (see PRIVACY_HOVER_REVEAL_CLASS); demo cards stay blurred.

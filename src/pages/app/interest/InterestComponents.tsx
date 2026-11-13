@@ -14,8 +14,27 @@ import { usePreferences } from "../../../contexts/PreferencesContext";
 import { TILE_HOVER_ZOOM_CLASS, useProfilePhotoPrivacy } from "../../../hooks/useProfilePhotoPrivacy";
 import type { BrowseCard } from "../GridPage.types";
 import { IconTabs, type IconTabConfig } from "../../../components/ui/icon-tabs";
+import { useTileMenuPress } from "../gridpage/hooks/useTileMenuPress";
 
 export type InterestTabConfig = IconTabConfig<InterestTab>;
+
+/** Long press / right-click on an Interest tile or row; see InterestProfileMenu. */
+export type InterestOpenMenu = (item: InterestItem, x: number, y: number) => void;
+
+/**
+ * Its actions only make sense for a known profile, so only those get the
+ * menu: not locked previews (no profile behind them for us), not previews
+ * matched to a profile by a distance guess, not blocked or demo rows.
+ */
+function menuOpenerFor(item: InterestItem, isBlocked: boolean, onOpenMenu: InterestOpenMenu | undefined) {
+	const isKnownProfile =
+		item.canOpenProfile &&
+		item.recoveredBy !== "distance" &&
+		item.profileId !== "demo" &&
+		!item.profileId.startsWith(PREVIEW_ID_PREFIX);
+	if (!onOpenMenu || !isKnownProfile || isBlocked) return null;
+	return (x: number, y: number) => onOpenMenu(item, x, y);
+}
 
 export const InterestTabs = memo(IconTabs<InterestTab>);
 
@@ -71,6 +90,7 @@ export const InterestRow = memo(function InterestRow({
 	isBlocked = false,
 	canOpenWhileBlocked = false,
 	myTapType,
+	onOpenMenu,
 }: {
 	item: InterestItem;
 	mode: InterestTab;
@@ -81,9 +101,11 @@ export const InterestRow = memo(function InterestRow({
 	canOpenWhileBlocked?: boolean;
 	/** Mutual taps: the tap type you sent back (falls back to theirs). */
 	myTapType?: number | null;
+	onOpenMenu?: InterestOpenMenu;
 }) {
 	const { t } = useTranslation();
 	const { unitsPreset } = usePreferences();
+	const { pressHandlers, consumeLongPress } = useTileMenuPress(menuOpenerFor(item, isBlocked, onOpenMenu));
 	const { ref, revealClass } = useRevealOnScroll();
 	const imageSrc = item.imageHash ? getThumbImageUrl(item.imageHash, "320x320") : null;
 
@@ -103,8 +125,9 @@ export const InterestRow = memo(function InterestRow({
 	return (
 		<div
 			ref={ref}
+			{...pressHandlers}
 			className={cn(
-				"group/reveal relative flex items-center gap-4 border-b border-[var(--surface-2)] ps-4 pe-4 py-3 transition-colors",
+				"group/reveal no-touch-callout relative flex items-center gap-4 border-b border-[var(--surface-2)] ps-4 pe-4 py-3 transition-colors",
 				isLocked ? "opacity-75 grayscale-[0.3]" : "hover-fill/40",
 				revealClass
 			)}
@@ -112,7 +135,7 @@ export const InterestRow = memo(function InterestRow({
 			{/* Avatar */}
 			<button
 				type="button"
-				onClick={() => !isUnopenable && onOpenProfile(item.profileId)}
+				onClick={() => !consumeLongPress() && !isUnopenable && onOpenProfile(item.profileId)}
 				disabled={isUnopenable}
 				className="relative shrink-0"
 			>
@@ -140,7 +163,7 @@ export const InterestRow = memo(function InterestRow({
 			<div className="min-w-0 flex-1">
 				<button
 					type="button"
-					onClick={() => !isUnopenable && onOpenProfile(item.profileId)}
+					onClick={() => !consumeLongPress() && !isUnopenable && onOpenProfile(item.profileId)}
 					disabled={isUnopenable}
 					className="w-full text-start"
 				>
@@ -242,6 +265,7 @@ export const InterestViewTile = memo(function InterestViewTile({
 	isDesktop = false,
 	mode = "views",
 	myTapType,
+	onOpenMenu,
 }: {
 	item: InterestItem;
 	browseCard?: BrowseCard;
@@ -254,9 +278,11 @@ export const InterestViewTile = memo(function InterestViewTile({
 	mode?: InterestTab;
 	/** Mutual taps: the tap type you sent back (falls back to theirs). */
 	myTapType?: number | null;
+	onOpenMenu?: InterestOpenMenu;
 }) {
 	const { t } = useTranslation();
 	const { unitsPreset, showLastOnline } = usePreferences();
+	const { pressHandlers, consumeLongPress } = useTileMenuPress(menuOpenerFor(item, isBlocked, onOpenMenu));
 	const tapColor = emojiColorMap[item.tapType ?? -1] || "255, 200, 0";
 	const photoPrivacy = useProfilePhotoPrivacy("grid");
 	const { ref, revealClass } = useRevealOnScroll();
@@ -291,7 +317,8 @@ export const InterestViewTile = memo(function InterestViewTile({
 		<div ref={ref} className={cn(!isDesktop && "bg-black rounded-[6px] overflow-hidden", revealClass)}>
 			<button
 				type="button"
-				onClick={() => !isUnopenable && onOpenProfile(item.profileId)}
+				onClick={() => !consumeLongPress() && !isUnopenable && onOpenProfile(item.profileId)}
+				{...pressHandlers}
 				disabled={isUnopenable}
 				className={cn(
 					"group/reveal no-touch-callout touch-manipulation surface-card-grid relative block w-full overflow-hidden text-start transition-transform",
