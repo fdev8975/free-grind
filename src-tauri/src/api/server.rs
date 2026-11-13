@@ -210,6 +210,23 @@ pub async fn test_server(selection: ServerSelection) -> Result<ServerProbe, AppE
     Ok(probe)
 }
 
+/// Saves a session to the account switcher, with the active server, unless
+/// that account is already there.
+fn keep_in_switcher(session: &grindr::Session) {
+    let Some(profile_id) = session.credentials.profile_id.as_deref() else {
+        return;
+    };
+    if AuthStorage::get_account(profile_id).ok().flatten().is_some() {
+        return;
+    }
+    let Some(device) = DeviceStorage::load().ok().flatten() else {
+        return;
+    };
+    if AuthStorage::save_account(session, &device).is_ok() {
+        let _ = ServerStorage::save_for_account(profile_id, &grindr::server_config());
+    }
+}
+
 /// Switches the backend. Only while signed out, so a session of one server is
 /// never sent to another; the device identity is rotated as well, so the two
 /// servers can't correlate this device. With `detach_session` (adding an
@@ -222,15 +239,33 @@ pub async fn set_server_config(app: tauri::AppHandle, selection: ServerSelection
     if *grindr::server_config() == config {
         return Ok(info(&config));
     }
-    if AuthStorage::get_session().ok().flatten().is_some() {
+    // Signed in means what the app shows (`auth_state`): the live client's
+    // session, not just a stored one.
+    let client = app.state::<AppState>().client().ok();
+    let signed_in = client
+        .as_ref()
+        .is_some_and(|client| {
+            client
+                .session_receiver()
+                .borrow()
+                .as_ref()
+                .is_some_and(|session| session.credentials.profile_id.is_some())
+        });
+    if signed_in {
         if !selection.detach_session {
             return Err(AppError::Auth("sign out before changing the server".to_owned()));
         }
         // Up to date in the switcher (and remembered with its server) before
         // the active slot lets go of it.
-        if let Ok(client) = app.state::<AppState>().client() {
-            persist_current_session(&client).await;
+        if let Some(client) = &client {
+            persist_current_session(client).await;
         }
+        AuthStorage::clear_session()?;
+    } else if let Some(stale) = AuthStorage::get_session().ok().flatten() {
+        // A stored session the client isn't using (it would have resumed it
+        // otherwise) must not block the switch, nor reach the other server.
+        // Kept in the switcher if it isn't there yet.
+        keep_in_switcher(&stale);
         AuthStorage::clear_session()?;
     }
     activate(config)?;

@@ -384,7 +384,7 @@ pub(crate) fn clear_slot(slot: &str) -> Result<(), AppError> {
 }
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
-pub(crate) fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
+fn get_keyring_slot(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
     let entry = Entry::new(SERVICE, slot).map_err(|e| AppError::Auth(e.to_string()))?;
     match entry.get_secret() {
         Ok(bytes) => Ok(Some(bytes)),
@@ -394,7 +394,7 @@ pub(crate) fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
 }
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
-pub(crate) fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
+fn set_keyring_slot(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
     let entry = Entry::new(SERVICE, slot).map_err(|e| AppError::Auth(e.to_string()))?;
     entry
         .set_secret(bytes)
@@ -402,12 +402,60 @@ pub(crate) fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
 }
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
-pub(crate) fn clear_slot(slot: &str) -> Result<(), AppError> {
+fn clear_keyring_slot(slot: &str) -> Result<(), AppError> {
     let entry = Entry::new(SERVICE, slot).map_err(|e| AppError::Auth(e.to_string()))?;
     match entry.delete_credential() {
         Ok(()) | Err(keyring_core::Error::NoEntry) => Ok(()),
         Err(e) => Err(AppError::Auth(e.to_string())),
     }
+}
+
+// macOS release builds keep slots in the keychain, which refuses writes when
+// the build lacks the keychain entitlements. Each slot then falls back to a
+// file, like the active session does (macos_fallback_path); without it the
+// saved accounts and their index were never stored, so adding an account
+// dropped the previous one.
+#[cfg(all(target_os = "macos", not(debug_assertions)))]
+fn slot_fallback_path(slot: &str) -> Result<PathBuf, AppError> {
+    app_support_file(&format!("{slot}.fallback.msgpack"))
+}
+
+#[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
+pub(crate) fn get_slot_bytes(slot: &str) -> Result<Option<Vec<u8>>, AppError> {
+    let keyring = get_keyring_slot(slot);
+    #[cfg(target_os = "macos")]
+    if !matches!(keyring, Ok(Some(_))) {
+        return read_file(&slot_fallback_path(slot)?);
+    }
+    keyring
+}
+
+#[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
+pub(crate) fn set_slot_bytes(slot: &str, bytes: &[u8]) -> Result<(), AppError> {
+    let keyring = set_keyring_slot(slot, bytes);
+    #[cfg(target_os = "macos")]
+    let keyring = match keyring {
+        Ok(()) => {
+            let _ = remove_file(&slot_fallback_path(slot)?);
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("[auth] keychain write for {slot} failed, using a file: {e}");
+            write_file(&slot_fallback_path(slot)?, bytes)
+        }
+    };
+    keyring
+}
+
+#[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
+pub(crate) fn clear_slot(slot: &str) -> Result<(), AppError> {
+    let keyring = clear_keyring_slot(slot);
+    #[cfg(target_os = "macos")]
+    let keyring = {
+        let _ = keyring;
+        remove_file(&slot_fallback_path(slot)?)
+    };
+    keyring
 }
 
 // --- the active session slot ---
@@ -444,7 +492,7 @@ fn macos_fallback_path() -> Result<PathBuf, AppError> {
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
 fn read_active() -> Result<Option<Vec<u8>>, AppError> {
-    let keyring = get_slot_bytes(ACTIVE_SESSION_SLOT);
+    let keyring = get_keyring_slot(ACTIVE_SESSION_SLOT);
     #[cfg(target_os = "macos")]
     if !matches!(keyring, Ok(Some(_))) {
         return read_file(&macos_fallback_path()?);
@@ -454,7 +502,7 @@ fn read_active() -> Result<Option<Vec<u8>>, AppError> {
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
 fn write_active(bytes: &[u8]) -> Result<(), AppError> {
-    let keyring = set_slot_bytes(ACTIVE_SESSION_SLOT, bytes);
+    let keyring = set_keyring_slot(ACTIVE_SESSION_SLOT, bytes);
     #[cfg(target_os = "macos")]
     let keyring = match keyring {
         Ok(()) => {
@@ -468,7 +516,7 @@ fn write_active(bytes: &[u8]) -> Result<(), AppError> {
 
 #[cfg(not(any(target_os = "windows", all(target_os = "macos", debug_assertions))))]
 fn clear_active() -> Result<(), AppError> {
-    let keyring = clear_slot(ACTIVE_SESSION_SLOT);
+    let keyring = clear_keyring_slot(ACTIVE_SESSION_SLOT);
     #[cfg(target_os = "macos")]
     let keyring = {
         let _ = keyring;
