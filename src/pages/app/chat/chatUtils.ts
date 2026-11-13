@@ -10,6 +10,7 @@ import { formatRelativeTime } from "../../../utils/relativeTime";
 import { hourCycleOptions } from "../../../utils/timeFormat";
 import { ONLINE_ENDING_SOON_MINUTES } from "../gridpage/utils";
 import { sanitizeUploadFile } from "../../../services/uploadSanitize";
+import { isFeatureOn } from "../../../services/assignmentsStore";
 
 export type ChatFiltersDraft = {
 	unreadOnly: boolean;
@@ -1119,6 +1120,26 @@ export const MAX_VIDEO_VIEWS = 999_999;
  * (1 = once, 2 = repeat, anything above = unlimited, capped). */
 export function videoMessageViews(maxViews: number): number {
 	return Math.min(maxViews, MAX_VIDEO_VIEWS);
+}
+
+/** Feature flag (only set by our own server): "unlimited" videos go out as
+ * NonExpiringVideo, without any view count, instead of a MAX_VIDEO_VIEWS Video. */
+export const NON_EXPIRING_VIDEOS_FLAG = "chat-non-expiring-videos";
+
+const UNLIMITED_VIDEO_VIEWS = 2147483647;
+
+/** Message type and view fields of a video sent with the expiry picker's
+ * maxViews: unlimited is a NonExpiringVideo where the flag is on, otherwise
+ * (and for any view limit) a regular Video (see videoMessageViews). */
+export function videoMessageSend(maxViews: number): {
+	type: "Video" | "NonExpiringVideo";
+	body: { maxViews: number; viewsRemaining: number };
+} {
+	if (maxViews >= MAX_VIDEO_VIEWS && isFeatureOn(NON_EXPIRING_VIDEOS_FLAG)) {
+		return { type: "NonExpiringVideo", body: { maxViews: UNLIMITED_VIDEO_VIEWS, viewsRemaining: UNLIMITED_VIDEO_VIEWS } };
+	}
+	const views = videoMessageViews(maxViews);
+	return { type: "Video", body: { maxViews: views, viewsRemaining: views } };
 }
 
 // The pickers use 2147483647 for "unlimited" (videos are sent with

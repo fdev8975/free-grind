@@ -130,7 +130,7 @@ import {
 	parseChatFiltersFromLocationState,
     formatDateTime24,
 	sortDrawerMediaByUsage,
-	videoMessageViews,
+	videoMessageSend,
 	type ChatFiltersDraft,
 } from "./chat/chatUtils";
 import { loadChatFiltersDraft, saveChatFiltersDraft } from "./chat/chat-filters-storage";
@@ -7142,16 +7142,16 @@ export function ChatPage() {
 				if (!media) return [];
 				const isVideo = media.contentType.startsWith("video");
 				const isOnceImage = !isVideo && views === 1;
-				// Videos are always a regular Video, "unlimited" included (see videoMessageViews).
-				const videoViews = videoMessageViews(views);
-				const messageType = isVideo ? "Video" : isOnceImage ? "ExpiringImage" : "Image";
+				// "Unlimited" is a NonExpiringVideo or a MAX_VIDEO_VIEWS Video (see videoMessageSend).
+				const video = videoMessageSend(views);
+				const messageType = isVideo ? video.type : isOnceImage ? "ExpiringImage" : "Image";
 				const body = {
 					mediaId,
 					width: null,
 					height: null,
 					url: media.url,
 					...(isOnceImage ? { viewsRemaining: 1, maxViews: 1, duration: 10 } : {}),
-					...(isVideo ? { viewsRemaining: videoViews, maxViews: videoViews } : {}),
+					...(isVideo ? video.body : {}),
 				};
 				return [{ mediaId, url: media.url, messageType, body }];
 			});

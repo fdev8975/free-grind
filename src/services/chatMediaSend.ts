@@ -19,7 +19,7 @@ import {
 	extractImageHashFromSignedUrl,
 	getMediaCaptureTarget,
 	getVideoDurationMs,
-	videoMessageViews,
+	videoMessageSend,
 } from "../pages/app/chat/chatUtils";
 import { MAX_CHAT_MEDIA_BYTES } from "./stagedVideoUpload";
 import { resolveVideoEdit } from "./videoEdit";
@@ -104,9 +104,9 @@ export async function sendUploadedChatMedia(
 	const imageUrl = uploaded.url;
 	const imageHash = imageUrl ? uploaded.mediaHash || extractImageHashFromSignedUrl(imageUrl) : uploaded.mediaHash;
 	const isOnceImage = isImage && options.maxViews === 1;
-	// Videos are always a regular Video, "unlimited" included (see videoMessageViews).
-	const videoViews = videoMessageViews(options.maxViews);
-	const messageType = isVideo ? "Video" : isOnceImage ? "ExpiringImage" : "Image";
+	// "Unlimited" is a NonExpiringVideo or a MAX_VIDEO_VIEWS Video (see videoMessageSend).
+	const video = videoMessageSend(options.maxViews);
+	const messageType = isVideo ? video.type : isOnceImage ? "ExpiringImage" : "Image";
 	const sentMessage = await api.sendMessage({
 		type: messageType,
 		target: { type: "Direct", targetId: Number(targetProfileId) },
@@ -114,7 +114,7 @@ export async function sendUploadedChatMedia(
 			mediaId: uploaded.mediaId,
 			width: null,
 			height: null,
-			...(isVideo ? { viewsRemaining: videoViews, maxViews: videoViews } : {}),
+			...(isVideo ? video.body : {}),
 			...(isOnceImage ? { viewsRemaining: 1, maxViews: 1, duration: 10 } : {}),
 			...(imageUrl ? { url: imageUrl } : {}),
 			...(isImage && imageHash ? { imageHash } : {}),
