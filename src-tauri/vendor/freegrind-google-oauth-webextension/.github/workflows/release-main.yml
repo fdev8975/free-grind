@@ -1,0 +1,103 @@
+name: Release Main
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install JS dependencies
+        run: bun install --frozen-lockfile --no-summary
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Formatting
+        run: bun run check:format
+
+      - name: Tests
+        run: bun run test
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Lint Firefox package
+        run: bun run lint:firefox
+
+      - name: Derive release metadata
+        id: vars
+        run: |
+          version=$(jq -r '.version' firefox/manifest.json)
+          echo "tag_name=main-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "release_name=Free Grind Google OAuth WebExtension v$version (${GITHUB_SHA::7})" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        uses: actions/github-script@v8
+        env:
+          TAG_NAME: ${{ steps.vars.outputs.tag_name }}
+          RELEASE_NAME: ${{ steps.vars.outputs.release_name }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const dir = 'web-ext-artifacts';
+            const zips = fs.readdirSync(dir).filter((f) => f.endsWith('.zip'));
+            if (zips.length !== 3) {
+              throw new Error(`Expected 3 zips in ${dir}, found ${zips.join(', ')}`);
+            }
+
+            const { data: release } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: process.env.TAG_NAME,
+              target_commitish: context.sha,
+              name: process.env.RELEASE_NAME,
+              body: [
+                'Automated release generated from a push to `main`.',
+                '',
+                `Commit: ${context.sha}`
+              ].join('\n'),
+              draft: true,
+              prerelease: false,
+              generate_release_notes: true
+            });
+
+            for (const name of zips) {
+              const data = fs.readFileSync(path.join(dir, name));
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: release.id,
+                name,
+                data,
+                headers: { 'content-type': 'application/zip', 'content-length': data.length }
+              });
+              console.log(`✓ Uploaded ${name}`);
+            }
+
+            // Publish only once every zip is attached.
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              draft: false,
+              make_latest: 'true'
+            });
+            console.log(`✓ Published ${process.env.RELEASE_NAME}`);

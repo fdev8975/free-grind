@@ -1,0 +1,24 @@
+{
+	"manifest_version": 2,
+	"name": "Free Grind Google OAuth",
+	"version": "1.0.6",
+	"description": "Gets a Google OAuth token for signing in to Free Grind",
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "freegrind-google-oauth-webextension@estopia.dev",
+			"strict_min_version": "140.0"
+		},
+		"gecko_android": { "strict_min_version": "142.0" }
+	},
+	"permissions": ["nativeMessaging", "geckoViewAddons"],
+	"background": { "scripts": ["shared/background.js"], "persistent": false },
+	"content_scripts": [
+		{
+			"matches": ["https://web.grindr.com/*"],
+			"js": ["shared/oauth-ui.js", "shared/content.js"],
+			"css": ["shared/oauth-ui.css"],
+			"run_at": "document_start"
+		}
+	],
+	"web_accessible_resources": ["shared/gis-core.js", "shared/page-runner.js"]
+}

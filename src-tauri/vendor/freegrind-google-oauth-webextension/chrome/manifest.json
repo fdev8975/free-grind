@@ -1,0 +1,34 @@
+{
+	"manifest_version": 3,
+	"name": "Free Grind Google OAuth",
+	"homepage_url": "https://github.com/fdev8975/free-grind/tree/development/src-tauri/vendor/freegrind-google-oauth-webextension",
+	"version": "1.0.6",
+	"description": "Gets a Google OAuth token for signing in to Free Grind",
+	"minimum_chrome_version": "102",
+	"icons": {
+		"16": "icons/icon-16.png",
+		"32": "icons/icon-32.png",
+		"48": "icons/icon-48.png",
+		"128": "icons/icon-128.png"
+	},
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; object-src 'self'"
+	},
+	"permissions": ["storage"],
+	"action": { "default_title": "Sign in with Google" },
+	"background": { "service_worker": "shared/background.js" },
+	"content_scripts": [
+		{
+			"matches": ["https://web.grindr.com/*"],
+			"js": ["shared/oauth-ui.js", "shared/content.js"],
+			"css": ["shared/oauth-ui.css"],
+			"run_at": "document_start"
+		}
+	],
+	"web_accessible_resources": [
+		{
+			"resources": ["shared/gis-core.js", "shared/page-runner.js"],
+			"matches": ["https://web.grindr.com/*"]
+		}
+	]
+}
